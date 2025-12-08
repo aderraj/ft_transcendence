@@ -1,0 +1,29 @@
+services:
+  # --- THE WAF (The Gatekeeper) ---
+  waf:
+    build: ./infra/modsecurity
+    container_name: transcendence-waf
+    ports:
+      - "443:443"
+      - "80:80"
+    environment:
+      - PARANOIA=1
+      - ANOMALY_INBOUND=5
+      - MODSEC_RULE_ENGINE=on
+    # REMOVED: volumes section for nginx.conf
+    # The config is now baked into the image.
+    networks:
+      - secure_net
+
+  # --- MOCK BACKEND ---
+  auth-service:
+    build: ./mock_backend
+    container_name: mock-backend
+    expose:
+      - "3000"
+    networks:
+      - secure_net
+
+networks:
+  secure_net:
+    driver: bridge
