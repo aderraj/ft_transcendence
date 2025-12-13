@@ -1,0 +1,27 @@
+FROM node:20-alpine
+
+WORKDIR /app
+
+# Install dependencies for node-gyp and Prisma
+RUN apk add --no-cache python3 make g++ openssl
+
+# Copy package files
+COPY package*.json ./
+
+# Install dependencies
+RUN npm install
+
+# Copy prisma schema for generation
+COPY prisma ./prisma/
+
+# Generate Prisma client
+RUN npx prisma generate || true
+
+# Copy rest of the application
+COPY . .
+
+# Expose port
+EXPOSE 3000
+
+# Default command (overridden in docker-compose for dev)
+CMD ["npm", "run", "start:dev"]
