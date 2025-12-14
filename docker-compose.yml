@@ -1,8 +1,8 @@
 services:
-  # --- THE WAF (The Gatekeeper) ---
+  # --- WAF (Edge / Single Entry Point) ---
   waf:
     build: ./infra/modsecurity
-    container_name: transcendence-waf
+    container_name: pong-waf
     ports:
       - "443:443"
       - "80:80"
@@ -10,20 +10,92 @@ services:
       - PARANOIA=1
       - ANOMALY_INBOUND=5
       - MODSEC_RULE_ENGINE=on
-    # REMOVED: volumes section for nginx.conf
-    # The config is now baked into the image.
+    depends_on:
+      - backend
+      - frontend
     networks:
       - secure_net
 
-  # --- MOCK BACKEND ---
-  auth-service:
-    build: ./mock_backend
-    container_name: mock-backend
+  # --- React Frontend ---
+  frontend:
+    build: ./frontend
+    container_name: pong-frontend
     expose:
-      - "3000"
+      - "5173"
+    environment:
+      - NODE_ENV=development
     networks:
       - secure_net
+    restart: unless-stopped
+
+  # --- NestJS Backend ---
+  backend:
+    build: ./backend
+    container_name: pong-backend
+    expose:
+      - "3000"
+    environment:
+      - VAULT_ADDR=http://vault:8200
+      - VAULT_TOKEN=${VAULT_TOKEN:-}
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=pong
+      - DATABASE_USER=pong
+    depends_on:
+      vault:
+        condition: service_started
+      postgres:
+        condition: service_healthy
+    networks:
+      - secure_net
+    restart: unless-stopped
+
+  # --- PostgreSQL Database ---
+  postgres:
+    image: postgres:15-alpine
+    container_name: pong-postgres
+    environment:
+      - POSTGRES_USER=pong
+      - POSTGRES_PASSWORD=${DB_PASSWORD:-changeme}
+      - POSTGRES_DB=pong
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+    expose:
+      - "5432"
+    networks:
+      - secure_net
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pong -d pong"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+
+  # --- Vault (Self-Managed Secrets) ---
+  vault:
+    image: hashicorp/vault:1.15
+    container_name: pong-vault
+    cap_add:
+      - IPC_LOCK
+    ports:
+      - "8200:8200"
+    environment:
+      - VAULT_ADDR=http://0.0.0.0:8200
+      - VAULT_API_ADDR=http://0.0.0.0:8200
+      - VAULT_LOCAL_CONFIG={"storage":{"file":{"path":"/vault/file"}},"listener":{"tcp":{"address":"0.0.0.0:8200","tls_disable":true}},"disable_mlock":true,"ui":true,"api_addr":"http://vault:8200"}
+    volumes:
+      - vault-data:/vault/file
+    command: server
+    networks:
+      - secure_net
+    # NOTE: Vault is self-managed.
+    # Use `docker exec` to unseal and manage.
+    # UI available at http://localhost:8200/ui
 
 networks:
   secure_net:
     driver: bridge
+
+volumes:
+  vault-data:
+  postgres-data:

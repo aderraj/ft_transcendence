@@ -1,0 +1,35 @@
+# ============================================
+# ft_transcendence - .gitignore
+# ============================================
+
+# Secrets (NEVER commit these)
+.env
+.vault-credentials
+*.pem
+*.key
+
+# Node modules
+node_modules/
+dist/
+build/
+
+# Logs
+*.log
+npm-debug.log*
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Docker volumes (local data)
+data/
+
+# Test files
+ddddddd.*
+*.reda
