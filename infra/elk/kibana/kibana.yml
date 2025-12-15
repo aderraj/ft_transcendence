@@ -1,0 +1,29 @@
+# ============================================
+# Kibana Configuration
+# ============================================
+
+server.name: kibana
+server.host: "0.0.0.0"
+server.port: 5601
+
+# SSL Configuration
+server.ssl.enabled: true
+server.ssl.certificate: /usr/share/kibana/config/certs/kibana.crt
+server.ssl.key: /usr/share/kibana/config/certs/kibana.key
+
+# Elasticsearch connection
+elasticsearch.hosts: ["https://elasticsearch:9200"]
+elasticsearch.ssl.verificationMode: none # Trust self-signed cert from ES
+
+# Use kibana_system user (built-in for Kibana)
+elasticsearch.username: "kibana_system"
+elasticsearch.password: "${ELASTICSEARCH_PASSWORD}"
+
+# Monitoring
+monitoring.ui.container.elasticsearch.enabled: true
+
+# Security
+xpack.security.enabled: true
+
+# Logging
+logging.root.level: info

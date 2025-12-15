@@ -18,11 +18,26 @@ function VaultDemo() {
   const fetchVaultStatus = async () => {
     try {
       const response = await fetch('/api/vault/status');
+      
+      // Handle WAF blocked requests
+      if (response.status === 403) {
+        throw new Error('🛡️ Request blocked by security firewall.');
+      }
+      
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('🛡️ Request blocked by security firewall.');
+      }
+      
       if (!response.ok) throw new Error('Failed to fetch Vault status');
       const data = await response.json();
       setVaultStatus(data);
     } catch (err: any) {
-      setError(err.message);
+      if (err.name === 'SyntaxError' && err.message.includes('JSON')) {
+        setError('🛡️ Request blocked by security firewall.');
+      } else {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }

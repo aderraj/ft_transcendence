@@ -5,9 +5,11 @@ import { VaultModule } from './vault/vault.module';
 import { UsersModule } from './users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { HealthModule } from './health/health.module';
+import { LoggerModule } from './logger/logger.module';
 
 @Module({
   imports: [
+    LoggerModule,
     TypeOrmModule.forRootAsync({
       imports: [VaultModule],
       inject: [VaultService],

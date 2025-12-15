@@ -22,6 +22,17 @@ function Register() {
         body: JSON.stringify({ username, password }),
       });
 
+      // Handle WAF blocked requests (returns HTML, not JSON)
+      if (response.status === 403) {
+        throw new Error('🛡️ Request blocked by security firewall. Suspicious input detected.');
+      }
+
+      // Check content type before parsing JSON
+      const contentType = response.headers.get('content-type');
+      if (!contentType || !contentType.includes('application/json')) {
+        throw new Error('🛡️ Request blocked by security firewall.');
+      }
+
       const data = await response.json();
 
       if (!response.ok) {
@@ -33,7 +44,12 @@ function Register() {
       
       setTimeout(() => navigate('/'), 2000);
     } catch (err: any) {
-      setError(err.message);
+      // Handle JSON parse errors (WAF returns HTML)
+      if (err.name === 'SyntaxError' && err.message.includes('JSON')) {
+        setError('🛡️ Request blocked by security firewall. Suspicious input detected.');
+      } else {
+        setError(err.message);
+      }
     } finally {
       setLoading(false);
     }

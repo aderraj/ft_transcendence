@@ -39,6 +39,10 @@ export class VaultService {
       apiVersion: 'v1',
       endpoint: vaultAddr,
       token: vaultToken,
+      requestOptions: {
+        strictSSL: false,
+        rejectUnauthorized: false,
+      },
     });
 
     // Retry loop for Vault readiness

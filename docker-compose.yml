@@ -1,20 +1,76 @@
 services:
-  # --- WAF (Edge / Single Entry Point) ---
-  waf:
-    build: ./infra/modsecurity
-    container_name: pong-waf
+  # --- Vault (Secrets Management - starts first) ---
+  vault:
+    build: ./infra/vault
+    container_name: pong-vault
+    cap_add:
+      - IPC_LOCK
     ports:
-      - "443:443"
-      - "80:80"
+      - "8200:8200"
     environment:
-      - PARANOIA=1
-      - ANOMALY_INBOUND=5
-      - MODSEC_RULE_ENGINE=on
-    depends_on:
-      - backend
-      - frontend
+      - VAULT_ADDR=https://0.0.0.0:8200
+      - VAULT_API_ADDR=https://0.0.0.0:8200
+      - VAULT_SKIP_VERIFY=true
+    volumes:
+      - vault-data:/vault/file
+      - ./infra/vault/config:/vault/config:ro
+      - secrets-data:/secrets
     networks:
       - secure_net
+    healthcheck:
+      test: ["CMD-SHELL", "[ -f /secrets/.ready ] || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  # --- PostgreSQL Database ---
+  postgres:
+    image: postgres:15-alpine
+    container_name: pong-postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - secrets-data:/secrets:ro
+    expose:
+      - "5432"
+    networks:
+      - secure_net
+    entrypoint: ["/bin/sh", "-c", "while [ ! -f /secrets/.ready ]; do sleep 1; done; export POSTGRES_PASSWORD=$$(cat /secrets/db_password); docker-entrypoint.sh postgres"]
+    environment:
+      - POSTGRES_USER=pong
+      - POSTGRES_DB=pong
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pong -d pong"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      vault:
+        condition: service_healthy
+    restart: unless-stopped
+
+  # --- NestJS Backend ---
+  backend:
+    build: ./backend
+    container_name: pong-backend
+    expose:
+      - "3000"
+    volumes:
+      - secrets-data:/secrets:ro
+    environment:
+      - VAULT_ADDR=https://vault:8200
+      - DATABASE_HOST=postgres
+      - DATABASE_PORT=5432
+      - DATABASE_NAME=pong
+      - DATABASE_USER=pong
+    depends_on:
+      vault:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    networks:
+      - secure_net
+    restart: unless-stopped
 
   # --- React Frontend ---
   frontend:
@@ -28,69 +84,119 @@ services:
       - secure_net
     restart: unless-stopped
 
-  # --- NestJS Backend ---
-  backend:
-    build: ./backend
-    container_name: pong-backend
-    expose:
-      - "3000"
+  # --- WAF (Edge / Single Entry Point) ---
+  waf:
+    build: ./infra/modsecurity
+    container_name: pong-waf
+    ports:
+      - "443:8443"
+      - "80:8080"
     environment:
-      - VAULT_ADDR=http://vault:8200
-      - VAULT_TOKEN=${VAULT_TOKEN:-}
-      - DATABASE_HOST=postgres
-      - DATABASE_PORT=5432
-      - DATABASE_NAME=pong
-      - DATABASE_USER=pong
+      - PARANOIA=1
+      - ANOMALY_INBOUND=5
+      - MODSEC_RULE_ENGINE=on
+    depends_on:
+      - backend
+      - frontend
+    networks:
+      - secure_net
+
+  # ============================================
+  # ELK Stack - Log Management
+  # ============================================
+
+  # --- Elasticsearch ---
+  elasticsearch:
+    build: ./infra/elk/elasticsearch
+    container_name: pong-elasticsearch
+    environment:
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - ./infra/elk/elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+      - elasticsearch-data:/usr/share/elasticsearch/data
+      - secrets-data:/secrets:ro
+    expose:
+      - "9200"
+      - "9300"
+    networks:
+      - secure_net
     depends_on:
       vault:
-        condition: service_started
-      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sk -u elastic:$(cat /secrets/elastic_password) https://localhost:9200/_cluster/health | grep -qE '\"status\":\"(green|yellow)\"'"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 30s
+    restart: unless-stopped
+
+  # --- Logstash ---
+  logstash:
+    build: ./infra/elk/logstash
+    container_name: pong-logstash
+    volumes:
+      - ./infra/elk/logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - ./infra/elk/logstash/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - secrets-data:/secrets:ro
+    environment:
+      - "LS_JAVA_OPTS=-Xms256m -Xmx256m"
+    expose:
+      - "5000"
+      - "5044"
+      - "9600"
+    depends_on:
+      elasticsearch:
         condition: service_healthy
     networks:
       - secure_net
     restart: unless-stopped
 
-  # --- PostgreSQL Database ---
-  postgres:
-    image: postgres:15-alpine
-    container_name: pong-postgres
-    environment:
-      - POSTGRES_USER=pong
-      - POSTGRES_PASSWORD=${DB_PASSWORD:-changeme}
-      - POSTGRES_DB=pong
+  # --- Kibana ---
+  kibana:
+    build: ./infra/elk/kibana
+    container_name: pong-kibana
     volumes:
-      - postgres-data:/var/lib/postgresql/data
-    expose:
-      - "5432"
+      - ./infra/elk/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
+      - secrets-data:/secrets:ro
+    environment:
+      - ELASTICSEARCH_HOSTS=https://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
     networks:
       - secure_net
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U pong -d pong"]
-      interval: 5s
-      timeout: 5s
-      retries: 5
+      test: ["CMD-SHELL", "curl -sk https://localhost:5601/api/status | grep -q 'available'"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
     restart: unless-stopped
 
-  # --- Vault (Self-Managed Secrets) ---
-  vault:
-    image: hashicorp/vault:1.15
-    container_name: pong-vault
-    cap_add:
-      - IPC_LOCK
-    ports:
-      - "8200:8200"
-    environment:
-      - VAULT_ADDR=http://0.0.0.0:8200
-      - VAULT_API_ADDR=http://0.0.0.0:8200
-      - VAULT_LOCAL_CONFIG={"storage":{"file":{"path":"/vault/file"}},"listener":{"tcp":{"address":"0.0.0.0:8200","tls_disable":true}},"disable_mlock":true,"ui":true,"api_addr":"http://vault:8200"}
+  # --- Filebeat ---
+  filebeat:
+    build: ./infra/elk/filebeat
+    container_name: pong-filebeat
+    user: root
     volumes:
-      - vault-data:/vault/file
-    command: server
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - filebeat-data:/usr/share/filebeat/data
+    depends_on:
+      logstash:
+        condition: service_started
     networks:
       - secure_net
-    # NOTE: Vault is self-managed.
-    # Use `docker exec` to unseal and manage.
-    # UI available at http://localhost:8200/ui
+    restart: unless-stopped
 
 networks:
   secure_net:
@@ -99,3 +205,6 @@ networks:
 volumes:
   vault-data:
   postgres-data:
+  elasticsearch-data:
+  filebeat-data:
+  secrets-data:

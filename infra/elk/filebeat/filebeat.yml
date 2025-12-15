@@ -1,0 +1,57 @@
+# ============================================
+# Filebeat Configuration
+# Collects logs from Docker containers
+# ============================================
+
+filebeat.inputs:
+  # Docker container logs
+  - type: container
+    paths:
+      - '/var/lib/docker/containers/*/*.log'
+    processors:
+      - add_docker_metadata:
+          host: "unix:///var/run/docker.sock"
+
+# Autodiscover Docker containers
+filebeat.autodiscover:
+  providers:
+    - type: docker
+      hints.enabled: true
+      templates:
+        # Only collect logs from pong-* containers
+        - condition:
+            contains:
+              docker.container.name: pong
+          config:
+            - type: container
+              paths:
+                - "/var/lib/docker/containers/${data.docker.container.id}/*.log"
+              processors:
+                - add_docker_metadata:
+                    host: "unix:///var/run/docker.sock"
+                - add_fields:
+                    target: ''
+                    fields:
+                      project: ft_transcendence
+
+# Processors applied to all events
+processors:
+  - add_docker_metadata:
+      host: "unix:///var/run/docker.sock"
+  - decode_json_fields:
+      fields: ["message"]
+      target: ""
+      overwrite_keys: true
+      add_error_key: true
+
+# Output to Logstash
+output.logstash:
+  hosts: ["logstash:5044"]
+
+# Logging settings
+logging.level: info
+logging.to_files: false
+logging.to_stderr: true
+
+# Monitoring (optional)
+monitoring.enabled: false
