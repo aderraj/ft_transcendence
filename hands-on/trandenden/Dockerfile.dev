@@ -1,0 +1,19 @@
+# Development Dockerfile
+FROM node:22.12-alpine
+
+WORKDIR /app
+
+# Install dependencies
+COPY package.json yarn.lock ./
+RUN yarn install
+
+# Copy everything
+COPY . .
+
+# Generate Prisma Client (MUST be after yarn install)
+RUN npx prisma generate
+
+EXPOSE 3001
+
+# Run in watch mode - auto-restarts on file changes
+CMD ["yarn", "start:dev"]
