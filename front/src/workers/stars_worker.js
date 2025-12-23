@@ -10,9 +10,6 @@ function resizeCanvas(w, h) {
     canvas.width = Math.floor(w * dpr);
     canvas.height = Math.floor(h * dpr);
 
-    canvas.styleWidth = w;
-    canvas.styleHeight = h;
-
     ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
 
     size.w = w;
