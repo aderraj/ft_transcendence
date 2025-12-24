@@ -1,0 +1,35 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model User {
+  id             String  @id @default(uuid())
+  username       String? @unique
+  matchesAsUser1 Match[] @relation("MatchUser1")
+  matchesAsUser2 Match[] @relation("MatchUser2")
+}
+
+model Match {
+  id         String    @id @default(uuid())
+  user1Id    String
+  user2Id    String
+  user1Score Int       @default(0)
+  user2Score Int       @default(0)
+  winnerId   String?
+  createdAt  DateTime  @default(now())
+  endedAt    DateTime?
+
+  // Relations
+  user1 User @relation("MatchUser1", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2 User @relation("MatchUser2", fields: [user2Id], references: [id], onDelete: Cascade)
+}
