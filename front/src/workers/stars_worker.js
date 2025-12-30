@@ -36,7 +36,7 @@ function initStars(stars) {
 }
 
 const render = () => {
-    ctx.fillStyle = "black";
+    ctx.fillStyle = "rgba(10, 15, 20, 0.5)";
     ctx.fillRect(0, 0, size.w, size.h);
 
     ctx.fillStyle = "white";
