@@ -58,11 +58,12 @@ header {
 .Nav-Profile p {
     line-height: 1.1;
     margin: 0;
+    margin-left: 15px;
     text-align: center;
 }
+
 
 .Nav-Profile #level {
     grid-row: end;
     font-size: small;
-    text-align: center;
 }
