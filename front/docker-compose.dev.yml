@@ -1,0 +1,16 @@
+version: '3.8'
+
+services:
+  frontend-dev:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "5173:5173"
+    volumes:
+      - .:/app
+      - /app/node_modules
+    environment:
+      - NODE_ENV=development
+    restart: unless-stopped
+    container_name: ft_transcendence_frontend_dev
