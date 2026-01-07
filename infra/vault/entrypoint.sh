@@ -36,6 +36,7 @@ write_secrets_to_volume() {
     vault kv get -tls-skip-verify -field=elastic_password secret/pong-app > "$SECRETS_DIR/elastic_password"
     vault kv get -tls-skip-verify -field=jwt_secret secret/pong-app > "$SECRETS_DIR/jwt_secret"
     vault kv get -tls-skip-verify -field=api_key secret/pong-app > "$SECRETS_DIR/api_key"
+    vault kv get -tls-skip-verify -field=grafana_password secret/pong-app > "$SECRETS_DIR/grafana_password"
     echo "$VAULT_TOKEN" > "$SECRETS_DIR/vault_token"
     
     chmod 644 "$SECRETS_DIR"/*
@@ -78,7 +79,8 @@ initialize_vault() {
         db_password="$(openssl rand -base64 16)" \
         elastic_password="$(openssl rand -base64 16 | tr -d '/+=')" \
         jwt_secret="$(openssl rand -hex 32)" \
-        api_key="$(openssl rand -hex 16)" > /dev/null 2>&1
+        api_key="$(openssl rand -hex 16)" \
+        grafana_password="$(openssl rand -base64 12)" > /dev/null 2>&1
     
     echo "[vault] ✓ Secrets generated"
     

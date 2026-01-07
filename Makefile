@@ -24,6 +24,8 @@ all: build up
 	@echo "$(CYAN)→ App:       https://localhost$(NC)"
 	@echo "$(CYAN)→ Vault UI:  https://localhost:8200/ui$(NC)"
 	@echo "$(CYAN)→ Kibana:    https://localhost:5601$(NC)"
+	@echo "$(CYAN)→ Grafana:   http://localhost:3000 (User: admin, Pass: see vault logs)$(NC)"
+	@echo "$(CYAN)→ Prometheus: http://localhost:9090$(NC)"
 	@echo ""
 
 build:

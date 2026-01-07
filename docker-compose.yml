@@ -198,6 +198,149 @@ services:
       - secure_net
     restart: unless-stopped
 
+  # ============================================
+  # Monitoring Stack
+  # ============================================
+
+  # --- Prometheus ---
+  prometheus:
+    build: ./infra/monitoring/prometheus
+    container_name: pong-prometheus
+    volumes:
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    networks:
+      - secure_net
+    restart: unless-stopped
+
+  # --- Grafana ---
+  grafana:
+    build: ./infra/monitoring/grafana
+    container_name: pong-grafana
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - secrets-data:/secrets:ro
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+    ports:
+      - "3000:3000"
+    networks:
+      - secure_net
+    depends_on:
+      - prometheus
+      - vault
+    restart: unless-stopped
+
+  # --- Alertmanager ---
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    container_name: pong-alertmanager
+    volumes:
+      - ./infra/monitoring/alertmanager/config.yml:/etc/alertmanager/config.yml
+      - alertmanager-data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+    ports:
+      - "9093:9093"
+    networks:
+      - secure_net
+    restart: unless-stopped
+
+  # --- Node Exporter (System Metrics) ---
+  node-exporter:
+    image: prom/node-exporter:v1.7.0
+    container_name: pong-node-exporter
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    expose:
+      - "9100"
+    networks:
+      - secure_net
+    restart: unless-stopped
+
+  # --- cAdvisor (Container Metrics) ---
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.0
+    container_name: pong-cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    expose:
+      - "8080"
+    networks:
+      - secure_net
+    restart: unless-stopped
+
+  # --- PostgreSQL Exporter ---
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter
+    container_name: pong-postgres-exporter
+    volumes:
+      - secrets-data:/secrets:ro
+    environment:
+      - DATA_SOURCE_URI=postgres:5432/pong?sslmode=disable
+      - DATA_SOURCE_USER_FILE=/secrets/db_password
+      - DATA_SOURCE_USER=pong
+    # We need to construct the DATA_SOURCE_NAME with the password from file.
+    # The default image doesn't support generic file reading for password in URI easily without shell.
+    # We use entrypoint to read secret.
+    entrypoint: ["/bin/sh", "-c", "export DATA_SOURCE_NAME=\"postgresql://pong:$(cat /secrets/db_password)@postgres:5432/pong?sslmode=disable\"; /bin/postgres_exporter"]
+    expose:
+      - "9187"
+    networks:
+      - secure_net
+    depends_on:
+      - postgres
+      - vault
+    restart: unless-stopped
+
+  # --- Nginx Exporter ---
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:1.0
+    container_name: pong-nginx-exporter
+    command:
+      - -nginx.scrape-uri=http://waf:8080/stub_status
+    expose:
+      - "9113"
+    networks:
+      - secure_net
+    depends_on:
+      - waf
+    restart: unless-stopped
+
+  # --- Elasticsearch Exporter ---
+  elasticsearch-exporter:
+    image: prometheuscommunity/elasticsearch-exporter:v1.6.0
+    container_name: pong-elasticsearch-exporter
+    command:
+      - '--es.uri=https://elasticsearch:9200'
+      - '--es.all'
+      - '--es.ssl-skip-verify'
+    expose:
+      - "9114"
+    networks:
+      - secure_net
+    depends_on:
+      - elasticsearch
+    restart: unless-stopped
+
 networks:
   secure_net:
     driver: bridge
@@ -208,3 +351,6 @@ volumes:
   elasticsearch-data:
   filebeat-data:
   secrets-data:
+  prometheus-data:
+  grafana-data:
+  alertmanager-data:

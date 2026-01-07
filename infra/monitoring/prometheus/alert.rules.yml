@@ -1,0 +1,74 @@
+# Prometheus Alerting Rules for ft_transcendence
+groups:
+  # Infrastructure alerts
+  - name: infrastructure
+    rules:
+      # High CPU usage
+      - alert: HighCpuUsage
+        expr: 100 - (avg by(instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage detected"
+          description: "CPU usage is above 80% on {{ $labels.instance }} (current value: {{ $value }}%)"
+
+      # High memory usage
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage detected"
+          description: "Memory usage is above 85% on {{ $labels.instance }} (current value: {{ $value }}%)"
+
+      # Disk space running low
+      - alert: DiskSpaceLow
+        expr: (node_filesystem_avail_bytes{fstype!~"tmpfs|overlay"} / node_filesystem_size_bytes{fstype!~"tmpfs|overlay"}) * 100 < 15
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Disk space running low"
+          description: "Disk space is below 15% on {{ $labels.instance }} mount {{ $labels.mountpoint }} (current value: {{ $value }}%)"
+
+  # Container alerts
+  - name: containers
+    rules:
+      # Container down
+      - alert: ContainerDown
+        expr: absent(container_last_seen{name=~"pong-.*"})
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Container is down"
+          description: "Container {{ $labels.name }} is not running"
+
+  # Application alerts
+  - name: application
+    rules:
+      # Backend down
+      - alert: BackendDown
+        expr: up{job="backend"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Backend service is down"
+          description: "The NestJS backend is not responding to health checks"
+
+  # Database alerts
+  - name: database
+    rules:
+      # PostgreSQL down
+      - alert: PostgresDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL is down"
+          description: "PostgreSQL database is not responding"
+
