@@ -1,8 +1,10 @@
 "use client";
-import AuroraOGL from './Aurora'; // Import your optimized Aurora component
-import { useState } from 'react';
-
+import React from 'react';
 import './index.css';
+
+// 1. Import the TWO separate components
+import AuroraBackground from './Aurora';
+import StarField from './StarField';
 
 // --- Glass Component Helper ---
 const GlassCard = ({ children, className = "" }) => (
@@ -56,10 +58,13 @@ export default function App() {
   return (
     <div className="relative min-h-screen w-full font-sans selection:bg-cyan-500/30">
       
-      {/* 1. The Background Layer */}
-      <AuroraOGL speed={0.8} />
+      {/* 1. LAYER -20: The Aurora (Run fast, slightly blurry is fine) */}
+      <AuroraBackground speed={0.8} />
 
-      {/* 2. The Content Layer (Must have relative & z-index) */}
+      {/* 2. LAYER -10: The Stars (Run crisp, native resolution) */}
+      <StarField density={0.002} />
+
+      {/* 3. LAYER 10: The Content */}
       <div className="relative z-10 pt-32 pb-20 px-6">
         <Navbar />
 

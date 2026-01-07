@@ -1,3 +1,4 @@
+// AuroraBackground.js
 "use client";
 import React, { useRef, useEffect } from 'react';
 import { Renderer, Program, Mesh, Triangle, Vec2 } from 'ogl';
@@ -14,10 +15,8 @@ void main() {
 
 const fragment = `#version 300 es
 precision highp float;
-
 uniform vec2 uResolution;
 uniform float uTime;
-
 out vec4 fragColor;
 
 mat2 mm2(in float a){float c = cos(a), s = sin(a);return mat2(c,s,-s,c);}
@@ -28,7 +27,6 @@ vec2 tri2(in vec2 p){return vec2(tri(p.x)+tri(p.y),tri(p.y+tri(p.x)));}
 float triNoise2d(in vec2 p, float spd) {
     float z=1.8; float z2=2.5; float rz = 0.;
     p *= mm2(p.x*0.06); vec2 bp = p;
-    // ULTRA-OPTIMIZATION: Only 2 iterations. Enough for blurry clouds.
     for (float i=0.; i<2.; i++ ) {
         vec2 dg = tri2(bp*1.85)*.75; dg *= mm2(uTime*spd);
         p -= dg/z2; bp *= 1.3; z2 *= .45; z *= .42;
@@ -41,7 +39,6 @@ float hash21(in vec2 n){ return fract(sin(dot(n, vec2(12.9898, 4.1414))) * 43758
 
 vec4 aurora(vec3 ro, vec3 rd) {
     vec4 col = vec4(0); vec4 avgCol = vec4(0);
-    // ULTRA-OPTIMIZATION: 14 steps is the lowest limit before it looks bad.
     for(float i=0.;i<14.;i++) {
         float of = 0.006*hash21(gl_FragCoord.xy)*smoothstep(0.,15., i);
         float pt = ((.8+pow(i,1.4)*.002)-ro.y)/(rd.y*2.+0.4);
@@ -55,11 +52,6 @@ vec4 aurora(vec3 ro, vec3 rd) {
     col *= (clamp(rd.y*15.+.4,0.,1.)); return col*1.8;
 }
 
-vec3 stars(in vec3 p) {
-    vec2 uv = p.xy * 2.0; float h = hash21(floor(uv * 15.0));
-    float star = step(0.998, h); return vec3(star * h * 0.25);
-}
-
 vec3 bg(in vec3 rd) {
     float sd = dot(normalize(vec3(-0.5, -0.6, 0.9)), rd)*0.5+0.5;
     sd = pow(sd, 5.);
@@ -70,25 +62,20 @@ void main() {
     vec2 q = gl_FragCoord.xy / uResolution.xy;
     vec2 p = q - 0.5;
     p.x *= uResolution.x/uResolution.y;
-    
-    vec3 ro = vec3(0,0,-6.7);
-    vec3 rd = normalize(vec3(p, 1.2)); 
+    vec3 ro = vec3(0,0,-6.7); vec3 rd = normalize(vec3(p, 1.2)); 
     rd.yz *= mm2(0.3); 
-    
     vec3 col = vec3(0.);
     float lightsFade = smoothstep(0.0, 0.05, abs(rd.y));
     
     if (rd.y > 0.){
         col = bg(rd);
         vec4 aur = smoothstep(0.,1.5,aurora(ro,rd)) * lightsFade;
-        col += stars(rd * 50.0) * lightsFade;
         col = col*(1.-aur.a) + aur.rgb;
     } else {
         rd.y = abs(rd.y);
         float waterDarken = smoothstep(0.0, 0.6, rd.y);
         col = bg(rd) * mix(1.0, 0.4, waterDarken);
         vec4 aur = smoothstep(0.0,2.5,aurora(ro,rd)) * lightsFade;
-        col += stars(rd * 50.0) * 0.1 * lightsFade;
         col = col*(1.-aur.a) + aur.rgb;
         vec3 pos = ro + ((0.5-ro.y)/rd.y)*rd;
         float nz2 = triNoise2d(pos.xz*vec2(.5,.7), 0.);
@@ -99,7 +86,7 @@ void main() {
 }
 `;
 
-export default function AuroraOGL({ speed = 1.0 }) {
+export default function AuroraBackground({ speed = 1.0 }) {
   const ref = useRef(null);
   const speedRef = useRef(speed);
   
@@ -109,76 +96,46 @@ export default function AuroraOGL({ speed = 1.0 }) {
     const canvas = ref.current;
     if (!canvas) return;
 
-    const renderer = new Renderer({
-      canvas,
-      webgl: 2, 
-      dpr: 1, 
-      alpha: false,
-      depth: false
-    });
+    const renderer = new Renderer({ canvas, webgl: 2, dpr: 1, alpha: false, depth: false });
     const gl = renderer.gl;
-
     const geometry = new Triangle(gl);
     const program = new Program(gl, {
       vertex,
       fragment,
-      uniforms: {
-        uTime: { value: 0 },
-        uResolution: { value: new Vec2(1000, 600) }, // Default init size
-      },
+      uniforms: { uTime: { value: 0 }, uResolution: { value: new Vec2(100, 100) } },
     });
     const mesh = new Mesh(gl, { geometry, program });
 
     const resize = () => {
       const width = window.innerWidth;
       const height = window.innerHeight;
-      
-      // HARD CAP: Max 1000px width.
-      // Even if browser says 8000px, we only calculate 1000px.
-      // GPU load = Low, always.
       const resolutionScale = 0.5; 
       let drawWidth = width * resolutionScale;
       let drawHeight = height * resolutionScale;
-
       const MAX_WIDTH = 1000;
       if (drawWidth > MAX_WIDTH) {
           const aspect = drawWidth / drawHeight;
-          drawWidth = MAX_WIDTH;
-          drawHeight = drawWidth / aspect;
+          drawWidth = MAX_WIDTH; drawHeight = drawWidth / aspect;
       }
-
       renderer.setSize(drawWidth, drawHeight);
-      
-      // IMPORTANT: CSS stretches this small buffer to fill the huge screen
       gl.canvas.style.width = "100%";
       gl.canvas.style.height = "100%";
-      
       program.uniforms.uResolution.value.set(drawWidth, drawHeight);
     };
     
-    window.addEventListener("resize", resize);
-    resize();
+    window.addEventListener("resize", resize); resize();
 
     let animationId;
     const start = performance.now();
     const loop = () => {
       animationId = requestAnimationFrame(loop);
-      const elapsed = (performance.now() - start) * 0.001;
-      program.uniforms.uTime.value = elapsed * speedRef.current;
+      program.uniforms.uTime.value = (performance.now() - start) * 0.001 * speedRef.current;
       renderer.render({ scene: mesh });
     };
-    animationId = requestAnimationFrame(loop);
+    loop();
 
-    return () => {
-      cancelAnimationFrame(animationId);
-      window.removeEventListener("resize", resize);
-    };
+    return () => { cancelAnimationFrame(animationId); window.removeEventListener("resize", resize); };
   }, []);
 
-  return (
-    <canvas 
-      ref={ref} 
-      className="fixed top-0 left-0 w-full h-full -z-10 pointer-events-none block object-cover"
-    />
-  );
+  return <canvas ref={ref} className="fixed top-0 left-0 w-full h-full -z-20 pointer-events-none block object-cover" />;
 }
