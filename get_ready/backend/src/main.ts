@@ -1,10 +1,19 @@
+
 import { NestFactory } from '@nestjs/core';
 import { ValidationPipe } from '@nestjs/common';
 import { SwaggerModule, DocumentBuilder } from '@nestjs/swagger';
 import { AppModule } from './app.module';
+import * as fs from 'fs';
+import * as path from 'path';
 
 async function bootstrap() {
-  const app = await NestFactory.create(AppModule);
+  // HTTPS options (if SSL certificates exist)
+  const httpsOptions = process.env.USE_HTTPS === 'true' ? {
+    key: fs.readFileSync('/app/ssl/server.key'),
+    cert: fs.readFileSync('/app/ssl/server.crt'),
+  } : undefined;
+
+  const app = await NestFactory.create(AppModule, { httpsOptions });
 
   // Global prefix for all routes
   app.setGlobalPrefix('api');

@@ -20,9 +20,11 @@ import { Response, Request } from 'express';
 import { AuthService } from './auth.service';
 import { JwtAuthGuard } from './guards/jwt-auth.guard';
 import { OAuth42Guard } from './guards/oauth42.guard';
+import { GoogleAuthGuard } from './guards/google-auth.guard';
 import { Public } from '../common/decorators';
 import { CurrentUser } from '../common/decorators';
 import { RegisterDto, LoginDto, ForgotPasswordDto, ResetPasswordDto } from './dto';
+import { Enable2FADto, Verify2FADto } from './dto/2fa.dto';
 
 @ApiTags('auth')
 @Controller('auth')
@@ -113,4 +115,77 @@ export class AuthController {
   async resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
     return this.authService.resetPassword(resetPasswordDto.token, resetPasswordDto.newPassword);
   }
+
+  // ============================================
+  // 2FA Endpoints
+  // ============================================
+
+  @UseGuards(JwtAuthGuard)
+  @Post('2fa/generate')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Generate 2FA QR code' })
+  @ApiResponse({ status: 200, description: 'QR code generated successfully' })
+  async generate2FA(@CurrentUser() user: any) {
+    return this.authService.generate2FASecret(user.id);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('2fa/enable')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Enable 2FA with verification code' })
+  @ApiBody({ type: Enable2FADto })
+  @ApiResponse({ status: 200, description: '2FA enabled successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid 2FA code' })
+  async enable2FA(@CurrentUser() user: any, @Body() dto: Enable2FADto) {
+    return this.authService.enable2FA(user.id, dto.code);
+  }
+
+  @UseGuards(JwtAuthGuard)
+  @Post('2fa/disable')
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Disable 2FA' })
+  @ApiBody({ type: Enable2FADto })
+  @ApiResponse({ status: 200, description: '2FA disabled successfully' })
+  @ApiResponse({ status: 400, description: 'Invalid 2FA code' })
+  async disable2FA(@CurrentUser() user: any, @Body() dto: Enable2FADto) {
+    return this.authService.disable2FA(user.id, dto.code);
+  }
+
+  @Public()
+  @Post('2fa/verify')
+  @HttpCode(HttpStatus.OK)
+  @ApiOperation({ summary: 'Verify 2FA code during login' })
+  @ApiBody({ type: Verify2FADto })
+  @ApiResponse({ status: 200, description: '2FA verification successful' })
+  @ApiResponse({ status: 401, description: 'Invalid 2FA code' })
+  async verify2FA(@Body() dto: Verify2FADto, @Req() req: any) {
+    // This would be called after initial login with username/password
+    // The userId should be in a temporary session or token
+    // For now, we'll handle this in the login endpoint
+    return { message: '2FA verification endpoint' };
+  }
+
+  // ============================================
+  // Google OAuth Endpoints
+  // ============================================
+
+  @Public()
+  @Get('google')
+  @UseGuards(GoogleAuthGuard)
+  @ApiOperation({ summary: 'Initiate Google OAuth login' })
+  async googleAuth() {
+    // Guard redirects to Google
+  }
+
+  @Public()
+  @Get('google/callback')
+  @UseGuards(GoogleAuthGuard)
+  @ApiOperation({ summary: 'Google OAuth callback' })
+  async googleAuthCallback(@Req() req: any, @Res() res: Response) {
+    const { access_token } = await this.authService.googleLogin(req);
+    
+    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    res.redirect(`${frontendUrl}/auth/callback?token=${access_token}`);
+  }
 }
+
