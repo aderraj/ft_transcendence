@@ -26,10 +26,10 @@ model User {
   resetPasswordToken    String?
   resetPasswordExpires  DateTime?
   
-  // 42 OAuth
-  
+  // OAuth Providers
   intraId       String?   @unique  // 42 intra ID
   fortytwoId    String?   @unique  // Keep for backward compatibility
+  googleId      String?   @unique  // Google OAuth ID
   
   // 2FA
   twoFactorEnabled  Boolean   @default(false)

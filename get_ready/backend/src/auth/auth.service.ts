@@ -4,6 +4,8 @@ import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../common/services/email.service';
 import * as bcrypt from 'bcrypt';
 import * as crypto from 'crypto';
+import { authenticator } from 'otplib';
+import * as QRCode from 'qrcode';
 import { RegisterDto, LoginDto } from './dto';
 
 @Injectable()
@@ -179,6 +181,13 @@ export class AuthService {
     return username;
   }
 
+  // Generate username from email (for OAuth providers without username field)
+  private async generateUsernameFromEmail(email: string): Promise<string> {
+    // Extract the part before @ and clean it
+    const baseUsername = email.split('@')[0].replace(/[^a-zA-Z0-9_]/g, '_');
+    return this.generateUniqueUsername(baseUsername);
+  }
+
   // Legacy 42 OAuth login (keeping for backward compatibility)
   async fortytwoLogin(profile: any) {
     let user = await this.prisma.user.findUnique({
@@ -278,4 +287,196 @@ export class AuthService {
 
     return { message: 'Password has been reset successfully' };
   }
+
+  // ============================================
+  // 2FA (Two-Factor Authentication) Methods
+  // ============================================
+
+  /**
+   * Generate 2FA secret and QR code for user
+   */
+  async generate2FASecret(userId: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user) {
+      throw new UnauthorizedException('User not found');
+    }
+
+    // Generate secret
+    const secret = authenticator.generateSecret();
+    
+    // Create otpauth URL for QR code
+    const otpauthUrl = authenticator.keyuri(
+      user.email,
+      'Transcendence',
+      secret,
+    );
+
+    // Generate QR code
+    const qrCode = await QRCode.toDataURL(otpauthUrl);
+
+    // Store secret temporarily (not enabled yet)
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { twoFactorSecret: secret },
+    });
+
+    return {
+      secret,
+      qrCode,
+    };
+  }
+
+  /**
+   * Verify and enable 2FA
+   */
+  async enable2FA(userId: string, code: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user || !user.twoFactorSecret) {
+      throw new BadRequestException('2FA secret not found. Generate QR code first.');
+    }
+
+    // Verify the code
+    const isValid = authenticator.verify({
+      token: code,
+      secret: user.twoFactorSecret,
+    });
+
+    if (!isValid) {
+      throw new BadRequestException('Invalid 2FA code');
+    }
+
+    // Enable 2FA
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { twoFactorEnabled: true },
+    });
+
+    return { message: '2FA enabled successfully' };
+  }
+
+  /**
+   * Disable 2FA
+   */
+  async disable2FA(userId: string, code: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user || !user.twoFactorEnabled) {
+      throw new BadRequestException('2FA is not enabled');
+    }
+
+    // Verify the code before disabling
+    const isValid = authenticator.verify({
+      token: code,
+      secret: user.twoFactorSecret,
+    });
+
+    if (!isValid) {
+      throw new BadRequestException('Invalid 2FA code');
+    }
+
+    // Disable 2FA and clear secret
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        twoFactorEnabled: false,
+        twoFactorSecret: null,
+      },
+    });
+
+    return { message: '2FA disabled successfully' };
+  }
+
+  /**
+   * Validate 2FA code during login
+   */
+  async validate2FACode(userId: string, code: string) {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+    });
+
+    if (!user || !user.twoFactorEnabled || !user.twoFactorSecret) {
+      throw new BadRequestException('2FA is not enabled for this user');
+    }
+
+    const isValid = authenticator.verify({
+      token: code,
+      secret: user.twoFactorSecret,
+    });
+
+    if (!isValid) {
+      throw new UnauthorizedException('Invalid 2FA code');
+    }
+
+    return true;
+  }
+
+  // ============================================
+  // Google OAuth Methods
+  // ============================================
+
+  /**
+   * Handle Google OAuth login/registration
+   */
+  async googleLogin(req: any) {
+    if (!req.user) {
+      throw new UnauthorizedException('No user from Google');
+    }
+
+    const { googleId, email, displayName, avatar } = req.user;
+
+    // Check if user exists by Google ID
+    let user = await this.prisma.user.findUnique({
+      where: { googleId },
+    });
+
+    // If not found by googleId, check by email
+    if (!user) {
+      user = await this.prisma.user.findUnique({
+        where: { email },
+      });
+
+      // If user exists with same email, link Google account
+      if (user) {
+        user = await this.prisma.user.update({
+          where: { id: user.id },
+          data: { googleId },
+        });
+      }
+    }
+
+    // Create new user if doesn't exist
+    if (!user) {
+      const username = await this.generateUsernameFromEmail(email);
+      
+      user = await this.prisma.user.create({
+        data: {
+          email,
+          username,
+          displayName: displayName || username,
+          googleId,
+          avatar: avatar || 'default-avatar.png',
+          // OAuth users don't have password
+          password: null,
+        },
+      });
+    }
+
+    // Update last seen
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: { lastSeen: new Date(), isOnline: true },
+    });
+
+    // Generate JWT token
+    return this.generateToken(user);
+  }
 }
+
