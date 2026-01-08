@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef } from 'react';
 import { io, Socket } from 'socket.io-client';
+import config from './config';
 
-const API_URL = 'http://10.14.57.32:3001';
+const API_URL = config.API_URL;
 
 interface Message {
   id: string;

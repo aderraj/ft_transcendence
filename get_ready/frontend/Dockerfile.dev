@@ -1,13 +1,28 @@
 FROM node:20-alpine
 
+# Install system dependencies
+RUN apk add --no-cache \
+    curl \
+    bash
+
 WORKDIR /app
 
+# Copy package files for better caching
 COPY package*.json ./
 
-RUN npm install
+# Install dependencies
+RUN npm ci --only=production=false && \
+    npm cache clean --force
 
+# Copy application source
 COPY . .
 
+# Expose Vite dev server port
 EXPOSE 5173
 
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=40s --retries=3 \
+    CMD curl -f https://localhost:5173 || curl -f http://localhost:5173 || exit 1
+
+# Run dev server
 CMD ["npm", "run", "dev"]

@@ -5,6 +5,7 @@ import { AuthCallback } from './AuthCallback'
 import { Chat } from './Chat'
 import { ForgotPassword } from './ForgotPassword'
 import { ResetPassword } from './ResetPassword'
+import config from './config'
 
 // Types
 interface User {
@@ -213,7 +214,12 @@ function LoginPage({
             <button 
               type="button"
               className="btn btn-primary" 
-              onClick={() => window.location.href = 'http://10.14.57.32:3001/api/auth/42'}
+              onClick={() => {
+                const oauthUrl = `${config.API_URL}/api/auth/42`;
+                console.log('🔐 OAuth URL:', oauthUrl);
+                console.log('🔧 Config:', config);
+                window.location.href = oauthUrl;
+              }}
               disabled={loading}
               style={{ 
                 width: '100%', 
