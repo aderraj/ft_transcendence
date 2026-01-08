@@ -28,7 +28,10 @@ src/
 Create a singleton `PrismaService` extending `PrismaClient`:
 ```typescript
 @Injectable()
-export class PrismaService extends PrismaClient {
+export class PrismaServ
+  - Return token in response for frontend storage
+- [ ] Add OAuth guard for `/api/auth/42` route
+- [ ] Update Prisma schema to include `intraId` field ice extends PrismaClient {
   constructor() {
     super({ datasources: { db: { url: process.env.DATABASE_URL } } });
   }

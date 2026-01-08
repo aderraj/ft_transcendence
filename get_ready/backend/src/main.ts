@@ -9,8 +9,8 @@ import * as path from 'path';
 async function bootstrap() {
   // HTTPS options (if SSL certificates exist)
   const httpsOptions = process.env.USE_HTTPS === 'true' ? {
-    key: fs.readFileSync('/app/ssl/server.key'),
-    cert: fs.readFileSync('/app/ssl/server.crt'),
+    key: fs.readFileSync('/app/ssl/key.pem'),
+    cert: fs.readFileSync('/app/ssl/cert.pem'),
   } : undefined;
 
   const app = await NestFactory.create(AppModule, { httpsOptions });
