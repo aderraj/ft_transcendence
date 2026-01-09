@@ -86,7 +86,7 @@ void main() {
 }
 `;
 
-export default function AuroraBackground({ speed = 10.0 }) {
+export default function AuroraBackground({ speed = 1.0 }) {
   const ref = useRef(null);
   const speedRef = useRef(speed);
   
