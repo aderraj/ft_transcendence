@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ShieldCheck, Lock, User, AlertCircle, Mail, ArrowLeft, UserPlus } from 'lucide-react';
-
+import '@/styles/index.css'
 const GoogleIcon = () => (
   <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -195,18 +195,6 @@ const Login = () => {
 
   return (
     <div className="w-full max-w-md">
-      
-      <style>{`
-        @keyframes shake {
-          10%, 90% { transform: translate3d(-1px, 0, 0); }
-          20%, 80% { transform: translate3d(2px, 0, 0); }
-          30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
-          40%, 60% { transform: translate3d(4px, 0, 0); }
-        }
-        .animate-shake {
-          animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
-        }
-      `}</style>
 
       <div className="p-8 rounded-3xl 
                       bg-cyan-950/40 backdrop-blur-xl backdrop-brightness-75
@@ -231,7 +219,7 @@ const Login = () => {
         {error && (
           <div className="mb-6 p-3 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center gap-3 animate-pulse">
             <AlertCircle className="w-5 h-5 text-red-400" />
-            <span className="text-red-200 text-sm font-mono break-all leading-tight">{error}</span>
+            <span className="text-red-200 text-sm font-mono break-words leading-tight text-wrap">{error}</span>
           </div>
         )}
 
