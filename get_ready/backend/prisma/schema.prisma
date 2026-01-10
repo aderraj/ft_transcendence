@@ -42,7 +42,8 @@ model User {
   // Stats
   wins          Int       @default(0)
   losses        Int       @default(0)
-  elo           Int       @default(1000)
+  level         Int       @default(1)
+  experience    Int       @default(0)
   
   createdAt     DateTime  @default(now())
   updatedAt     DateTime  @updatedAt

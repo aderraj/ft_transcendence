@@ -16,7 +16,8 @@ services:
           openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
             -keyout /ssl/key.pem \
             -out /ssl/cert.pem \
-            -subj "/C=US/ST=State/L=City/O=Transcendence/CN=$${HOST_IP:-localhost}";
+            -subj "/C=US/ST=State/L=City/O=Transcendence/CN=$${HOST_IP:-localhost}" \
+            -addext "subjectAltName = IP:$${HOST_IP:-127.0.0.1},DNS:$${HOST_IP:-localhost}.nip.io";
           chmod 644 /ssl/cert.pem /ssl/key.pem;
           echo '✅ SSL certificates generated successfully';
         else
@@ -120,11 +121,38 @@ services:
       backend:
         condition: service_healthy
     healthcheck:
-      test: ['CMD', 'curl', '-f', 'http://localhost:5173']
+      test: ['CMD', 'curl', '-kf', 'https://localhost:5173']
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
+    networks:
+      - transcendence-network
+
+  game:
+    build:
+      context: ./ft_transcendence-pong_game
+      dockerfile: Dockerfile
+    container_name: transcendence-game
+    restart: unless-stopped
+    ports:
+      - '3002:3002'
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-transcendence}:${POSTGRES_PASSWORD:-transcendence}@postgres:5432/${POSTGRES_DB:-transcendence}?schema=public
+      PORT: 3002
+      NODE_ENV: ${NODE_ENV:-development}
+    volumes:
+      - ./ft_transcendence-pong_game:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'sh', '-c', 'nc -z localhost 3002 || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
     networks:
       - transcendence-network
 

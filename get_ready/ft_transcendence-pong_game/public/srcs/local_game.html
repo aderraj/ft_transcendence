@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ping Pong Game</title>
+    <!-- Local stylesheet (compiled Tailwind output) -->
+    <link rel="stylesheet" href="./css/output.css">
+    <link href="https://fonts.googleapis.com/css2?family=Bungee&display=swap" rel="stylesheet">
+    <style>
+
+    .game-font {
+        font-family: 'Bungee', cursive;
+        letter-spacing: 0.05em;
+    }
+    </style>
+</head>
+
+<body class="flex flex-row min-h-screen justify-center items-center bg-[url('../public/bg-image.png')]  bg-center bg-no-repeat  w-full ">
+    
+    <div id="root" class="p-4  bg-slate-900 border-2 border-gray-300 rounded-lg max-w-[1100px] mt-10 text-center">
+
+        <div class="flex items-stretch shadow-2xl mt-4 max-w-[1100px] mx-auto">
+            <!-- Player 1 Section -->
+            <div class="bg-blue-950 border-4  border-pink-500 px-5 py-3 flex items-center justify-between gap-4 min-w-[220px]">
+                <span class="text-pink-500 text-lg game-font whitespace-nowrap">Player 1</span>
+                <span id="score1" class="text-pink-500 text-5xl game-font font-bold">0</span>
+            </div>
+            
+            <div class="bg-yellow-400 border-y-4 border-pink-500 px-6 py-3 relative min-w-[240px] flex-1">
+                <!-- Top Label -->
+                <div class="absolute -top-4 left-1/2 transform -translate-x-1/2 bg-pink-500 px-4 py-1 rounded-full border-2 border-yellow-400">
+                    <span class="text-white text-xs game-font whitespace-nowrap">PING PONG GAME</span>
+                </div>
+                <!-- Timer Content -->
+                <div class="flex flex-col items-center justify-center pt-1">
+                    <span class="text-pink-500 text-xl game-font font-bold">TIMER</span>
+                    <span id="timer" class="text-pink-500 text-5xl game-font font-bold">35</span>
+                </div>
+            </div>
+            
+            <!-- Player 2 Section -->
+            <div class="bg-blue-950 border-4 border-pink-500 px-5 py-3 flex items-center justify-between gap-4 min-w-[220px]">
+                <span id="score2" class="text-pink-500 text-5xl game-font font-bold">0</span>
+                <span class="text-pink-500 text-lg game-font whitespace-nowrap">Player 2</span>
+            </div>
+        </div>
+
+        <div class="relative">
+            <canvas id="canvas" class="border rounded 10px"></canvas>
+            <div id="gameEndMessage" class="absolute inset-0 bg-black bg-opacity-50 flex flex-col text-white text-4xl justify-center items-center" style="display: none;">
+                <p>Game Over</p>
+                <p><span id="winnerText" class="font-bold"></span> wins!</p>
+            </div>
+        </div>
+        <div id="controls" class="mt-4 space-x-2">
+            <button id="resetBtn" class="w-[200px] text-white rounded">
+                <img src="./public/image.png" alt="">
+            </button>
+            <a href="../index.html">
+                <button id="resetBtn" class=" py w-[270px] bg-pink text-white rounded">
+                    <img src="./public/game-menu.png" alt="">
+                </button>
+            </a>    
+        </div>  
+    </div>
+    <script type="module" src="./js/app.js"></script>
+</body>
+
+</html>

@@ -24,7 +24,8 @@ async function main() {
       username: 'reda',
       displayName: 'Reda',
       password: await hashPassword('password1'),
-      elo: 1200,
+      level: 1,
+      experience: 730, // 7 wins * 100 + 3 losses * 10
       wins: 7,
       losses: 3,
       isOnline: true,
@@ -38,7 +39,8 @@ async function main() {
       username: 'samir',
       displayName: 'Samir',
       password: await hashPassword('password2'),
-      elo: 1100,
+      level: 1,
+      experience: 550, // 5 wins * 100 + 5 losses * 10
       wins: 5,
       losses: 5,
       isOnline: false,
@@ -52,7 +54,8 @@ async function main() {
       username: 'aymen',
       displayName: 'Aymen',
       password: await hashPassword('password3'),
-      elo: 1050,
+      level: 1,
+      experience: 440, // 4 wins * 100 + 4 losses * 10
       wins: 4,
       losses: 4,
       isOnline: true,
@@ -66,7 +69,8 @@ async function main() {
       username: 'karim',
       displayName: 'Karim',
       password: await hashPassword('password4'),
-      elo: 1000,
+      level: 1,
+      experience: 660, // 6 wins * 100 + 6 losses * 10
       wins: 6,
       losses: 6,
       isOnline: false,
@@ -80,7 +84,8 @@ async function main() {
       username: 'user5',
       displayName: 'User 5',
       password: await hashPassword('password5'),
-      elo: 950,
+      level: 1,
+      experience: 550, // 5 wins * 100 + 5 losses * 10
       wins: 5,
       losses: 5,
       isOnline: true,

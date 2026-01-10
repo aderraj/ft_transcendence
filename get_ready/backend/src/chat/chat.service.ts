@@ -1,9 +1,22 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class ChatService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService,
+  ) {}
+
+  private getAvatarUrl(filename: string | null): string | null {
+    if (!filename) return null;
+    if (filename.startsWith('http')) return filename;
+    const protocol = this.configService.get('USE_HTTPS') === 'true' ? 'https' : 'http';
+    const host = this.configService.get('HOST_IP') || 'localhost';
+    const port = this.configService.get('PORT') || '3001';
+    return `${protocol}://${host}:${port}/uploads/avatar/${filename}`;
+  }
 
   // Get all conversations for a user
   async getConversations(userId: string) {
@@ -107,12 +120,19 @@ export class ChatService {
       }
     });
 
-    return Array.from(conversationsMap.values());
+    const conversations = Array.from(conversationsMap.values());
+    return conversations.map((conv: any) => ({
+      ...conv,
+      user: {
+        ...conv.user,
+        avatar: this.getAvatarUrl(conv.user.avatar),
+      },
+    }));
   }
 
   // Get message history between two users
   async getMessages(userId: string, friendId: string, limit = 50, offset = 0) {
-    return this.prisma.message.findMany({
+    const messages = await this.prisma.message.findMany({
       where: {
         OR: [
           { senderId: userId, receiverId: friendId },
@@ -133,6 +153,14 @@ export class ChatService {
         },
       },
     });
+
+    return messages.map((msg) => ({
+      ...msg,
+      sender: {
+        ...msg.sender,
+        avatar: this.getAvatarUrl(msg.sender.avatar),
+      },
+    }));
   }
 
   // Send a message
@@ -151,7 +179,7 @@ export class ChatService {
       throw new Error('You can only send messages to friends');
     }
 
-    return this.prisma.message.create({
+    const message = await this.prisma.message.create({
       data: {
         senderId,
         receiverId,
@@ -176,6 +204,18 @@ export class ChatService {
         },
       },
     });
+
+    return {
+      ...message,
+      sender: {
+        ...message.sender,
+        avatar: this.getAvatarUrl(message.sender.avatar),
+      },
+      receiver: {
+        ...message.receiver,
+        avatar: this.getAvatarUrl(message.receiver.avatar),
+      },
+    };
   }
 
   // Mark messages as read

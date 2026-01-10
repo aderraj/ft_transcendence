@@ -8,7 +8,7 @@ import {
 } from '@nestjs/swagger';
 import { LeaderboardService } from './leaderboard.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
-import { CurrentUser } from '../common/decorators';
+import { CurrentUser, Public } from '../common/decorators';
 
 @ApiTags('leaderboard')
 @Controller('leaderboard')
@@ -17,8 +17,9 @@ import { CurrentUser } from '../common/decorators';
 export class LeaderboardController {
   constructor(private readonly leaderboardService: LeaderboardService) {}
 
+  @Public()
   @Get()
-  @ApiOperation({ summary: 'Get global leaderboard' })
+  @ApiOperation({ summary: 'Get global leaderboard (public)' })
   @ApiQuery({ name: 'take', required: false, type: Number, description: 'Number of players to return' })
   @ApiQuery({ name: 'skip', required: false, type: Number, description: 'Number of players to skip' })
   @ApiResponse({ status: 200, description: 'Returns leaderboard' })
