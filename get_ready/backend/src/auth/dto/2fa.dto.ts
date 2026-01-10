@@ -9,6 +9,10 @@ export class Enable2FADto {
 }
 
 export class Verify2FADto {
+  @ApiProperty({ description: 'User ID from initial login' })
+  @IsString()
+  userId: string;
+
   @ApiProperty({ description: '6-digit 2FA code' })
   @IsString()
   @Length(6, 6)

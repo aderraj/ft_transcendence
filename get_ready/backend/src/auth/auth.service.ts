@@ -26,7 +26,8 @@ export class AuthService {
         displayName: true,
         avatar: true,
         isOnline: true,
-        elo: true,
+        level: true,
+        experience: true,
         wins: true,
         losses: true,
         twoFactorEnabled: true,
@@ -34,7 +35,7 @@ export class AuthService {
     });
   }
 
-  async generateToken(user: { id: string; email: string; username: string }) {
+  async generateToken(user: { id: string; email: string; username: string; twoFactorEnabled?: boolean }) {
     const payload = { sub: user.id, email: user.email, username: user.username };
     return {
       access_token: this.jwtService.sign(payload),
@@ -42,6 +43,7 @@ export class AuthService {
         id: user.id,
         email: user.email,
         username: user.username,
+        twoFactorEnabled: user.twoFactorEnabled || false,
       },
     };
   }
@@ -111,6 +113,16 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
+    // Check if 2FA is enabled
+    if (user.twoFactorEnabled) {
+      // Return a temporary response indicating 2FA is required
+      return {
+        requires2FA: true,
+        userId: user.id,
+        message: '2FA verification required',
+      };
+    }
+
     // Update online status
     await this.prisma.user.update({
       where: { id: user.id },
@@ -165,6 +177,15 @@ export class AuthService {
       data: { isOnline: true, lastSeen: new Date() },
     });
 
+    // Check if 2FA is enabled
+    if (user.twoFactorEnabled) {
+      return {
+        requires2FA: true,
+        userId: user.id,
+        message: '2FA verification required',
+      };
+    }
+
     return this.generateToken(user);
   }
 
@@ -204,6 +225,15 @@ export class AuthService {
           avatar: profile._json?.image?.link || 'default-avatar.png',
         },
       });
+    }
+
+    // Check if 2FA is enabled
+    if (user.twoFactorEnabled) {
+      return {
+        requires2FA: true,
+        userId: user.id,
+        message: '2FA verification required',
+      };
     }
 
     return this.generateToken(user);
@@ -415,7 +445,14 @@ export class AuthService {
       throw new UnauthorizedException('Invalid 2FA code');
     }
 
-    return true;
+    // Update online status
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: { isOnline: true, lastSeen: new Date() },
+    });
+
+    // Generate and return JWT token
+    return this.generateToken(user);
   }
 
   // ============================================
@@ -474,6 +511,15 @@ export class AuthService {
       where: { id: user.id },
       data: { lastSeen: new Date(), isOnline: true },
     });
+
+    // Check if 2FA is enabled
+    if (user.twoFactorEnabled) {
+      return {
+        requires2FA: true,
+        userId: user.id,
+        message: '2FA verification required',
+      };
+    }
 
     // Generate JWT token
     return this.generateToken(user);

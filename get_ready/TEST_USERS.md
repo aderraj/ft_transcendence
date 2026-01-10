@@ -10,32 +10,36 @@ The following test users have been created in your database:
 - **Email:** reda@transcendence.ma
 - **Username:** reda
 - **Password:** password1
-- **ELO:** 1200
+- **Level:** 3 (850 XP)
 - **Stats:** 7 wins, 3 losses
+- **Win Rate:** 70%
 - **Friends:** samir (accepted)
 
 ### User 2: Samir  
 - **Email:** samir@transcendence.ma
 - **Username:** samir
 - **Password:** password2
-- **ELO:** 1100
+- **Level:** 3 (750 XP)
 - **Stats:** 5 wins, 5 losses
+- **Win Rate:** 50%
 - **Friends:** reda (accepted)
 
 ### User 3: Aymen
 - **Email:** aymen@transcendence.ma
 - **Username:** aymen
 - **Password:** password3
-- **ELO:** 1050
+- **Level:** 2 (600 XP)
 - **Stats:** 4 wins, 4 losses
+- **Win Rate:** 50%
 - **Friend Requests:** Sent to karim (pending)
 
 ### User 4: Karim
 - **Email:** karim@transcendence.ma
 - **Username:** karim
 - **Password:** password4
-- **ELO:** 1000
+- **Level:** 3 (900 XP)
 - **Stats:** 6 wins, 6 losses
+- **Win Rate:** 50%
 - **Friend Requests:** From aymen (pending)
 - **Friends:** user5 (accepted)
 
@@ -43,8 +47,9 @@ The following test users have been created in your database:
 - **Email:** user5@transcendence.ma
 - **Username:** user5
 - **Password:** password5
-- **ELO:** 950
+- **Level:** 2 (750 XP)
 - **Stats:** 5 wins, 5 losses
+- **Win Rate:** 50%
 - **Friends:** karim (accepted)
 
 ## 🎮 Game Data
@@ -88,9 +93,10 @@ Password: password2
 - Real-time messaging should work
 
 #### 3. Leaderboard
-- View all users ranked by ELO
-- reda (1200) should be #1
-- user5 (950) should be last
+- View all users ranked by Level and XP
+- karim (Level 3, 900 XP) should be #1
+- reda (Level 3, 850 XP) should be #2
+- samir (Level 3, 750 XP) should be #3
 
 #### 4. User Profiles
 - View each user's profile
@@ -110,13 +116,13 @@ sudo docker exec -it transcendence-backend npm run seed
 
 ## 📊 Quick Stats
 
-| Username | Password  | ELO  | W/L | Friends |
-|----------|-----------|------|-----|---------|
-| reda     | password1 | 1200 | 7/3 | samir   |
-| samir    | password2 | 1100 | 5/5 | reda    |
-| aymen    | password3 | 1050 | 4/4 | -       |
-| karim    | password4 | 1000 | 6/6 | user5   |
-| user5    | password5 | 950  | 5/5 | karim   |
+| Username | Password  | Level | XP  | W/L | Friends |
+|----------|-----------|-------|-----|-----|---------|
+| karim    | password4 | 3     | 900 | 6/6 | user5   |
+| reda     | password1 | 3     | 850 | 7/3 | samir   |
+| samir    | password2 | 3     | 750 | 5/5 | reda    |
+| user5    | password5 | 2     | 750 | 5/5 | karim   |
+| aymen    | password3 | 2     | 600 | 4/4 | -       |
 
 ## 🎯 Test Scenarios
 
@@ -142,7 +148,7 @@ sudo docker exec -it transcendence-backend npm run seed
 ### Scenario 4: Leaderboard
 1. Login with any user
 2. Go to Leaderboard page
-3. See users ranked by ELO
+3. See users ranked by Level & XP
 4. View detailed stats
 
 ## ✅ Everything Ready!
@@ -152,7 +158,7 @@ Your database now has:
 - ✅ 2 established friendships
 - ✅ 1 pending friend request
 - ✅ 10 game records
-- ✅ Varied ELO ratings
+- ✅ Level-based progression system (replaces ELO)
 
 **Start testing:** http://localhost:3000
 

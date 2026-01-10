@@ -55,10 +55,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.userSockets.set(client.userId, client.id);
 
       // Update user online status
-      await this.prisma.user.update({
-        where: { id: client.userId },
-        data: { isOnline: true },
-      });
+      try {
+        await this.prisma.user.update({
+          where: { id: client.userId },
+          data: { isOnline: true },
+        });
+      } catch (error) {
+        if (error.code !== 'P2025') { // Ignore RecordNotFound
+           console.error('Failed to update online status:', error);
+        }
+      }
 
       // Notify friends about online status
       this.notifyFriendsStatus(client.userId, true);
@@ -75,10 +81,16 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.userSockets.delete(client.userId);
 
       // Update user offline status
-      await this.prisma.user.update({
-        where: { id: client.userId },
-        data: { isOnline: false, lastSeen: new Date() },
-      });
+      try {
+        await this.prisma.user.update({
+          where: { id: client.userId },
+          data: { isOnline: false, lastSeen: new Date() },
+        });
+      } catch (error) {
+        if (error.code !== 'P2025') { // Ignore RecordNotFound
+           console.error('Failed to update offline status:', error);
+        }
+      }
 
       // Notify friends about offline status
       this.notifyFriendsStatus(client.userId, false);
@@ -163,6 +175,58 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       this.server.to(receiverSocketId).emit('typing:stop', {
         userId: client.userId,
       });
+    }
+  }
+
+  @SubscribeMessage('invite_game')
+  async handleGameInvite(
+    @ConnectedSocket() client: AuthenticatedSocket,
+    @MessageBody() data: { friendId: string },
+  ) {
+    const friendSocketId = this.userSockets.get(data.friendId);
+    if (friendSocketId) {
+      const sender = await this.prisma.user.findUnique({
+        where: { id: client.userId },
+        select: { username: true, displayName: true },
+      });
+
+      this.server.to(friendSocketId).emit('receive_invite', {
+        senderId: client.userId,
+        senderName: sender.displayName || sender.username,
+      });
+
+      return { success: true, message: 'Invite sent' };
+    }
+    return { success: false, error: 'User is offline' };
+  }
+
+  @SubscribeMessage('respond_invite')
+  async handleInviteResponse(
+    @ConnectedSocket() client: AuthenticatedSocket,
+    @MessageBody() data: { senderId: string; accepted: boolean },
+  ) {
+    const senderSocketId = this.userSockets.get(data.senderId);
+    
+    if (data.accepted) { 
+      // Create room and notify both
+      const roomId = `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
+      
+      // Notify Sender (User A)
+      if (senderSocketId) {
+        this.server.to(senderSocketId).emit('game_start', { roomId });
+      }
+      
+      // Notify Accepter (User B - Client)
+      // client is a Socket, which has emit
+      (client as Socket).emit('game_start', { roomId });
+      
+    } else {
+      // Notify Sender of Refusal
+      if (senderSocketId) {
+        this.server.to(senderSocketId).emit('invite_declined', { 
+           receiverId: client.userId 
+        });
+      }
     }
   }
 

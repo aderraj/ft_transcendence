@@ -1,10 +1,12 @@
 import { useState, useEffect } from 'react'
 import { BrowserRouter, Routes, Route, Link, Navigate, useNavigate } from 'react-router-dom'
+import { io, Socket } from 'socket.io-client'
 import { authApi, usersApi, friendsApi, leaderboardApi } from './api'
 import { AuthCallback } from './AuthCallback'
 import { Chat } from './Chat'
 import { ForgotPassword } from './ForgotPassword'
 import { ResetPassword } from './ResetPassword'
+import { Settings } from './Settings'
 import config from './config'
 
 // Types
@@ -15,7 +17,8 @@ interface User {
   displayName: string | null
   avatar: string
   isOnline: boolean
-  elo: number
+  level: number
+  experience: number
   wins: number
   losses: number
 }
@@ -35,12 +38,36 @@ const useAuth = () => {
   const loginWithCredentials = async (username: string, password: string) => {
     try {
       const res = await authApi.login(username, password)
+      
+      // Check if 2FA is required
+      if (res.data.requires2FA) {
+        return { 
+          success: true, 
+          requires2FA: true, 
+          userId: res.data.userId,
+          message: res.data.message 
+        }
+      }
+      
+      // Normal login - set token
       localStorage.setItem('token', res.data.access_token)
       setToken(res.data.access_token)
       return { success: true }
     } catch (err: any) {
       console.error('Login failed:', err)
       return { success: false, error: err.response?.data?.message || 'Login failed' }
+    }
+  }
+
+  const verify2FALogin = async (userId: string, code: string) => {
+    try {
+      const res = await authApi.verify2FA(userId, code)
+      localStorage.setItem('token', res.data.access_token)
+      setToken(res.data.access_token)
+      return { success: true }
+    } catch (err: any) {
+      console.error('2FA verification failed:', err)
+      return { success: false, error: err.response?.data?.message || '2FA verification failed' }
     }
   }
 
@@ -94,22 +121,27 @@ const useAuth = () => {
     fetchUser()
   }, [token])
 
-  return { token, user, loginWithCredentials, testLogin, register, logout, fetchUser, loading }
+  return { token, user, loginWithCredentials, verify2FALogin, testLogin, register, logout, fetchUser, loading }
 }
 
 // Login Page
 function LoginPage({ 
   onLogin, 
+  onVerify2FA,
   onTestLogin,
   onRegister 
 }: { 
-  onLogin: (username: string, password: string) => Promise<{ success: boolean; error?: string }>
+  onLogin: (username: string, password: string) => Promise<{ success: boolean; error?: string; requires2FA?: boolean; userId?: string; message?: string }>
+  onVerify2FA: (userId: string, code: string) => Promise<{ success: boolean; error?: string }>
   onTestLogin: () => Promise<{ success: boolean; error?: string }>
   onRegister: (email: string, username: string, password: string, displayName?: string) => Promise<{ success: boolean; error?: string }>
 }) {
   const [isRegister, setIsRegister] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
+  const [requires2FA, setRequires2FA] = useState(false)
+  const [twoFAUserId, setTwoFAUserId] = useState<string | null>(null)
+  const [twoFACode, setTwoFACode] = useState('')
   const navigate = useNavigate()
 
   // Login form state
@@ -128,11 +160,42 @@ function LoginPage({
     setLoading(true)
     const result = await onLogin(username, password)
     setLoading(false)
-    if (result.success) {
+    
+    if (result.requires2FA) {
+      setRequires2FA(true)
+      setTwoFAUserId(result.userId || null)
+      setError(null)
+    } else if (result.success) {
       navigate('/dashboard')
     } else {
       setError(result.error || 'Login failed')
     }
+  }
+
+  const handle2FAVerify = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!twoFAUserId || twoFACode.length !== 6) {
+      setError('Please enter a valid 6-digit code')
+      return
+    }
+    
+    setError(null)
+    setLoading(true)
+    const result = await onVerify2FA(twoFAUserId, twoFACode)
+    setLoading(false)
+    
+    if (result.success) {
+      navigate('/dashboard')
+    } else {
+      setError(result.error || '2FA verification failed')
+    }
+  }
+
+  const handle2FABack = () => {
+    setRequires2FA(false)
+    setTwoFAUserId(null)
+    setTwoFACode('')
+    setError(null)
   }
 
   const handleTestLogin = async () => {
@@ -174,7 +237,51 @@ function LoginPage({
           </div>
         )}
 
-        {!isRegister ? (
+        {requires2FA ? (
+          // 2FA Verification Form
+          <form onSubmit={handle2FAVerify}>
+            <div style={{ textAlign: 'center', marginBottom: 24 }}>
+              <h2 style={{ marginBottom: 8 }}>🔐 Two-Factor Authentication</h2>
+              <p style={{ color: 'rgba(255,255,255,0.6)', fontSize: '0.875rem' }}>
+                Enter the 6-digit code from your authenticator app
+              </p>
+            </div>
+            
+            <input
+              type="text"
+              placeholder="000000"
+              value={twoFACode}
+              onChange={(e) => setTwoFACode(e.target.value.replace(/\D/g, '').slice(0, 6))}
+              maxLength={6}
+              required
+              autoFocus
+              style={{
+                fontSize: '1.5rem',
+                letterSpacing: '0.5rem',
+                textAlign: 'center',
+                fontFamily: 'monospace'
+              }}
+            />
+            
+            <button 
+              type="submit"
+              className="btn btn-primary" 
+              disabled={loading || twoFACode.length !== 6}
+              style={{ width: '100%', marginTop: 16, marginBottom: 12 }}
+            >
+              {loading ? 'Verifying...' : '✅ Verify'}
+            </button>
+            
+            <button 
+              type="button"
+              className="btn btn-secondary" 
+              onClick={handle2FABack}
+              style={{ width: '100%' }}
+            >
+              ← Back to Login
+            </button>
+          </form>
+        ) : !isRegister ? (
           // Login Form
           <form onSubmit={handleLogin}>
             <input
@@ -216,7 +323,7 @@ function LoginPage({
               className="btn btn-primary" 
               onClick={() => {
                 const oauthUrl = `${config.API_URL}/api/auth/42`;
-                console.log('🔐 OAuth URL:', oauthUrl);
+                console.log('🔐 42 OAuth URL:', oauthUrl);
                 console.log('🔧 Config:', config);
                 window.location.href = oauthUrl;
               }}
@@ -228,6 +335,24 @@ function LoginPage({
               }}
             >
               🚀 Login with 42
+            </button>
+            
+            <button 
+              type="button"
+              className="btn btn-primary" 
+              onClick={() => {
+                const oauthUrl = `${config.API_URL}/api/auth/google`;
+                console.log('🔐 Google OAuth URL:', oauthUrl);
+                window.location.href = oauthUrl;
+              }}
+              disabled={loading}
+              style={{ 
+                width: '100%', 
+                marginBottom: 12,
+                background: 'linear-gradient(135deg, #4285f4 0%, #34a853 50%, #fbbc05 75%, #ea4335 100%)'
+              }}
+            >
+              🔐 Login with Google
             </button>
             
             <button 
@@ -308,11 +433,206 @@ function LoginPage({
 
 // Dashboard
 function Dashboard({ user, token, logout, refreshUser }: { user: User; token: string; logout: () => void; refreshUser: () => void }) {
+  const [socket, setSocket] = useState<Socket | null>(null);
+  const [invite, setInvite] = useState<{ senderId: string, senderName: string, roomId: string } | null>(null);
+
+  useEffect(() => {
+    if (!token) return;
+
+    const newSocket = io(`${config.API_URL}/chat`, {
+      auth: { token },
+      transports: ['websocket'],
+    });
+
+    newSocket.on('receive_invite', (data: { senderId: string, senderName: string, roomId: string }) => {
+        setInvite(data);
+    });
+
+    newSocket.on('game_start', (data: { roomId: string }) => {
+        const gameUrl = `http://${window.location.hostname}:3002/srcs/remote_game.html?user_id=${user.id}&token=${token}&roomId=${data.roomId}`;
+        window.location.href = gameUrl;
+    });
+
+    newSocket.on('invite_declined', (data: { receiverId: string }) => {
+        alert("Your friend declined the match.");
+        // Should also clear any "waiting" state if we had one
+    });
+
+    setSocket(newSocket);
+
+    return () => {
+      newSocket.close();
+    };
+  }, [token, user.id]);
+
+  const handleAcceptInvite = () => {
+    if (invite && socket) {
+      socket.emit('respond_invite', { senderId: invite.senderId, accepted: true });
+      setInvite(null);
+    }
+  };
+
+  const handleDeclineInvite = () => {
+    if (invite && socket) {
+      socket.emit('respond_invite', { senderId: invite.senderId, accepted: false });
+      setInvite(null);
+    }
+  };
+
   return (
-    <div className="container">
+    <div className="container" style={{ position: 'relative' }}>
+      
+      {/* Custom Game Invite Notification */}
+      {invite && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0,0,0,0.85)',
+          zIndex: 9999,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          backdropFilter: 'blur(5px)'
+        }}>
+          <style>{`
+            @keyframes pulse-rose {
+              0% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0.7); transform: scale(1); }
+              50% { transform: scale(1.05); }
+              70% { box-shadow: 0 0 0 20px rgba(236, 72, 153, 0); transform: scale(1.05); }
+              100% { box-shadow: 0 0 0 0 rgba(236, 72, 153, 0); transform: scale(1); }
+            }
+            @keyframes pulse-coffee {
+              0% { box-shadow: 0 0 0 0 rgba(180, 83, 9, 0.7); transform: scale(1); }
+              50% { transform: scale(1.05); }
+              70% { box-shadow: 0 0 0 20px rgba(180, 83, 9, 0); transform: scale(1.05); }
+              100% { box-shadow: 0 0 0 0 rgba(180, 83, 9, 0); transform: scale(1); }
+            }
+            @keyframes float {
+              0% { transform: translateY(0px); }
+              50% { transform: translateY(-10px); }
+              100% { transform: translateY(0px); }
+            }
+            @keyframes popIn {
+              0% { opacity: 0; transform: scale(0.8) translateY(20px); }
+              100% { opacity: 1; transform: scale(1) translateY(0); }
+            }
+          `}</style>
+          
+          <div style={{
+            background: 'linear-gradient(135deg, #1a202c 0%, #2d3748 100%)',
+            padding: '40px',
+            borderRadius: '30px',
+            boxShadow: '0 0 50px rgba(0,0,0,0.5), inset 0 0 0 1px rgba(255,255,255,0.1)',
+            textAlign: 'center',
+            minWidth: '400px',
+            animation: 'popIn 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275)'
+          }}>
+            <div style={{ fontSize: '64px', marginBottom: '20px', animation: 'float 3s ease-in-out infinite' }}>🎮</div>
+            <h2 style={{ 
+              marginBottom: '15px', 
+              color: '#fff', 
+              fontFamily: "'Bungee', cursive, sans-serif",
+              fontSize: '2rem',
+              letterSpacing: '2px',
+              textShadow: '0 0 10px rgba(236, 72, 153, 0.5)'
+             }}>
+              CHALLENGER ALERT!
+            </h2>
+            <p style={{ color: '#e2e8f0', marginBottom: '40px', fontSize: '1.2rem', lineHeight: '1.6' }}>
+              <span style={{ 
+                color: '#ec4899', 
+                fontWeight: 'bold', 
+                fontSize: '1.4rem',
+                textShadow: '0 0 10px rgba(236, 72, 153, 0.3)'
+              }}>{invite.senderName}</span>
+              <br/>
+              has challenged you to a duel!
+            </p>
+            
+            <div style={{ display: 'flex', justifyContent: 'center', gap: '40px' }}>
+              
+              {/* Accept Bubble (Rose) */}
+              <button 
+                onClick={handleAcceptInvite}
+                style={{
+                  width: '120px',
+                  height: '120px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #ec4899 0%, #db2777 100%)',
+                  border: '4px solid rgba(255,255,255,0.2)',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  animation: 'pulse-rose 2s infinite',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.animation = 'none';
+                  e.currentTarget.style.transform = 'scale(1.1) rotate(5deg)';
+                  e.currentTarget.style.boxShadow = '0 0 30px rgba(236, 72, 153, 0.8)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.animation = 'pulse-rose 2s infinite';
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <span style={{ fontSize: '32px', marginBottom: '4px' }}>⚔️</span>
+                <span style={{ fontSize: '14px', letterSpacing: '1px' }}>FIGHT</span>
+              </button>
+
+              {/* Decline Bubble (Brown/Coffee) */}
+              <button 
+                onClick={handleDeclineInvite}
+                style={{
+                  width: '120px',
+                  height: '120px',
+                  borderRadius: '50%',
+                  background: 'linear-gradient(135deg, #92400e 0%, #78350f 100%)',
+                  border: '4px solid rgba(255,255,255,0.2)',
+                  color: 'white',
+                  fontWeight: 'bold',
+                  cursor: 'pointer',
+                  animation: 'pulse-coffee 2s infinite',
+                  animationDelay: '1s',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  transition: 'all 0.3s ease'
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.animation = 'none';
+                  e.currentTarget.style.transform = 'scale(1.1) rotate(-5deg)';
+                  e.currentTarget.style.boxShadow = '0 0 30px rgba(180, 83, 9, 0.8)';
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.animation = 'pulse-coffee 2s infinite';
+                  e.currentTarget.style.transform = 'scale(1)';
+                  e.currentTarget.style.boxShadow = 'none';
+                }}
+              >
+                <span style={{ fontSize: '32px', marginBottom: '4px' }}>🏳️</span>
+                <span style={{ fontSize: '14px', letterSpacing: '1px' }}>PASS</span>
+              </button>
+
+            </div>
+          </div>
+        </div>
+      )}
+
       <nav className="nav">
         <Link to="/dashboard">Dashboard</Link>
         <Link to="/dashboard/profile">Profile</Link>
+        <Link to="/dashboard/settings">Settings</Link>
         <Link to="/dashboard/users">Users</Link>
         <Link to="/dashboard/friends">Friends</Link>
         <Link to="/dashboard/chat">Chat</Link>
@@ -325,8 +645,9 @@ function Dashboard({ user, token, logout, refreshUser }: { user: User; token: st
       <Routes>
         <Route path="/" element={<DashboardHome user={user} />} />
         <Route path="/profile" element={<ProfilePage user={user} onUpdate={refreshUser} />} />
+        <Route path="/settings" element={<Settings user={user} onUpdate={refreshUser} />} />
         <Route path="/users" element={<UsersPage />} />
-        <Route path="/friends" element={<FriendsPage currentUserId={user.id} />} />
+        <Route path="/friends" element={<FriendsPage currentUserId={user.id} socket={socket} />} />
         <Route path="/chat" element={<Chat token={token} currentUserId={user.id} />} />
         <Route path="/leaderboard" element={<LeaderboardPage />} />
       </Routes>
@@ -579,7 +900,7 @@ function DashboardHome({ user }: { user: User }) {
           <div>
             <h1 style={{ marginBottom: 4 }}>Welcome back, {user.displayName || user.username}! 👋</h1>
             <p style={{ color: 'rgba(255,255,255,0.6)' }}>
-              {user.isOnline ? '🟢 Online' : '⚫ Offline'} • Rank #{stats?.rank || '-'} • {user.elo} ELO
+              {user.isOnline ? '🟢 Online' : '⚫ Offline'} • Rank #{stats?.rank || '-'} • Level {user.level}
             </p>
           </div>
         </div>
@@ -595,8 +916,15 @@ function DashboardHome({ user }: { user: User }) {
               <div className="stat-label">Global Rank</div>
             </div>
             <div className="stat">
-              <div className="stat-value" style={{ color: '#ffd700' }}>{user.elo}</div>
-              <div className="stat-label">ELO Rating</div>
+              <div className="stat-value" style={{ color: '#ffd700' }}>Level {user.level}</div>
+              <div className="stat-label">
+                {user.experience} XP
+                {user.level < 100 && (
+                  <span style={{ fontSize: '0.75rem', color: 'rgba(255,255,255,0.5)' }}>
+                    {' '}• {1000 - (user.experience % 1000)} to next
+                  </span>
+                )}
+              </div>
             </div>
             <div className="stat">
               <div className="stat-value">{totalGames}</div>
@@ -659,12 +987,34 @@ function DashboardHome({ user }: { user: User }) {
         <div className="card">
           <h2>🎮 Quick Actions</h2>
           <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-            <button className="btn btn-primary" disabled>
-              🎯 Find Match (Coming Soon)
+            <button 
+              className="btn btn-primary" 
+              onClick={() => {
+                const token = localStorage.getItem('token');
+                if (token) {
+                  // Redirect to the Game Server with Auth Token
+                  // Use window.location.hostname for dynamic IP/host resolution
+                  window.location.href = `http://${window.location.hostname}:3002/srcs/remote_game.html?user_id=${user.id}&token=${token}`;
+                } else {
+                  alert("Please log in again.");
+                }
+              }}
+            >
+              🎯 Play Remote Pong
             </button>
-            <button className="btn btn-secondary" disabled>
-              👥 Invite Friend to Play
-            </button>
+            <a 
+              href="/srcs/local_game.html"
+              onClick={(e) => {
+                e.preventDefault();
+                // Redirect to the Game Server Port 3002
+                // We use window.location.hostname to keep it working on remote setups
+                window.location.href = `http://${window.location.hostname}:3002/srcs/local_game.html`;
+              }}
+              className="btn btn-secondary" 
+              style={{ textAlign: 'center', textDecoration: 'none', lineHeight: '42px', display: 'block' }}
+            >
+              👥 Play Local Pong
+            </a>
             <Link to="/dashboard/profile" className="btn btn-secondary" style={{ textAlign: 'center', textDecoration: 'none' }}>
               ✏️ Edit Profile
             </Link>
@@ -755,7 +1105,7 @@ function UsersPage() {
           <tr>
             <th>User</th>
             <th>Status</th>
-            <th>ELO</th>
+            <th>Level</th>
             <th>W/L</th>
           </tr>
         </thead>
@@ -779,7 +1129,14 @@ function UsersPage() {
                 <span className={`online-status ${user.isOnline ? 'online' : 'offline'}`}></span>
                 {user.isOnline ? 'Online' : 'Offline'}
               </td>
-              <td>{user.elo}</td>
+              <td>
+                <div>
+                  Level {user.level}
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>
+                    {user.experience} XP
+                  </div>
+                </div>
+              </td>
               <td>{user.wins}/{user.losses}</td>
             </tr>
           ))}
@@ -790,7 +1147,7 @@ function UsersPage() {
 }
 
 // Friends Page
-function FriendsPage({ currentUserId }: { currentUserId: string }) {
+function FriendsPage({ currentUserId, socket }: { currentUserId: string; socket?: Socket | null }) {
   const [friends, setFriends] = useState<User[]>([])
   const [pending, setPending] = useState<FriendRequest[]>([])
   const [sent, setSent] = useState<FriendRequest[]>([])
@@ -894,9 +1251,29 @@ function FriendsPage({ currentUserId }: { currentUserId: string }) {
                     </div>
                   </div>
                 </div>
-                <button className="btn btn-danger" onClick={() => removeFriend(friend.id)}>
-                  Remove
-                </button>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <button 
+                    className="btn btn-primary" 
+                    onClick={() => {
+                      if (socket) {
+                        socket.emit('invite_game', { friendId: friend.id }, (response: any) => {
+                          if (response && response.success) {
+                             alert("Invite sent! Waiting for your friend to accept...");
+                          } else {
+                            alert(response?.error || 'Failed to send invite');
+                          }
+                        });
+                      } else {
+                        alert("Chat connection not established");
+                      }
+                    }}
+                  >
+                    Invite
+                  </button>
+                  <button className="btn btn-danger" onClick={() => removeFriend(friend.id)}>
+                    Remove
+                  </button>
+                </div>
               </div>
             ))
           )}
@@ -941,7 +1318,7 @@ function FriendsPage({ currentUserId }: { currentUserId: string }) {
                 <div>
                   <div>{user.displayName || user.username}</div>
                   <div style={{ fontSize: 12, color: 'rgba(255,255,255,0.5)' }}>
-                    ELO: {user.elo}
+                    Level {user.level} • {user.experience} XP
                   </div>
                 </div>
               </div>
@@ -984,7 +1361,7 @@ function LeaderboardPage() {
           <tr>
             <th>Rank</th>
             <th>Player</th>
-            <th>ELO</th>
+            <th>Level</th>
             <th>Wins</th>
             <th>Losses</th>
             <th>Win Rate</th>
@@ -1004,7 +1381,14 @@ function LeaderboardPage() {
                   {player.displayName || player.username}
                 </div>
               </td>
-              <td>{player.elo}</td>
+              <td>
+                <div>
+                  <div style={{ fontWeight: 600, color: '#ffd700' }}>Level {player.level}</div>
+                  <div style={{ fontSize: 11, color: 'rgba(255,255,255,0.5)' }}>
+                    {player.experience} XP
+                  </div>
+                </div>
+              </td>
               <td style={{ color: '#38ef7d' }}>{player.wins}</td>
               <td style={{ color: '#f5576c' }}>{player.losses}</td>
               <td>{player.winRate}%</td>
@@ -1018,7 +1402,7 @@ function LeaderboardPage() {
 
 // Main App
 function App() {
-  const { token, user, loginWithCredentials, testLogin, register, logout, fetchUser, loading } = useAuth()
+  const { token, user, loginWithCredentials, verify2FALogin, testLogin, register, logout, fetchUser, loading } = useAuth()
 
   if (loading) {
     return (
@@ -1041,7 +1425,8 @@ function App() {
               <Navigate to="/dashboard" />
             ) : (
               <LoginPage 
-                onLogin={loginWithCredentials} 
+                onLogin={loginWithCredentials}
+                onVerify2FA={verify2FALogin}
                 onTestLogin={testLogin}
                 onRegister={register}
               />

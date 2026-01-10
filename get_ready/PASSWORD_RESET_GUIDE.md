@@ -105,7 +105,8 @@ You can test with these existing users:
 | Username | Email | Current Password |
 |----------|-------|-----------------|
 | reda | reda@transcendence.ma | password1 |
-| samir | samir@transcendence.ma | password2 |
+| samir | 
+samir@transcendence.ma | password2 |
 | aymen | aymen@transcendence.ma | password3 |
 | karim | karim@transcendence.ma | password4 |
 | user5 | user5@transcendence.ma | password5 |

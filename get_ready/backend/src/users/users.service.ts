@@ -1,10 +1,14 @@
 import { Injectable, NotFoundException, ConflictException } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 
 @Injectable()
 export class UsersService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService,
+  ) {}
 
   async findAll(take = 20, skip = 0) {
     const [users, total] = await Promise.all([
@@ -17,16 +21,31 @@ export class UsersService {
           displayName: true,
           avatar: true,
           isOnline: true,
-          elo: true,
+          level: true,
+          experience: true,
           wins: true,
           losses: true,
           createdAt: true,
         },
-        orderBy: { elo: 'desc' },
+        orderBy: [
+          { level: 'desc' },
+          { experience: 'desc' },
+        ],
       }),
       this.prisma.user.count(),
     ]);
-    return { users, total, take, skip };
+
+    // Convert avatar filenames to full URLs
+    const protocol = this.configService.get('USE_HTTPS') === 'true' ? 'https' : 'http';
+    const host = this.configService.get('HOST_IP') || 'localhost';
+    const port = this.configService.get('PORT') || '3001';
+
+    const usersWithAvatarUrls = users.map((user) => ({
+      ...user,
+      avatar: user.avatar && !user.avatar.startsWith('http') ? `${protocol}://${host}:${port}/uploads/avatar/${user.avatar}` : user.avatar,
+    }));
+
+    return { users: usersWithAvatarUrls, total, take, skip };
   }
 
   async findOne(id: string) {
@@ -40,15 +59,25 @@ export class UsersService {
         avatar: true,
         isOnline: true,
         lastSeen: true,
-        elo: true,
+        level: true,
+        experience: true,
         wins: true,
         losses: true,
         createdAt: true,
+        twoFactorEnabled: true, // Include 2FA status
       },
     });
 
     if (!user) {
       throw new NotFoundException(`User with ID ${id} not found`);
+    }
+
+    // Convert avatar filename to full URL
+    if (user.avatar && !user.avatar.startsWith('http')) {
+      const protocol = this.configService.get('USE_HTTPS') === 'true' ? 'https' : 'http';
+      const host = this.configService.get('HOST_IP') || 'localhost';
+      const port = this.configService.get('PORT') || '3001';
+      user.avatar = `${protocol}://${host}:${port}/uploads/avatar/${user.avatar}`;
     }
 
     return user;
@@ -63,7 +92,8 @@ export class UsersService {
         displayName: true,
         avatar: true,
         isOnline: true,
-        elo: true,
+        level: true,
+        experience: true,
         wins: true,
         losses: true,
       },
@@ -71,6 +101,14 @@ export class UsersService {
 
     if (!user) {
       throw new NotFoundException(`User ${username} not found`);
+    }
+
+    // Convert avatar filename to full URL
+    if (user.avatar && !user.avatar.startsWith('http')) {
+      const protocol = this.configService.get('USE_HTTPS') === 'true' ? 'https' : 'http';
+      const host = this.configService.get('HOST_IP') || 'localhost';
+      const port = this.configService.get('PORT') || '3001';
+      user.avatar = `${protocol}://${host}:${port}/uploads/avatar/${user.avatar}`;
     }
 
     return user;

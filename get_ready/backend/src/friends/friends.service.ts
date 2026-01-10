@@ -6,10 +6,24 @@ import {
 } from '@nestjs/common';
 import { PrismaService } from '../prisma/prisma.service';
 import { FriendRequestStatus } from '@prisma/client';
+import { ConfigService } from '@nestjs/config';
 
 @Injectable()
 export class FriendsService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService,
+  ) {}
+
+  private getAvatarUrl(filename: string | null): string | null {
+    if (!filename) return null;
+    if (filename.startsWith('http')) return filename;
+    const protocol =
+      this.configService.get('USE_HTTPS') === 'true' ? 'https' : 'http';
+    const host = this.configService.get('HOST_IP') || 'localhost';
+    const port = this.configService.get('PORT') || '3001';
+    return `${protocol}://${host}:${port}/uploads/avatar/${filename}`;
+  }
 
   // Get all friends for a user
   async getFriends(userId: string) {
@@ -29,12 +43,15 @@ export class FriendsService {
       },
     });
 
-    return friends.map((f) => f.friend);
+    return friends.map((f) => ({
+      ...f.friend,
+      avatar: this.getAvatarUrl(f.friend.avatar),
+    }));
   }
 
   // Get pending friend requests received
   async getPendingRequests(userId: string) {
-    return this.prisma.friendRequest.findMany({
+    const requests = await this.prisma.friendRequest.findMany({
       where: {
         receiverId: userId,
         status: FriendRequestStatus.PENDING,
@@ -50,11 +67,19 @@ export class FriendsService {
         },
       },
     });
+
+    return requests.map(req => ({
+      ...req,
+      sender: {
+        ...req.sender,
+        avatar: this.getAvatarUrl(req.sender.avatar),
+      }
+    }));
   }
 
   // Get sent friend requests
   async getSentRequests(userId: string) {
-    return this.prisma.friendRequest.findMany({
+    const requests = await this.prisma.friendRequest.findMany({
       where: {
         senderId: userId,
         status: FriendRequestStatus.PENDING,
@@ -70,6 +95,14 @@ export class FriendsService {
         },
       },
     });
+
+    return requests.map(req => ({
+      ...req,
+      receiver: {
+        ...req.receiver,
+        avatar: this.getAvatarUrl(req.receiver.avatar),
+      }
+    }));
   }
 
   // Send friend request

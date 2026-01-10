@@ -5,6 +5,7 @@ const API_URL = `${config.API_URL}/api`;
 
 const api = axios.create({
   baseURL: API_URL,
+  withCredentials: true, // Enable sending cookies and credentials
   headers: {
     'Content-Type': 'application/json',
   },
@@ -39,6 +40,16 @@ export const authApi = {
     api.post('/auth/register', data),
   testLogin: () => api.post('/auth/test-login'),
   getMe: () => api.get('/auth/me'),
+  
+  // 2FA
+  generate2FA: () => api.post('/auth/2fa/generate'),
+  enable2FA: (code: string) => api.post('/auth/2fa/enable', { code }),
+  disable2FA: (code: string) => api.post('/auth/2fa/disable', { code }),
+  verify2FA: (userId: string, code: string) => api.post('/auth/2fa/verify', { userId, code }),
+  
+  // OAuth URLs
+  get42OAuthUrl: () => `${API_URL}/auth/42`,
+  getGoogleOAuthUrl: () => `${API_URL}/auth/google`,
 };
 
 // Users

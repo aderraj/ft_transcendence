@@ -1,5 +1,6 @@
 // Configuration from environment variables
-const HOST_IP = import.meta.env.VITE_HOST_IP || 'localhost';
+// Use window.location.hostname if VITE_HOST_IP is not set effectively
+const HOST_IP = import.meta.env.VITE_HOST_IP || window.location.hostname;
 const USE_HTTPS = import.meta.env.VITE_USE_HTTPS === 'true';
 const BACKEND_PORT = import.meta.env.VITE_BACKEND_PORT || '3001';
 const FRONTEND_PORT = '3000';

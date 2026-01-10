@@ -1,23 +1,40 @@
 import { Injectable } from '@nestjs/common';
+import { ConfigService } from '@nestjs/config';
 import { PrismaService } from '../prisma/prisma.service';
 
 @Injectable()
 export class LeaderboardService {
-  constructor(private prisma: PrismaService) {}
+  constructor(
+    private prisma: PrismaService,
+    private configService: ConfigService,
+  ) {}
 
-  // Get global leaderboard ranked by ELO
+  private getAvatarUrl(filename: string | null): string | null {
+    if (!filename) return null;
+    if (filename.startsWith('http')) return filename;
+    const protocol = this.configService.get('USE_HTTPS') === 'true' ? 'https' : 'http';
+    const host = this.configService.get('HOST_IP') || 'localhost';
+    const port = this.configService.get('PORT') || '3001';
+    return `${protocol}://${host}:${port}/uploads/avatar/${filename}`;
+  }
+
+  // Get global leaderboard ranked by level and experience
   async getLeaderboard(take = 50, skip = 0) {
     const [players, total] = await Promise.all([
       this.prisma.user.findMany({
         take,
         skip,
-        orderBy: { elo: 'desc' },
+        orderBy: [
+          { level: 'desc' },
+          { experience: 'desc' },
+        ],
         select: {
           id: true,
           username: true,
           displayName: true,
           avatar: true,
-          elo: true,
+          level: true,
+          experience: true,
           wins: true,
           losses: true,
         },
@@ -29,6 +46,8 @@ export class LeaderboardService {
     const rankedPlayers = players.map((player, index) => ({
       rank: skip + index + 1,
       ...player,
+      avatar: this.getAvatarUrl(player.avatar),
+      totalGames: player.wins + player.losses,
       winRate:
         player.wins + player.losses > 0
           ? Math.round((player.wins / (player.wins + player.losses)) * 100)
@@ -47,7 +66,8 @@ export class LeaderboardService {
         username: true,
         displayName: true,
         avatar: true,
-        elo: true,
+        level: true,
+        experience: true,
         wins: true,
         losses: true,
       },
@@ -57,9 +77,19 @@ export class LeaderboardService {
       return null;
     }
 
-    // Count users with higher ELO to determine rank
+    // Count users with higher level or same level but higher experience
     const higherRanked = await this.prisma.user.count({
-      where: { elo: { gt: user.elo } },
+      where: {
+        OR: [
+          { level: { gt: user.level } },
+          {
+            AND: [
+              { level: user.level },
+              { experience: { gt: user.experience } },
+            ],
+          },
+        ],
+      },
     });
 
     const totalGames = user.wins + user.losses;
@@ -68,6 +98,7 @@ export class LeaderboardService {
     return {
       rank: higherRanked + 1,
       ...user,
+      avatar: this.getAvatarUrl(user.avatar),
       totalGames,
       winRate,
     };
@@ -75,7 +106,7 @@ export class LeaderboardService {
 
   // Get recent game history for a user
   async getGameHistory(userId: string, take = 10) {
-    return this.prisma.game.findMany({
+    const games = await this.prisma.game.findMany({
       where: {
         OR: [{ player1Id: userId }, { player2Id: userId }],
         status: 'FINISHED',
@@ -108,11 +139,23 @@ export class LeaderboardService {
         },
       },
     });
+
+    return games.map(game => ({
+      ...game,
+      player1: {
+        ...game.player1,
+        avatar: this.getAvatarUrl(game.player1.avatar),
+      },
+      player2: {
+        ...game.player2,
+        avatar: this.getAvatarUrl(game.player2.avatar),
+      },
+    }));
   }
 
   // Get top players by different criteria
   async getTopByWins(take = 10) {
-    return this.prisma.user.findMany({
+    const players = await this.prisma.user.findMany({
       take,
       orderBy: { wins: 'desc' },
       where: { wins: { gt: 0 } },
@@ -123,8 +166,14 @@ export class LeaderboardService {
         avatar: true,
         wins: true,
         losses: true,
-        elo: true,
+        level: true,
+        experience: true,
       },
     });
+
+    return players.map(player => ({
+      ...player,
+      avatar: this.getAvatarUrl(player.avatar),
+    }));
   }
 }
