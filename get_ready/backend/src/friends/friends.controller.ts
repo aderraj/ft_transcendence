@@ -16,6 +16,8 @@ import {
 import { FriendsService } from './friends.service';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators';
+import { UserEntity } from '../users/entities/user.entity';
+import { FriendRequestEntity } from './entities/friend-request.entity';
 
 @ApiTags('friends')
 @Controller('friends')
@@ -26,28 +28,28 @@ export class FriendsController {
 
   @Get()
   @ApiOperation({ summary: 'Get all friends' })
-  @ApiResponse({ status: 200, description: 'Returns list of friends' })
+  @ApiResponse({ status: 200, description: 'Returns list of friends', type: [UserEntity] })
   getFriends(@CurrentUser() user: any) {
     return this.friendsService.getFriends(user.sub);
   }
 
   @Get('requests/pending')
   @ApiOperation({ summary: 'Get pending friend requests received' })
-  @ApiResponse({ status: 200, description: 'Returns pending requests' })
+  @ApiResponse({ status: 200, description: 'Returns pending requests', type: [FriendRequestEntity] })
   getPendingRequests(@CurrentUser() user: any) {
     return this.friendsService.getPendingRequests(user.sub);
   }
 
   @Get('requests/sent')
   @ApiOperation({ summary: 'Get sent friend requests' })
-  @ApiResponse({ status: 200, description: 'Returns sent requests' })
+  @ApiResponse({ status: 200, description: 'Returns sent requests', type: [FriendRequestEntity] })
   getSentRequests(@CurrentUser() user: any) {
     return this.friendsService.getSentRequests(user.sub);
   }
 
   @Post('request/:userId')
   @ApiOperation({ summary: 'Send friend request' })
-  @ApiResponse({ status: 201, description: 'Friend request sent' })
+  @ApiResponse({ status: 201, description: 'Friend request sent', type: FriendRequestEntity })
   @ApiResponse({ status: 404, description: 'User not found' })
   @ApiResponse({ status: 409, description: 'Already friends or request exists' })
   sendFriendRequest(
