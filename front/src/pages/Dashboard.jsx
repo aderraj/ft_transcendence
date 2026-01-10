@@ -6,18 +6,18 @@ import { useAppData } from '@/contexts/AppDataContext';
 const Dashboard = () => {
   const { friends, stats, history, isLoaded } = useAppData();
 
-  console.log(friends);
-  const onlineFriends = friends.filter(f => f.is_online || f.status === 'online');
-  const offlineFriends = friends.filter(f => !f.is_online && f.status !== 'online');
+  const onlineFriends = friends.filter(f => f.isOnline === true || f.status === 'online');
+  const offlineFriends = friends.filter(f => !f.isOnline && f.status !== 'online');
 
   return (
     <div className="min-h-screen w-full transition-all duration-300 selection:bg-cyan-500/30">
 
       <main className="p-8 pt-6">
-        
+    
         <div className="flex flex-col xl:flex-row gap-8">
           
           <div className="flex-1 space-y-8 min-w-0">
+            
             <HighlightCard />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -48,17 +48,22 @@ const Dashboard = () => {
                 </div>
 
                 <div className="space-y-2">
-                    {history.map((game, index) => (
-                        <HistoryRow 
-                            key={game.id || index}
-                            result={game.result} 
-                            opponent={game.opponent} 
-                            score={game.score} 
-                            date={game.date} 
-                            isWin={game.isWin} 
-                        />
-                    ))}
-                    {!isLoaded && <div className="text-white/20 text-sm">Loading history...</div>}
+                    {history.length > 0 ? (
+                        history.map((game, index) => (
+                            <HistoryRow 
+                                key={game.id || index}
+                                result={game.result} 
+                                opponent={game.opponent} 
+                                score={game.score} 
+                                date={game.date} 
+                                isWin={game.isWin} 
+                            />
+                        ))
+                    ) : (
+                        <div className="text-white/20 text-sm py-4 text-center">
+                            {isLoaded ? "No recent matches found." : "Loading history..."}
+                        </div>
+                    )}
                 </div>
             </div>
           </div>
@@ -76,11 +81,11 @@ const Dashboard = () => {
                 <div className="space-y-1 overflow-y-auto pr-1 custom-scrollbar flex-1">
                     
                     {!isLoaded && (
-                        <div className="text-white/20 text-xs text-center py-4">Syncing Data...</div>
+                        <div className="text-white/20 text-xs text-center py-4">Syncing Friends...</div>
                     )}
 
-                    {!isLoaded && friends.length === 0 && (
-                        <div className="text-white/20 text-xs text-center py-4">No friends found</div>
+                    {isLoaded && friends.length === 0 && (
+                        <div className="text-white/20 text-xs text-center py-4">No friends added yet</div>
                     )}
 
                     {onlineFriends.map((friend) => (
@@ -88,7 +93,8 @@ const Dashboard = () => {
                             key={friend.id} 
                             name={friend.username || "Unknown"} 
                             status={friend.status || "Online"} 
-                            statusColor="text-emerald-400" 
+                            statusColor="text-emerald-400"
+                            avatar={friend.avatar} 
                         />
                     ))}
                     
@@ -104,7 +110,8 @@ const Dashboard = () => {
                                     name={friend.username || "Unknown"} 
                                     status="Offline" 
                                     statusColor="text-white/20" 
-                                    isOffline 
+                                    isOffline
+                                    avatar={friend.avatar} 
                                 />
                             ))}
                         </>
@@ -123,6 +130,7 @@ const Dashboard = () => {
     </div>
   );
 };
+
 
 const StatCard = ({ title, value, subtitle, icon: Icon, color, glow }) => (
     <div className={`relative overflow-hidden rounded-3xl bg-[#0bc1021]/40 backdrop-blur-xl border border-white/5 p-8 group hover:border-white/10 transition-all duration-300`}>
@@ -157,12 +165,20 @@ const HistoryRow = ({ result, opponent, score, date, isWin }) => (
     </div>
 );
 
-const FriendRow = ({ name, status, statusColor, isOffline }) => (
+const FriendRow = ({ name, status, statusColor, isOffline, avatar }) => (
     <div className={`flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors cursor-pointer group ${isOffline ? 'opacity-40 hover:opacity-100' : ''}`}>
         <div className="relative">
-            <div className="w-9 h-9 rounded-full bg-gradient-to-br from-gray-800 to-black border border-white/10 group-hover:border-cyan-400/50 transition-colors"></div>
-            {!isOffline && <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[#050b14] ${statusColor.replace('text-', 'bg-')}`}></div>}
+            <img 
+                src={avatar || "/default-avatar.png"} 
+                alt={name}
+                className="w-9 h-9 rounded-full object-cover bg-gray-800 border border-white/10 group-hover:border-cyan-400/50 transition-colors"
+            />
+
+            {!isOffline && (
+                <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[#050b14] ${statusColor.replace('text-', 'bg-')}`}></div>
+            )}
         </div>
+        
         <div className="flex-1 min-w-0">
             <div className="text-sm font-bold text-white/80 group-hover:text-white truncate transition-colors">{name}</div>
             <div className={`text-[9px] font-mono uppercase tracking-wider truncate ${statusColor}`}>{status}</div>
