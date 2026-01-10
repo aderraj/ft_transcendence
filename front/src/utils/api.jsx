@@ -1,8 +1,7 @@
-const API_BASE = '';
+export const API_BASE = 'https://10.14.57.32:3001';
 
 export const authenticatedFetch = async (endpoint, options = {}) => {
   const token = localStorage.getItem('accessToken');
-  console.log(token);
   const headers = {
     'Content-Type': 'application/json',
     ...options.headers,
@@ -18,8 +17,8 @@ export const authenticatedFetch = async (endpoint, options = {}) => {
   });
 
   if (response.status === 401) {
-    localStorage.removeItem('authToken');
-    window.location.href = '/login'; // Force redirect
+    localStorage.removeItem('accessToken');
+    window.location.href = '/login';
   }
 
   return response;

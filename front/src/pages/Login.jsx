@@ -1,7 +1,9 @@
 import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
-import { ShieldCheck, Lock, User, AlertCircle, Mail, ArrowLeft, UserPlus } from 'lucide-react';
-import '@/styles/index.css'
+import { ShieldCheck, Lock, User, AlertCircle, Mail, ArrowLeft, UserPlus, Smartphone } from 'lucide-react';
+import '@/styles/index.css';
+import { API_BASE } from '@/utils/api'; // Import API_BASE
+
 const GoogleIcon = () => (
   <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
     <path d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" fill="#4285F4" />
@@ -12,13 +14,15 @@ const GoogleIcon = () => (
 );
 
 const Login = () => {
-  const { login } = useAuth();
+  const { login, verifyTwoFactor } = useAuth();
   
   const [view, setView] = useState('login'); 
   const [loginData, setLoginData] = useState({ username: '', password: '' });
   const [registerData, setRegisterData] = useState({ email: '', username: '', displayName: '', password: '', confirmPassword: '' });
   const [resetEmail, setResetEmail] = useState('');
-  
+  const [twoFactorCode, setTwoFactorCode] = useState('');
+  const [tempUserId, setTempUserId] = useState(null); 
+
   const [error, setError] = useState('');
   const [fieldErrors, setFieldErrors] = useState({}); 
   const [shakeField, setShakeField] = useState('');   
@@ -45,7 +49,6 @@ const Login = () => {
   const getInputClass = (fieldName) => {
     const isError = fieldErrors[fieldName];
     const isShaking = shakeField === fieldName;
-    
     return `
       w-full bg-black/20 rounded-xl py-3 pl-12 pr-4 text-white placeholder-white/20 
       transition-all duration-200 focus:outline-none focus:bg-black/40
@@ -61,15 +64,48 @@ const Login = () => {
       return `absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors duration-200 ${isError ? 'text-red-500' : 'text-cyan-500/50'}`;
   };
 
+  const switchView = (newView) => {
+    setView(newView);
+    setError('');
+    setFieldErrors({});
+    setShakeField('');
+    setSuccessMsg('');
+  };
+
   const handleLoginSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
+    
     try {
-      await login(loginData);
+        const result = await login(loginData);
+
+        if (result.requires2FA) {
+            setTempUserId(result.userId);
+            setView('2fa');
+            setIsLoading(false);
+        }
     } catch (err) {
-      setError("ACCESS DENIED: Invalid Credentials");
+      setError("ACCESS DENIED: " + err.message);
       setIsLoading(false);
+    }
+  };
+
+  const handle2FASubmit = async (e) => {
+    e.preventDefault();
+    setIsLoading(true);
+    setError('');
+
+    try {
+        const success = await verifyTwoFactor(tempUserId, twoFactorCode);
+        
+        if (!success) {
+            triggerValidationError('2fa', "Invalid Verification Code");
+        } 
+    } catch (err) {
+        triggerValidationError('2fa', "Verification Error");
+    } finally {
+        setIsLoading(false);
     }
   };
 
@@ -80,25 +116,25 @@ const Login = () => {
     setFieldErrors({});
 
     if (!registerData.email || !emailRegex.test(registerData.email)) {
-        triggerValidationError('email', "Invalid email address.");
+        triggerValidationError('email', "FORMAT ERROR: Invalid email address.");
         return; 
     }
     
     if (!registerData.username || registerData.username.trim().length < 3) {
-        triggerValidationError('username', "Username must be at least 3 characters.");
+        triggerValidationError('username', "FORMAT ERROR: Username must be at least 3 characters.");
         return; 
     }
     if (!usernameRegex.test(registerData.username)) {
-        triggerValidationError('username', "Username can only contain letters, numbers, and underscores.");
+        triggerValidationError('username', "FORMAT ERROR: Username can only contain letters, numbers, and underscores.");
         return;
     }
 
     if (!registerData.displayName || registerData.displayName.trim().length < 3) {
-        triggerValidationError('displayName', "Display name must be at least 3 characters.");
+        triggerValidationError('displayName', "FORMAT ERROR: Display name must be at least 3 characters.");
         return; 
     }
     if (!usernameRegex.test(registerData.displayName)) {
-        triggerValidationError('displayName', "Display name can only contain letters, numbers, and underscores.");
+        triggerValidationError('displayName', "FORMAT ERROR: Display name can only contain letters, numbers, and underscores.");
         return;
     }
 
@@ -113,7 +149,7 @@ const Login = () => {
     }
 
     try {
-        const res = await fetch('/api/auth/register', {
+        const res = await fetch(`${API_BASE}/api/auth/register`, { // Use API_BASE
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -161,13 +197,14 @@ const Login = () => {
     }
   };
 
+  // ... (handleResetSubmit, handleSocialLogin remain unchanged) ...
   const handleResetSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
     setSuccessMsg('');
     try {
-      const res = await fetch('/api/auth/forgot-password', {
+      const res = await fetch(`${API_BASE}/api/auth/forgot-password`, { // Use API_BASE
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: resetEmail })
@@ -180,27 +217,32 @@ const Login = () => {
       setIsLoading(false);
     }
   };
+  
+  const handleSocialLogin = (provider) => { window.location.href = `${API_BASE}/api/auth/${provider}`; }; // Use API_BASE
 
-  const handleSocialLogin = (provider) => {
-    window.location.href = `/api/auth/${provider}`;
-  };
-
-  const switchView = (newView) => {
-    setView(newView);
-    setError('');
-    setFieldErrors({});
-    setShakeField('');
-    setSuccessMsg('');
-  };
-
+  // --- RENDER ---
   return (
     <div className="w-full max-w-md">
+      
+      {/* SHAKE ANIMATION KEYFRAMES (Required for triggerValidationError) */}
+      <style>{`
+        @keyframes shake {
+          10%, 90% { transform: translate3d(-1px, 0, 0); }
+          20%, 80% { transform: translate3d(2px, 0, 0); }
+          30%, 50%, 70% { transform: translate3d(-4px, 0, 0); }
+          40%, 60% { transform: translate3d(4px, 0, 0); }
+        }
+        .animate-shake {
+          animation: shake 0.5s cubic-bezier(.36,.07,.19,.97) both;
+        }
+      `}</style>
 
       <div className="p-8 rounded-3xl 
                       bg-cyan-950/40 backdrop-blur-xl backdrop-brightness-75
                       border border-white/10 border-t-white/20
                       shadow-[0_0_40px_rgba(0,0,0,0.5)]">
         
+        {/* LOGO AREA */}
         <div className="flex justify-center mb-6">
           <div className="w-16 h-16 rounded-full bg-cyan-500/10 flex items-center justify-center border border-cyan-400/30 shadow-[0_0_15px_rgba(34,211,238,0.2)]">
             <ShieldCheck className="w-8 h-8 text-cyan-400" />
@@ -208,28 +250,34 @@ const Login = () => {
         </div>
 
         <h2 className="text-2xl font-light text-center text-white tracking-[0.2em] mb-2 uppercase">
-          {view === 'login' ? 'Identity Verified' : view === 'register' ? 'New Identity' : 'Recovery Mode'}
+          {view === 'login' ? 'Identity Verified' : 
+           view === 'register' ? 'New Identity' : 
+           view === '2fa' ? 'Second Factor' : 
+           'Recovery Mode'}
         </h2>
         <p className="text-center text-cyan-200/50 text-xs tracking-wider mb-8">
           {view === 'login' ? 'RESTRICTED ACCESS | LEVEL 5 SECURITY' : 
            view === 'register' ? 'INITIALIZE NEW USER PROTOCOL' : 
+           view === '2fa' ? 'ENTER SECURITY CODE' :
            'INITIATE CREDENTIAL RESET'}
         </p>
 
+        {/* FEEDBACK BANNERS */}
         {error && (
           <div className="mb-6 p-3 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center gap-3 animate-pulse">
-            <AlertCircle className="w-5 h-5 text-red-400" />
-            <span className="text-red-200 text-sm font-mono break-words leading-tight text-wrap">{error}</span>
+            <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
+            <span className="text-red-200 text-sm font-mono break-words leading-tight">{error}</span>
           </div>
         )}
 
         {successMsg && (
           <div className="mb-6 p-3 rounded-lg bg-emerald-500/10 border border-emerald-500/20 flex items-center gap-3">
-            <ShieldCheck className="w-5 h-5 text-emerald-400" />
-            <span className="text-emerald-200 text-sm font-mono">{successMsg}</span>
+            <ShieldCheck className="w-5 h-5 text-emerald-400 shrink-0" />
+            <span className="text-emerald-200 text-sm font-mono break-words leading-tight">{successMsg}</span>
           </div>
         )}
 
+        {/* --- VIEW: LOGIN --- */}
         {view === 'login' && (
           <div className="animate-in fade-in slide-in-from-left-4 duration-300">
             <form onSubmit={handleLoginSubmit} className="space-y-6">
@@ -276,6 +324,7 @@ const Login = () => {
                </button>
             </div>
             
+            {/* SOCIALS */}
             <div className="relative my-8">
                 <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/10"></span></div>
                 <div className="relative flex justify-center text-xs uppercase tracking-widest"><span className="bg-transparent px-2 text-white/30 backdrop-blur-xl">Or Authenticate via</span></div>
@@ -293,90 +342,87 @@ const Login = () => {
           </div>
         )}
 
+        {/* --- VIEW: 2FA --- */}
+        {view === '2fa' && (
+          <div className="animate-in fade-in slide-in-from-right-4 duration-300">
+            <form onSubmit={handle2FASubmit} className="space-y-6">
+                <div className="group space-y-2">
+                  <label className="text-xs font-semibold text-cyan-300/70 uppercase tracking-wider ml-1">Authentication Code</label>
+                  <div className="relative">
+                    <Smartphone className={`absolute left-4 top-1/2 -translate-y-1/2 w-5 h-5 transition-colors ${fieldErrors['2fa'] ? 'text-red-500' : 'text-cyan-500/50'}`} />
+                    <input 
+                        type="text" 
+                        maxLength="6"
+                        required 
+                        value={twoFactorCode} 
+                        onChange={e => {
+                            setTwoFactorCode(e.target.value.replace(/[^0-9]/g, '')); 
+                            clearFieldError('2fa');
+                        }} 
+                        className={getInputClass('2fa') + " tracking-[0.5em] text-center font-mono text-lg"} 
+                        placeholder="000000" 
+                    />
+                  </div>
+                  <p className="text-xs text-white/40 text-center pt-2">Enter the 6-digit code from your authenticator app.</p>
+                </div>
+
+                <div className="flex gap-4 pt-2">
+                    <button type="button" onClick={() => switchView('login')} className="flex-1 py-3.5 rounded-xl font-bold tracking-widest uppercase text-xs bg-transparent border border-white/10 text-white/60 hover:bg-white/5 hover:text-white transition-all">Cancel</button>
+                    <button type="submit" disabled={isLoading} className="flex-[2] py-3.5 rounded-xl font-bold tracking-widest uppercase text-xs bg-gradient-to-r from-cyan-600 to-blue-600 text-white hover:from-cyan-500 hover:to-blue-500 hover:shadow-[0_0_20px_rgba(6,182,212,0.4)] disabled:opacity-50 border border-white/10">
+                      {isLoading ? "Verifying..." : "Verify Code"}
+                    </button>
+                </div>
+            </form>
+          </div>
+        )}
+
+        {/* --- VIEW: REGISTER (Same logic as before, just kept for completeness) --- */}
         {view === 'register' && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
             <form onSubmit={handleRegisterSubmit} className="space-y-4">
-              
-              <div className="group space-y-1">
-                <label className="text-xs font-semibold text-cyan-300/70 uppercase tracking-wider ml-1">Email</label>
-                <div className="relative">
-                  <Mail className={getIconClass('email')} />
-                  <input type="email"
-                         required value={registerData.email}
-                         onChange={e => {
-                           setRegisterData({...registerData, email: e.target.value});
-                           clearFieldError('email');
-                         }}
-                         className={getInputClass('email')}
-                         placeholder="user@example.com" />
+                {/* ... (Register form fields - Email, Username, DisplayName, Password, Confirm) ... */}
+                <div className="group space-y-1">
+                    <label className="text-xs font-semibold text-cyan-300/70 uppercase tracking-wider ml-1">Email</label>
+                    <div className="relative">
+                        <Mail className={getIconClass('email')} />
+                        <input type="email" required value={registerData.email} onChange={e => {setRegisterData({...registerData, email: e.target.value}); clearFieldError('email');}} className={getInputClass('email')} placeholder="user@example.com" />
+                    </div>
                 </div>
-              </div>
-
-              <div className="group space-y-1">
-                <label className="text-xs font-semibold text-cyan-300/70 uppercase tracking-wider ml-1">Username</label>
-                <div className="relative">
-                  <User className={getIconClass('username')} />
-                  <input type="text"
-                         required value={registerData.username} 
-                         onChange={e => {
-                           setRegisterData({...registerData, username: e.target.value});
-                           clearFieldError('username');
-                         }}
-                         className={getInputClass('username')} 
-                         placeholder="username" />
+                {/* ... other fields ... */}
+                <div className="group space-y-1">
+                    <label className="text-xs font-semibold text-cyan-300/70 uppercase tracking-wider ml-1">Username</label>
+                    <div className="relative">
+                        <User className={getIconClass('username')} />
+                        <input type="text" required value={registerData.username} onChange={e => {setRegisterData({...registerData, username: e.target.value}); clearFieldError('username');}} className={getInputClass('username')} placeholder="username" />
+                    </div>
                 </div>
-              </div>
-
-              <div className="group space-y-1">
-                <label className="text-xs font-semibold text-cyan-300/70 uppercase tracking-wider ml-1">Display Name</label>
-                <div className="relative">
-                  <UserPlus className={getIconClass('displayName')} />
-                  <input type="text"
-                         required value={registerData.displayName} 
-                         onChange={e => {
-                           setRegisterData({...registerData, displayName: e.target.value});
-                           clearFieldError('displayName');
-                         }}
-                         className={getInputClass('displayName')} 
-                         placeholder="public name" />
+                <div className="group space-y-1">
+                    <label className="text-xs font-semibold text-cyan-300/70 uppercase tracking-wider ml-1">Display Name</label>
+                    <div className="relative">
+                        <UserPlus className={getIconClass('displayName')} />
+                        <input type="text" required value={registerData.displayName} onChange={e => {setRegisterData({...registerData, displayName: e.target.value}); clearFieldError('displayName');}} className={getInputClass('displayName')} placeholder="public name" />
+                    </div>
                 </div>
-              </div>
-
-              <div className="group space-y-1">
-                <label className="text-xs font-semibold text-cyan-300/70 uppercase tracking-wider ml-1">Password</label>
-                <div className="relative">
-                  <Lock className={getIconClass('password')} />
-                  <input type="password"
-                         required value={registerData.password} 
-                         onChange={e => {
-                           setRegisterData({...registerData, password: e.target.value});
-                           clearFieldError('password');
-                         }}
-                         className={getInputClass('password')} 
-                         placeholder="password" />
+                <div className="group space-y-1">
+                    <label className="text-xs font-semibold text-cyan-300/70 uppercase tracking-wider ml-1">Password</label>
+                    <div className="relative">
+                        <Lock className={getIconClass('password')} />
+                        <input type="password" required value={registerData.password} onChange={e => {setRegisterData({...registerData, password: e.target.value}); clearFieldError('password');}} className={getInputClass('password')} placeholder="password" />
+                    </div>
                 </div>
-              </div>
-
-              <div className="group space-y-1">
-                <label className="text-xs font-semibold text-cyan-300/70 uppercase tracking-wider ml-1">Confirm Password</label>
-                <div className="relative">
-                  <Lock className={getIconClass('confirmPassword')} />
-                  <input type="password"
-                         required value={registerData.confirmPassword} 
-                         onChange={e => {
-                           setRegisterData({...registerData, confirmPassword: e.target.value});
-                           clearFieldError('confirmPassword');
-                         }}
-                         className={getInputClass('confirmPassword')} 
-                         placeholder="verify password" />
+                <div className="group space-y-1">
+                    <label className="text-xs font-semibold text-cyan-300/70 uppercase tracking-wider ml-1">Confirm Password</label>
+                    <div className="relative">
+                        <Lock className={getIconClass('confirmPassword')} />
+                        <input type="password" required value={registerData.confirmPassword} onChange={e => {setRegisterData({...registerData, confirmPassword: e.target.value}); clearFieldError('confirmPassword');}} className={getInputClass('confirmPassword')} placeholder="verify password" />
+                    </div>
                 </div>
-              </div>
 
-              <button type="submit" disabled={isLoading} className="w-full mt-6 py-3.5 rounded-xl font-bold tracking-widest uppercase transition-all duration-300 bg-gradient-to-r from-emerald-600 to-cyan-600 text-white hover:from-emerald-500 hover:to-cyan-500 hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] disabled:opacity-50 disabled:cursor-not-allowed border border-white/10">
-                {isLoading ? "PROCESSING..." : "REGISTER IDENTITY"}
-              </button>
+                <button type="submit" disabled={isLoading} className="w-full mt-6 py-3.5 rounded-xl font-bold tracking-widest uppercase transition-all duration-300 bg-gradient-to-r from-emerald-600 to-cyan-600 text-white hover:from-emerald-500 hover:to-cyan-500 hover:shadow-[0_0_20px_rgba(16,185,129,0.4)] disabled:opacity-50 disabled:cursor-not-allowed border border-white/10">
+                    {isLoading ? "PROCESSING..." : "REGISTER IDENTITY"}
+                </button>
             </form>
-
+            
             <div className="mt-8 text-center">
                <button onClick={() => switchView('login')} className="text-cyan-400/60 text-xs hover:text-cyan-300 flex items-center justify-center gap-2 mx-auto transition-colors">
                  <ArrowLeft size={12} /> Return to Login
@@ -385,6 +431,7 @@ const Login = () => {
           </div>
         )}
 
+        {/* --- VIEW: FORGOT PASSWORD --- */}
         {view === 'forgot' && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
              <form onSubmit={handleResetSubmit} className="space-y-6">

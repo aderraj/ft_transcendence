@@ -7,7 +7,6 @@ import Profile from '@/pages/Profile';
 import Game from '@/pages/Game';
 import Chat from '@/pages/Chat';
 
-
 const ProtectedRoute = ({children}) => {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace/>;
