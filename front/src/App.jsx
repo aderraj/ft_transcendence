@@ -6,7 +6,7 @@ import Dashboard from '@/pages/Dashboard';
 import Profile from '@/pages/Profile';
 import Game from '@/pages/Game';
 import Chat from '@/pages/Chat';
-
+import { AppDataProvider } from "./contexts/AppDataContext";
 const ProtectedRoute = ({children}) => {
   const { user } = useAuth();
   if (!user) return <Navigate to="/login" replace/>;
@@ -66,9 +66,11 @@ function AppRoutes() {
 export default function App() {
   return (
     <AuthProvider>
-      <BrowserRouter>
-        <AppRoutes/>
-      </BrowserRouter>
+      <AppDataProvider>
+        <BrowserRouter>
+          <AppRoutes/>
+        </BrowserRouter>
+      </AppDataProvider>
     </AuthProvider>
   );
 };
