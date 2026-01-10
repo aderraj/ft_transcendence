@@ -4,39 +4,83 @@
 
 ## Description
 
-ft_transcendence - Security & DevOps Infrastructure for a Pong Web Application.
+ft_transcendence - A full-stack Pong web application with enterprise-grade infrastructure.
 
-This repository implements the **Cybersecurity** and **DevOps** modules:
+### Features
+- **Pong Game**: Real-time multiplayer pong game with matchmaking
+- **User System**: Authentication, profiles, friends, chat
+- **OAuth**: 42 and Google OAuth integration
+- **2FA**: Two-factor authentication support
+
+### Infrastructure (Cybersecurity & DevOps)
 - **WAF (Web Application Firewall)**: Nginx + ModSecurity with OWASP Core Rule Set
-- **Secrets Management**: Self-managed HashiCorp Vault
+- **Secrets Management**: HashiCorp Vault for secure credential storage
+- **Monitoring**: Prometheus + Grafana dashboards
+- **Logging**: ELK Stack (Elasticsearch, Logstash, Kibana)
+- **SSL/TLS**: Automatic certificate generation
 
 ## Architecture
 
 ```
-[Internet] → [WAF/Nginx:443] → [Pong Backend:3000] ← [Vault:8200]
-                  ↓
+[Internet] → [WAF/Nginx:443] → [Frontend:5173]
+                    ↓
+              [Backend:3001] ← [Vault:8200]
+                    ↓
+              [PostgreSQL:5432]
+                    
+            ═══════════════════════
             secure_net (isolated network)
+            ═══════════════════════
+                    ↓
+         [ELK Stack] [Prometheus/Grafana]
 ```
 
 ## Quick Start
 
 ```bash
-# 1. Start the infrastructure
-docker-compose up --build -d
+# Clone and enter directory
+cd ft_transcendence
 
-# 2. Initialize Vault (first time only)
-chmod +x scripts/init-vault.sh
-./scripts/init-vault.sh
-
-# 3. Copy the VAULT_TOKEN to .env
+# Copy environment file
 cp .env.example .env
-# Edit .env with the token from step 2
+# Edit .env with your OAuth credentials (optional)
 
-# 4. Restart backend to connect to Vault
-docker-compose restart backend
+# Start everything
+make
 
-# 5. Access the Pong App
-# https://localhost (accept self-signed cert)
+# Or start core services only (faster for development)
+make dev
+```
+
+### Access Points
+- **Application**: https://localhost
+- **Vault UI**: https://localhost:8200/ui
+- **Kibana**: https://localhost:5601
+- **Grafana**: http://localhost:3000
+- **Prometheus**: http://localhost:9090
+
+### Get Vault Credentials
+```bash
+make vault-token
+```
+
+## Development Commands
+
+```bash
+# View all commands
+make help
+
+# Database operations
+make db-studio      # Open Prisma Studio
+make db-migrate     # Run migrations
+make db-seed        # Seed test data
+
+# Logs
+make logs           # Follow all logs
+make logs-backend   # Backend logs only
+
+# Shell access
+make shell-backend  # Shell into backend container
 ```
 
 ## Security Testing

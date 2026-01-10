@@ -1,0 +1,2 @@
+# SSL certificates are auto-generated during docker-compose up
+# Do not commit actual .pem/.key files

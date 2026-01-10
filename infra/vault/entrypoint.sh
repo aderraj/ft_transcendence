@@ -37,6 +37,17 @@ write_secrets_to_volume() {
     vault kv get -tls-skip-verify -field=jwt_secret secret/pong-app > "$SECRETS_DIR/jwt_secret"
     vault kv get -tls-skip-verify -field=api_key secret/pong-app > "$SECRETS_DIR/api_key"
     vault kv get -tls-skip-verify -field=grafana_password secret/pong-app > "$SECRETS_DIR/grafana_password"
+    
+    # OAuth secrets
+    vault kv get -tls-skip-verify -field=oauth_42_client_id secret/pong-app > "$SECRETS_DIR/oauth_42_client_id" 2>/dev/null || echo "" > "$SECRETS_DIR/oauth_42_client_id"
+    vault kv get -tls-skip-verify -field=oauth_42_client_secret secret/pong-app > "$SECRETS_DIR/oauth_42_client_secret" 2>/dev/null || echo "" > "$SECRETS_DIR/oauth_42_client_secret"
+    vault kv get -tls-skip-verify -field=google_client_id secret/pong-app > "$SECRETS_DIR/google_client_id" 2>/dev/null || echo "" > "$SECRETS_DIR/google_client_id"
+    vault kv get -tls-skip-verify -field=google_client_secret secret/pong-app > "$SECRETS_DIR/google_client_secret" 2>/dev/null || echo "" > "$SECRETS_DIR/google_client_secret"
+    
+    # SMTP secrets
+    vault kv get -tls-skip-verify -field=smtp_user secret/pong-app > "$SECRETS_DIR/smtp_user" 2>/dev/null || echo "" > "$SECRETS_DIR/smtp_user"
+    vault kv get -tls-skip-verify -field=smtp_pass secret/pong-app > "$SECRETS_DIR/smtp_pass" 2>/dev/null || echo "" > "$SECRETS_DIR/smtp_pass"
+    
     echo "$VAULT_TOKEN" > "$SECRETS_DIR/vault_token"
     
     chmod 644 "$SECRETS_DIR"/*
@@ -74,13 +85,20 @@ initialize_vault() {
     export VAULT_TOKEN="$ROOT_TOKEN"
     vault secrets enable -path=secret -tls-skip-verify kv-v2 > /dev/null 2>&1 || true
     
-    # Generate random secrets
+    # Generate random secrets and store with placeholders for user-provided secrets
+    # OAuth and SMTP secrets will be read from environment if provided, otherwise use placeholders
     vault kv put -tls-skip-verify secret/pong-app \
         db_password="$(openssl rand -base64 16)" \
         elastic_password="$(openssl rand -base64 16 | tr -d '/+=')" \
         jwt_secret="$(openssl rand -hex 32)" \
         api_key="$(openssl rand -hex 16)" \
-        grafana_password="$(openssl rand -base64 12)" > /dev/null 2>&1
+        grafana_password="$(openssl rand -base64 12)" \
+        oauth_42_client_id="${OAUTH_42_CLIENT_ID:-}" \
+        oauth_42_client_secret="${OAUTH_42_CLIENT_SECRET:-}" \
+        google_client_id="${GOOGLE_CLIENT_ID:-}" \
+        google_client_secret="${GOOGLE_CLIENT_SECRET:-}" \
+        smtp_user="${SMTP_USER:-}" \
+        smtp_pass="${SMTP_PASS:-}" > /dev/null 2>&1
     
     echo "[vault] ✓ Secrets generated"
     

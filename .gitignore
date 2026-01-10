@@ -33,3 +33,6 @@ data/
 # Test files
 ddddddd.*
 *.reda
+
+# Environment files with secrets
+.env

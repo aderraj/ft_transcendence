@@ -1,9 +1,18 @@
 # Pong WAF - Custom Server Configuration
 # This template is processed by the OWASP ModSecurity CRS entrypoint
 
+# Upstream definitions
+upstream backend_upstream {
+    server backend:3001;
+}
+
+upstream frontend_upstream {
+    server frontend:5173;
+}
+
 # HTTPS Server (Main)
 server {
-    listen 443 ssl;
+    listen 8443 ssl;
     server_name localhost;
 
     # SSL Certificates
@@ -25,33 +34,90 @@ server {
     modsecurity on;
     modsecurity_rules_file /etc/nginx/modsecurity.d/include.conf;
 
-    # Proxy to Pong Backend
-    location / {
-        proxy_pass https://backend:3000/;
-        proxy_ssl_verify off;
-        proxy_http_version 1.1;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-    }
-
-    # API endpoints
+    # API endpoints -> Backend
     location /api/ {
-        proxy_pass https://backend:3000/api/;
-        proxy_ssl_verify off;
+        proxy_pass http://backend_upstream/api/;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header Content-Type $content_type;
+        proxy_read_timeout 300s;
+        proxy_connect_timeout 75s;
+    }
+
+    # WebSocket support for Socket.IO
+    location /socket.io/ {
+        proxy_pass http://backend_upstream/socket.io/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_read_timeout 86400;
+    }
+
+    # Uploads/static files from backend
+    location /uploads/ {
+        proxy_pass http://backend_upstream/uploads/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+
+    # Frontend (React/Vite) - Default
+    location / {
+        proxy_pass http://frontend_upstream/;
+        proxy_http_version 1.1;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # WebSocket support for Vite HMR
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
+
+    # Vite HMR WebSocket
+    location /@vite/ {
+        proxy_pass http://frontend_upstream/@vite/;
+        proxy_http_version 1.1;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header Host $host;
+    }
+
+    # Nginx status for monitoring
+    location /stub_status {
+        stub_status;
+        allow 172.16.0.0/12;
+        allow 10.0.0.0/8;
+        allow 192.168.0.0/16;
+        deny all;
     }
 }
 
 # HTTP -> HTTPS Redirect
 server {
-    listen 80;
+    listen 8080;
     server_name localhost;
-    return 301 https://$host$request_uri;
+
+    # Nginx status for monitoring (also on HTTP for internal access)
+    location /stub_status {
+        stub_status;
+        allow 172.16.0.0/12;
+        allow 10.0.0.0/8;
+        allow 192.168.0.0/16;
+        deny all;
+    }
+
+    location / {
+        return 301 https://$host$request_uri;
+    }
 }

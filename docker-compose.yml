@@ -1,5 +1,41 @@
 services:
-  # --- Vault (Secrets Management - starts first) ---
+  # ============================================
+  # SSL Certificate Generator (runs once)
+  # ============================================
+  ssl-init:
+    image: alpine:latest
+    container_name: pong-ssl-init
+    volumes:
+      - ./get_ready/ssl:/ssl
+      - ssl-certs:/certs
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        if [ ! -f /ssl/cert.pem ] || [ ! -f /ssl/key.pem ]; then
+          echo '🔐 Generating SSL certificates...';
+          apk add --no-cache openssl;
+          mkdir -p /ssl;
+          openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+            -keyout /ssl/key.pem \
+            -out /ssl/cert.pem \
+            -subj "/C=US/ST=State/L=City/O=Transcendence/CN=$${HOST_IP:-localhost}";
+          chmod 644 /ssl/cert.pem /ssl/key.pem;
+          echo '✅ SSL certificates generated successfully';
+        else
+          echo '✅ SSL certificates already exist';
+        fi
+        # Copy to shared volume for WAF
+        cp /ssl/cert.pem /certs/nginx.crt 2>/dev/null || true
+        cp /ssl/key.pem /certs/nginx.key 2>/dev/null || true
+    environment:
+      - HOST_IP=${HOST_IP:-localhost}
+    networks:
+      - secure_net
+
+  # ============================================
+  # Vault (Secrets Management - starts first)
+  # ============================================
   vault:
     build: ./infra/vault
     container_name: pong-vault
@@ -11,6 +47,13 @@ services:
       - VAULT_ADDR=https://0.0.0.0:8200
       - VAULT_API_ADDR=https://0.0.0.0:8200
       - VAULT_SKIP_VERIFY=true
+      # Pass OAuth/SMTP secrets to be stored in Vault on first init
+      - OAUTH_42_CLIENT_ID=${OAUTH_42_CLIENT_ID:-}
+      - OAUTH_42_CLIENT_SECRET=${OAUTH_42_CLIENT_SECRET:-}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
     volumes:
       - vault-data:/vault/file
       - ./infra/vault/config:/vault/config:ro
@@ -24,7 +67,9 @@ services:
       retries: 30
       start_period: 10s
 
-  # --- PostgreSQL Database ---
+  # ============================================
+  # PostgreSQL Database
+  # ============================================
   postgres:
     image: postgres:15-alpine
     container_name: pong-postgres
@@ -49,42 +94,93 @@ services:
         condition: service_healthy
     restart: unless-stopped
 
-  # --- NestJS Backend ---
+  # ============================================
+  # NestJS Backend (from get_ready)
+  # ============================================
   backend:
-    build: ./backend
+    build:
+      context: ./get_ready/backend
+      dockerfile: Dockerfile.dev
     container_name: pong-backend
     expose:
-      - "3000"
+      - "3001"
     volumes:
+      - ./get_ready/backend:/app
+      - /app/node_modules
+      - uploads-data:/app/uploads
+      - ./get_ready/ssl:/app/ssl:ro
       - secrets-data:/secrets:ro
     environment:
-      - VAULT_ADDR=https://vault:8200
-      - DATABASE_HOST=postgres
-      - DATABASE_PORT=5432
-      - DATABASE_NAME=pong
-      - DATABASE_USER=pong
+      # All secrets are read from /secrets volume (populated by Vault)
+      - VAULT_SECRETS_PATH=/secrets
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT=3001
+      - USE_HTTPS=false
+      - HOST_IP=${HOST_IP:-localhost}
+      # URLs constructed from HOST_IP (non-sensitive)
+      - FRONTEND_URL=https://${HOST_IP:-localhost}
+      - OAUTH_42_CALLBACK_URL=https://${HOST_IP:-localhost}/api/auth/42/callback
+      - GOOGLE_CALLBACK_URL=https://${HOST_IP:-localhost}/api/auth/google/callback
+      # SMTP config (non-sensitive)
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_SECURE=${SMTP_SECURE:-false}
+      - EMAIL_FROM=${EMAIL_FROM:-noreply@localhost}
     depends_on:
+      ssl-init:
+        condition: service_completed_successfully
       vault:
         condition: service_healthy
       postgres:
         condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'sh', '-c', 'nc -z localhost 3001 || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
     networks:
       - secure_net
     restart: unless-stopped
 
-  # --- React Frontend ---
+  # ============================================
+  # React Frontend (from get_ready)
+  # ============================================
   frontend:
-    build: ./frontend
+    build:
+      context: ./get_ready/frontend
+      dockerfile: Dockerfile.dev
     container_name: pong-frontend
     expose:
       - "5173"
+    volumes:
+      - ./get_ready/frontend:/app
+      - /app/node_modules
+      - ./get_ready/ssl:/app/ssl:ro
     environment:
-      - NODE_ENV=development
+      - NODE_ENV=${NODE_ENV:-development}
+      - VITE_HOST_IP=${HOST_IP:-localhost}
+      - VITE_USE_HTTPS=false
+      - VITE_BACKEND_PORT=443
+      - VITE_API_URL=https://${HOST_IP:-localhost}
+    depends_on:
+      ssl-init:
+        condition: service_completed_successfully
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:5173']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     networks:
       - secure_net
     restart: unless-stopped
 
-  # --- WAF (Edge / Single Entry Point) ---
+  # ============================================
+  # WAF (Edge / Single Entry Point)
+  # ============================================
   waf:
     build: ./infra/modsecurity
     container_name: pong-waf
@@ -93,11 +189,25 @@ services:
       - "80:8080"
     environment:
       - PARANOIA=1
-      - ANOMALY_INBOUND=5
+      - ANOMALY_INBOUND=10
       - MODSEC_RULE_ENGINE=on
+      - BACKEND_HOST=backend
+      - BACKEND_PORT=3001
+      - FRONTEND_HOST=frontend
+      - FRONTEND_PORT=5173
+      - ALLOWED_METHODS=GET HEAD POST OPTIONS PUT PATCH DELETE
+      - ALLOWED_REQUEST_CONTENT_TYPE=|application/x-www-form-urlencoded| |multipart/form-data| |text/xml| |application/xml| |application/json|
+    volumes:
+      - ssl-certs:/etc/nginx/ssl:ro
+      - ./get_ready/ssl:/etc/nginx/ssl-app:ro
+      - ./infra/modsecurity/rules-exclusions.conf:/etc/modsecurity.d/owasp-crs/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf
     depends_on:
-      - backend
-      - frontend
+      ssl-init:
+        condition: service_completed_successfully
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
     networks:
       - secure_net
 
@@ -354,3 +464,5 @@ volumes:
   prometheus-data:
   grafana-data:
   alertmanager-data:
+  uploads-data:
+  ssl-certs:

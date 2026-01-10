@@ -1,0 +1,141 @@
+// Prisma schema for Transcendence
+// Run: npx prisma migrate dev --name init
+// Generate: npx prisma generate
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// User model - core user information
+model User {
+  id            String    @id @default(uuid())
+  email         String    @unique
+  username      String    @unique
+  displayName   String?
+  avatar        String?   @default("default-avatar.png")
+  
+  // Local auth (username/password)
+  password      String?
+  
+  // Password reset
+  resetPasswordToken    String?
+  resetPasswordExpires  DateTime?
+  
+  // OAuth Providers
+  intraId       String?   @unique  // 42 intra ID
+  fortytwoId    String?   @unique  // Keep for backward compatibility
+  googleId      String?   @unique  // Google OAuth ID
+  
+  // 2FA
+  twoFactorEnabled  Boolean   @default(false)
+  twoFactorSecret   String?
+  
+  // Status
+  isOnline      Boolean   @default(false)
+  lastSeen      DateTime  @default(now())
+  
+  // Stats
+  wins          Int       @default(0)
+  losses        Int       @default(0)
+  elo           Int       @default(1000)
+  
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  // Relations
+  sentFriendRequests     FriendRequest[] @relation("SentRequests")
+  receivedFriendRequests FriendRequest[] @relation("ReceivedRequests")
+  friendsAsUser          Friend[]        @relation("UserFriends")
+  friendsAsFriend        Friend[]        @relation("FriendOfUser")
+  gamesAsPlayer1         Game[]          @relation("Player1Games")
+  gamesAsPlayer2         Game[]          @relation("Player2Games")
+  sentMessages           Message[]       @relation("SentMessages")
+  receivedMessages       Message[]       @relation("ReceivedMessages")
+
+  @@map("users")
+}
+
+// Friend request model
+model FriendRequest {
+  id          String   @id @default(uuid())
+  senderId    String
+  receiverId  String
+  status      FriendRequestStatus @default(PENDING)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sender      User     @relation("SentRequests", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver    User     @relation("ReceivedRequests", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@unique([senderId, receiverId])
+  @@map("friend_requests")
+}
+
+enum FriendRequestStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
+}
+
+// Accepted friends (bidirectional)
+model Friend {
+  id        String   @id @default(uuid())
+  userId    String
+  friendId  String
+  createdAt DateTime @default(now())
+
+  user      User     @relation("UserFriends", fields: [userId], references: [id], onDelete: Cascade)
+  friend    User     @relation("FriendOfUser", fields: [friendId], references: [id], onDelete: Cascade)
+
+  @@unique([userId, friendId])
+  @@map("friends")
+}
+
+// Game model - match history
+model Game {
+  id            String     @id @default(uuid())
+  player1Id     String
+  player2Id     String
+  player1Score  Int        @default(0)
+  player2Score  Int        @default(0)
+  winnerId      String?
+  status        GameStatus @default(PENDING)
+  startedAt     DateTime?
+  finishedAt    DateTime?
+  createdAt     DateTime   @default(now())
+
+  player1       User       @relation("Player1Games", fields: [player1Id], references: [id])
+  player2       User       @relation("Player2Games", fields: [player2Id], references: [id])
+
+  @@map("games")
+}
+
+enum GameStatus {
+  PENDING
+  IN_PROGRESS
+  FINISHED
+  CANCELLED
+}
+
+// Message model - chat messages between friends
+model Message {
+  id          String   @id @default(uuid())
+  senderId    String
+  receiverId  String
+  content     String   @db.Text
+  isRead      Boolean  @default(false)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  sender      User     @relation("SentMessages", fields: [senderId], references: [id], onDelete: Cascade)
+  receiver    User     @relation("ReceivedMessages", fields: [receiverId], references: [id], onDelete: Cascade)
+
+  @@index([senderId, receiverId])
+  @@index([receiverId, isRead])
+  @@map("messages")
+}
