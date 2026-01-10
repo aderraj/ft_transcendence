@@ -439,6 +439,24 @@ function Dashboard({ user, token, logout, refreshUser }: { user: User; token: st
   useEffect(() => {
     if (!token) return;
 
+    // Connect to /friends namespace for presence
+    const friendsSocket = io(`${config.API_URL}/friends`, {
+      auth: { token },
+      transports: ['websocket'],
+    });
+
+    friendsSocket.on('connect', () => {
+      console.log('✅ Connected to Friends/Presence Gateway');
+    });
+
+    friendsSocket.on('friend:status', (data) => {
+      console.log('Friend status update:', data);
+      
+      // OPTIONAL: Force refresh user data if the list of friends is needed with new status
+      // In a real app, you might just update a local "friendsList" state directly
+      refreshUser(); 
+    });
+
     const newSocket = io(`${config.API_URL}/chat`, {
       auth: { token },
       transports: ['websocket'],
@@ -462,6 +480,7 @@ function Dashboard({ user, token, logout, refreshUser }: { user: User; token: st
 
     return () => {
       newSocket.close();
+      friendsSocket.close();
     };
   }, [token, user.id]);
 

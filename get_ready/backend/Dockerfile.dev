@@ -15,14 +15,14 @@ WORKDIR /app
 COPY package*.json ./
 
 # Install npm dependencies
-RUN npm ci --only=production=false && \
+RUN npm ci  && \
     npm cache clean --force
 
-# Copy Prisma schema
+# Copy Prisma schema 
 COPY prisma ./prisma/
 
 # Generate Prisma Client
-RUN npx prisma generate
+RUN npx prisma generate 
 
 # Copy application source
 COPY . .

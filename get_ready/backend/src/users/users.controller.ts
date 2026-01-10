@@ -32,6 +32,7 @@ import { UsersService } from './users.service';
 import { UpdateUserDto } from './dto/update-user.dto';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser, Public } from '../common/decorators';
+import { UserEntity, PaginatedUsersResult } from './entities/user.entity';
 
 // Configure multer for avatar uploads
 const avatarStorage = diskStorage({
@@ -61,21 +62,21 @@ export class UsersController {
   @ApiOperation({ summary: 'Get all users (paginated)' })
   @ApiQuery({ name: 'take', required: false, type: Number })
   @ApiQuery({ name: 'skip', required: false, type: Number })
-  @ApiResponse({ status: 200, description: 'Returns list of users' })
+  @ApiResponse({ status: 200, description: 'Returns list of users', type: PaginatedUsersResult })
   findAll(@Query('take') take?: number, @Query('skip') skip?: number) {
     return this.usersService.findAll(take || 20, skip || 0);
   }
 
   @Get('me')
   @ApiOperation({ summary: 'Get current user profile' })
-  @ApiResponse({ status: 200, description: 'Returns current user' })
+  @ApiResponse({ status: 200, description: 'Returns current user', type: UserEntity })
   getMe(@CurrentUser() user: any) {
     return this.usersService.findOne(user.sub);
   }
 
   @Put('me')
   @ApiOperation({ summary: 'Update current user profile' })
-  @ApiResponse({ status: 200, description: 'User updated successfully' })
+  @ApiResponse({ status: 200, description: 'User updated successfully', type: UserEntity })
   @ApiResponse({ status: 409, description: 'Username already taken' })
   updateMe(@CurrentUser() user: any, @Body() updateUserDto: UpdateUserDto) {
     return this.usersService.update(user.sub, updateUserDto);

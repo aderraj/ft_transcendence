@@ -54,22 +54,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       // Store socket connection
       this.userSockets.set(client.userId, client.id);
 
-      // Update user online status
-      try {
-        await this.prisma.user.update({
-          where: { id: client.userId },
-          data: { isOnline: true },
-        });
-      } catch (error) {
-        if (error.code !== 'P2025') { // Ignore RecordNotFound
-           console.error('Failed to update online status:', error);
-        }
-      }
+      // Note: User online status is now handled by FriendsGateway (namespace /friends)
+      // We still track userSockets here for message routing
 
-      // Notify friends about online status
-      this.notifyFriendsStatus(client.userId, true);
-
-      console.log(`Client connected: ${client.id}, User: ${client.userId}`);
+      console.log(`Client connected to Chat: ${client.id}, User: ${client.userId}`);
     } catch (error) {
       console.error('WebSocket auth error:', error);
       client.disconnect();
@@ -80,22 +68,9 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     if (client.userId) {
       this.userSockets.delete(client.userId);
 
-      // Update user offline status
-      try {
-        await this.prisma.user.update({
-          where: { id: client.userId },
-          data: { isOnline: false, lastSeen: new Date() },
-        });
-      } catch (error) {
-        if (error.code !== 'P2025') { // Ignore RecordNotFound
-           console.error('Failed to update offline status:', error);
-        }
-      }
-
-      // Notify friends about offline status
-      this.notifyFriendsStatus(client.userId, false);
-
-      console.log(`Client disconnected: ${client.id}, User: ${client.userId}`);
+      // Note: User offline status handled by FriendsGateway
+      
+      console.log(`Client disconnected from Chat: ${client.id}, User: ${client.userId}`);
     }
   }
 
