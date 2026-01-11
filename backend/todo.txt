@@ -1,0 +1,2 @@
+fix backend packages and dependencies problem on fresh install , in a new container 
+fix prisma migrations and deploy in a fresh install

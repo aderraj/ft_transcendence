@@ -17,9 +17,15 @@ export default defineConfig({
     },
   },
   server: {
+    host: '0.0.0.0',
+    allowedHosts: [
+      '10.14.57.32.nip.io',
+      'localhost',
+      '10.14.57.32'
+    ],
     proxy: {
       '/api': {
-        target: 'https://localhost:3001',
+        target: 'https://10.14.57.32.nip.io:3001',
         changeOrigin: true,
         secure: false
       },
