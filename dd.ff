@@ -1,0 +1,494 @@
+services:
+  # ============================================
+  # SSL Certificate Generator (runs once)
+  # ============================================
+  ssl-init:
+    image: alpine:latest
+    container_name: transcendence-ssl-init
+    volumes:
+      - ./ssl:/ssl
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        if [ ! -f /ssl/cert.pem ] || [ ! -f /ssl/key.pem ]; then
+          echo '🔐 Generating SSL certificates...';
+          apk add --no-cache openssl;
+          mkdir -p /ssl;
+          openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+            -keyout /ssl/key.pem \
+            -out /ssl/cert.pem \
+            -subj "/C=US/ST=State/L=City/O=Transcendence/CN=$${HOST_IP:-localhost}" \
+            -addext "subjectAltName = IP:$${HOST_IP:-127.0.0.1},DNS:$${HOST_IP:-localhost}.nip.io";
+          chmod 644 /ssl/cert.pem /ssl/key.pem;
+          echo '✅ SSL certificates generated successfully';
+        else
+          echo '✅ SSL certificates already exist';
+        fi
+    environment:
+      - HOST_IP=${HOST_IP:-localhost}
+    networks:
+      - secure_net
+
+  # ============================================
+  # Vault (Secrets Management - starts first)
+  # ============================================
+  vault:
+    build: ./infra/vault
+    container_name: pong-vault
+    cap_add:
+      - IPC_LOCK
+    ports:
+      - "8200:8200"
+    environment:
+      - VAULT_ADDR=https://0.0.0.0:8200
+      - VAULT_API_ADDR=https://0.0.0.0:8200
+      - VAULT_SKIP_VERIFY=true
+      # Pass OAuth/SMTP secrets to be stored in Vault on first init
+      - OAUTH_42_CLIENT_ID=${OAUTH_42_CLIENT_ID:-}
+      - OAUTH_42_CLIENT_SECRET=${OAUTH_42_CLIENT_SECRET:-}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID:-}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET:-}
+      - SMTP_USER=${SMTP_USER:-}
+      - SMTP_PASS=${SMTP_PASS:-}
+    volumes:
+      - vault-data:/vault/file
+      - ./infra/vault/config:/vault/config:ro
+      - secrets-data:/secrets
+    networks:
+      - secure_net
+    healthcheck:
+      test: ["CMD-SHELL", "[ -f /secrets/.ready ] || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+      start_period: 10s
+
+  # ============================================
+  # PostgreSQL Database
+  # ============================================
+  postgres:
+    image: postgres:15-alpine
+    container_name: pong-postgres
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - secrets-data:/secrets:ro
+    expose:
+      - "5432"
+    networks:
+      - secure_net
+    entrypoint: ["/bin/sh", "-c", "while [ ! -f /secrets/.ready ]; do sleep 1; done; export POSTGRES_PASSWORD=$$(cat /secrets/db_password); docker-entrypoint.sh postgres"]
+    environment:
+      - POSTGRES_USER=pong
+      - POSTGRES_DB=pong
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U pong -d pong"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    depends_on:
+      vault:
+        condition: service_healthy
+    restart: unless-stopped
+
+
+	postgres:
+		image: postgres:16-alpine
+		container_name: transcendence-db
+		restart: unless-stopped
+		environment:
+			POSTGRES_USER: ${POSTGRES_USER:-transcendence}
+			POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-transcendence}
+			POSTGRES_DB: ${POSTGRES_DB:-transcendence}
+			PGDATA: /var/lib/postgresql/data/pgdata
+		ports:
+			- '5433:5432'
+		volumes:
+			- postgres_data:/var/lib/postgresql/data
+		healthcheck:
+			test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-transcendence} -d ${POSTGRES_DB:-transcendence}']
+		interval: 5s
+		timeout: 5s
+		retries: 10
+		start_period: 10s
+		networks:
+			- transcendence-network
+
+
+
+
+
+
+
+  # ============================================
+  # NestJS Backend (from get_ready)
+  # ============================================
+  backend:
+    build:
+      context: ./get_ready/backend
+      dockerfile: Dockerfile.dev
+    container_name: pong-backend
+    expose:
+      - "3001"
+    volumes:
+      - ./get_ready/backend:/app
+      - /app/node_modules
+      - uploads-data:/app/uploads
+      - ./get_ready/ssl:/app/ssl:ro
+      - secrets-data:/secrets:ro
+    environment:
+      # All secrets are read from /secrets volume (populated by Vault)
+      - VAULT_SECRETS_PATH=/secrets
+      - NODE_ENV=${NODE_ENV:-development}
+      - PORT=3001
+      - USE_HTTPS=false
+      - HOST_IP=${HOST_IP:-localhost}
+      # URLs constructed from HOST_IP (non-sensitive)
+      - FRONTEND_URL=https://${HOST_IP:-localhost}
+      - OAUTH_42_CALLBACK_URL=https://${HOST_IP:-localhost}/api/auth/42/callback
+      - GOOGLE_CALLBACK_URL=https://${HOST_IP:-localhost}/api/auth/google/callback
+      # SMTP config (non-sensitive)
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_SECURE=${SMTP_SECURE:-false}
+      - EMAIL_FROM=${EMAIL_FROM:-noreply@localhost}
+    depends_on:
+      ssl-init:
+        condition: service_completed_successfully
+      vault:
+        condition: service_healthy
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'sh', '-c', 'nc -z localhost 3001 || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 10
+      start_period: 60s
+    networks:
+      - secure_net
+    restart: unless-stopped
+
+  # ============================================
+  # React Frontend (from get_ready)
+  # ============================================
+  frontend:
+    build:
+      context: ./get_ready/frontend
+      dockerfile: Dockerfile.dev
+    container_name: pong-frontend
+    expose:
+      - "5173"
+    volumes:
+      - ./get_ready/frontend:/app
+      - /app/node_modules
+      - ./get_ready/ssl:/app/ssl:ro
+    environment:
+      - NODE_ENV=${NODE_ENV:-development}
+      - VITE_HOST_IP=${HOST_IP:-localhost}
+      - VITE_USE_HTTPS=false
+      - VITE_BACKEND_PORT=443
+      - VITE_API_URL=https://${HOST_IP:-localhost}
+    depends_on:
+      ssl-init:
+        condition: service_completed_successfully
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'curl', '-f', 'http://localhost:5173']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - secure_net
+    restart: unless-stopped
+
+  # ============================================
+  # WAF (Edge / Single Entry Point)
+  # ============================================
+  waf:
+    build: ./infra/modsecurity
+    container_name: pong-waf
+    ports:
+      - "443:8443"
+      - "80:8080"
+    environment:
+      - PARANOIA=1
+      - ANOMALY_INBOUND=10
+      - MODSEC_RULE_ENGINE=on
+      - BACKEND_HOST=backend
+      - BACKEND_PORT=3001
+      - FRONTEND_HOST=frontend
+      - FRONTEND_PORT=5173
+      - ALLOWED_METHODS=GET HEAD POST OPTIONS PUT PATCH DELETE
+      - ALLOWED_REQUEST_CONTENT_TYPE=|application/x-www-form-urlencoded| |multipart/form-data| |text/xml| |application/xml| |application/json|
+    volumes:
+      - ssl-certs:/etc/nginx/ssl:ro
+      - ./get_ready/ssl:/etc/nginx/ssl-app:ro
+      - ./infra/modsecurity/rules-exclusions.conf:/etc/modsecurity.d/owasp-crs/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf
+    depends_on:
+      ssl-init:
+        condition: service_completed_successfully
+      backend:
+        condition: service_healthy
+      frontend:
+        condition: service_started
+    networks:
+      - secure_net
+
+  # ============================================
+  # ELK Stack - Log Management
+  # ============================================
+
+  # --- Elasticsearch ---
+  elasticsearch:
+    build: ./infra/elk/elasticsearch
+    container_name: pong-elasticsearch
+    environment:
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ulimits:
+      memlock:
+        soft: -1
+        hard: -1
+      nofile:
+        soft: 65536
+        hard: 65536
+    volumes:
+      - ./infra/elk/elasticsearch/elasticsearch.yml:/usr/share/elasticsearch/config/elasticsearch.yml:ro
+      - elasticsearch-data:/usr/share/elasticsearch/data
+      - secrets-data:/secrets:ro
+    expose:
+      - "9200"
+      - "9300"
+    networks:
+      - secure_net
+    depends_on:
+      vault:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sk -u elastic:$(cat /secrets/elastic_password) https://localhost:9200/_cluster/health | grep -qE '\"status\":\"(green|yellow)\"'"]
+      interval: 10s
+      timeout: 10s
+      retries: 30
+      start_period: 30s
+    restart: unless-stopped
+
+  # --- Logstash ---
+  logstash:
+    build: ./infra/elk/logstash
+    container_name: pong-logstash
+    volumes:
+      - ./infra/elk/logstash/pipeline:/usr/share/logstash/pipeline:ro
+      - ./infra/elk/logstash/logstash.yml:/usr/share/logstash/config/logstash.yml:ro
+      - secrets-data:/secrets:ro
+    environment:
+      - "LS_JAVA_OPTS=-Xms256m -Xmx256m"
+    expose:
+      - "5000"
+      - "5044"
+      - "9600"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - secure_net
+    restart: unless-stopped
+
+  # --- Kibana ---
+  kibana:
+    build: ./infra/elk/kibana
+    container_name: pong-kibana
+    volumes:
+      - ./infra/elk/kibana/kibana.yml:/usr/share/kibana/config/kibana.yml:ro
+      - secrets-data:/secrets:ro
+    environment:
+      - ELASTICSEARCH_HOSTS=https://elasticsearch:9200
+    ports:
+      - "5601:5601"
+    depends_on:
+      elasticsearch:
+        condition: service_healthy
+    networks:
+      - secure_net
+    healthcheck:
+      test: ["CMD-SHELL", "curl -sk https://localhost:5601/api/status | grep -q 'available'"]
+      interval: 15s
+      timeout: 10s
+      retries: 20
+    restart: unless-stopped
+
+  # --- Filebeat ---
+  filebeat:
+    build: ./infra/elk/filebeat
+    container_name: pong-filebeat
+    user: root
+    volumes:
+      - /var/lib/docker/containers:/var/lib/docker/containers:ro
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+      - filebeat-data:/usr/share/filebeat/data
+    depends_on:
+      logstash:
+        condition: service_started
+    networks:
+      - secure_net
+    restart: unless-stopped
+
+  # ============================================
+  # Monitoring Stack
+  # ============================================
+
+  # --- Prometheus ---
+  prometheus:
+    build: ./infra/monitoring/prometheus
+    container_name: pong-prometheus
+    volumes:
+      - prometheus-data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+      - '--web.enable-lifecycle'
+    ports:
+      - "9090:9090"
+    networks:
+      - secure_net
+    restart: unless-stopped
+
+  # --- Grafana ---
+  grafana:
+    build: ./infra/monitoring/grafana
+    container_name: pong-grafana
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - secrets-data:/secrets:ro
+    environment:
+      - GF_SECURITY_ADMIN_USER=admin
+    ports:
+      - "3000:3000"
+    networks:
+      - secure_net
+    depends_on:
+      - prometheus
+      - vault
+    restart: unless-stopped
+
+  # --- Alertmanager ---
+  alertmanager:
+    image: prom/alertmanager:v0.26.0
+    container_name: pong-alertmanager
+    volumes:
+      - ./infra/monitoring/alertmanager/config.yml:/etc/alertmanager/config.yml
+      - alertmanager-data:/alertmanager
+    command:
+      - '--config.file=/etc/alertmanager/config.yml'
+      - '--storage.path=/alertmanager'
+    ports:
+      - "9093:9093"
+    networks:
+      - secure_net
+    restart: unless-stopped
+
+  # --- Node Exporter (System Metrics) ---
+  node-exporter:
+    image: prom/node-exporter:v1.7.0
+    container_name: pong-node-exporter
+    volumes:
+      - /proc:/host/proc:ro
+      - /sys:/host/sys:ro
+      - /:/rootfs:ro
+    command:
+      - '--path.procfs=/host/proc'
+      - '--path.sysfs=/host/sys'
+      - '--path.rootfs=/rootfs'
+      - '--collector.filesystem.mount-points-exclude=^/(sys|proc|dev|host|etc)($$|/)'
+    expose:
+      - "9100"
+    networks:
+      - secure_net
+    restart: unless-stopped
+
+  # --- cAdvisor (Container Metrics) ---
+  cadvisor:
+    image: gcr.io/cadvisor/cadvisor:v0.47.0
+    container_name: pong-cadvisor
+    volumes:
+      - /:/rootfs:ro
+      - /var/run:/var/run:rw
+      - /sys:/sys:ro
+      - /var/lib/docker/:/var/lib/docker:ro
+    expose:
+      - "8080"
+    networks:
+      - secure_net
+    restart: unless-stopped
+
+  # --- PostgreSQL Exporter ---
+  postgres-exporter:
+    image: prometheuscommunity/postgres-exporter
+    container_name: pong-postgres-exporter
+    volumes:
+      - secrets-data:/secrets:ro
+    environment:
+      - DATA_SOURCE_URI=postgres:5432/pong?sslmode=disable
+      - DATA_SOURCE_USER_FILE=/secrets/db_password
+      - DATA_SOURCE_USER=pong
+    # We need to construct the DATA_SOURCE_NAME with the password from file.
+    # The default image doesn't support generic file reading for password in URI easily without shell.
+    # We use entrypoint to read secret.
+    entrypoint: ["/bin/sh", "-c", "export DATA_SOURCE_NAME=\"postgresql://pong:$(cat /secrets/db_password)@postgres:5432/pong?sslmode=disable\"; /bin/postgres_exporter"]
+    expose:
+      - "9187"
+    networks:
+      - secure_net
+    depends_on:
+      - postgres
+      - vault
+    restart: unless-stopped
+
+  # --- Nginx Exporter ---
+  nginx-exporter:
+    image: nginx/nginx-prometheus-exporter:1.0
+    container_name: pong-nginx-exporter
+    command:
+      - -nginx.scrape-uri=http://waf:8080/stub_status
+    expose:
+      - "9113"
+    networks:
+      - secure_net
+    depends_on:
+      - waf
+    restart: unless-stopped
+
+  # --- Elasticsearch Exporter ---
+  elasticsearch-exporter:
+    image: prometheuscommunity/elasticsearch-exporter:v1.6.0
+    container_name: pong-elasticsearch-exporter
+    command:
+      - '--es.uri=https://elasticsearch:9200'
+      - '--es.all'
+      - '--es.ssl-skip-verify'
+    expose:
+      - "9114"
+    networks:
+      - secure_net
+    depends_on:
+      - elasticsearch
+    restart: unless-stopped
+
+networks:
+  secure_net:
+    driver: bridge
+
+volumes:
+  vault-data:
+  postgres-data:
+  elasticsearch-data:
+  filebeat-data:
+  secrets-data:
+  prometheus-data:
+  grafana-data:
+  alertmanager-data:
+  uploads-data:
+  ssl-certs:

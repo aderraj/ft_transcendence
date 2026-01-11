@@ -1,0 +1,49 @@
+FROM node:20-alpine
+
+# Install system dependencies
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    openssl \
+    bash \
+    curl
+
+WORKDIR /app
+
+# Copy package files first for better layer caching
+COPY package*.json ./
+
+# Install npm dependencies
+RUN npm ci  && \
+    npm cache clean --force
+
+# Copy Prisma schema 
+COPY prisma ./prisma/
+
+# Generate Prisma Client
+RUN npx prisma generate 
+
+# Copy application source
+COPY . .
+
+# Create uploads directory
+RUN mkdir -p /app/uploads/avatars && \
+    chmod -R 755 /app/uploads
+
+# Copy entrypoint script
+COPY docker-entrypoint.sh /usr/local/bin/
+RUN chmod +x /usr/local/bin/docker-entrypoint.sh
+
+# Expose application port
+EXPOSE 3001
+
+# Health check
+HEALTHCHECK --interval=30s --timeout=10s --start-period=60s --retries=3 \
+    CMD curl -f https://localhost:3001/api || curl -f http://localhost:3001/api || exit 1
+
+# Use entrypoint script
+ENTRYPOINT ["docker-entrypoint.sh"]
+
+# Default command
+CMD ["npm", "run", "start:dev"]

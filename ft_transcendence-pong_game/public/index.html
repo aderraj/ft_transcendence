@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Pixel Pong Game Menu</title>
+<link rel="stylesheet" href="srcs/css/output.css">
+<link rel="stylesheet" href="srcs/css/menu.css">
+</head>
+<body>
+
+<div class="window-frame">
+  <div class="close-btn">X</div>
+  <h1>PING PONG GAME</h1>
+
+  <div class="cards-container">
+
+    <div class="card card-guest">
+      <div class="card-banner">PLAY WITH GUEST</div>
+      
+      <div class="icon-area">
+        <img src="./srcs/public/remote.png" alt="Paddle" class="pixel-icon paddle-icon">
+      </div>
+      
+      <div class="card-text">
+        BEST OF 7 ROUNDS<br>
+        FIRST TO 4 WINS!
+      </div>
+      
+      <a href="./srcs/local_game.html">
+        <button class="start-btn" onsubmit="" >START GAME</button>
+      </a>
+    </div>
+
+    <div class="card card-friend">
+      <div class="card-banner">PLAY WITH A FRIEND</div>
+      
+      <div class="icon-area">
+        <img src="./srcs/public/online.png" alt="Paddle" class="pixel-icon paddle-icon">
+      </div>
+      
+      <div class="card-text">
+        BEST OF 7 ROUNDS<br>
+        FIRST TO 4 WINS!
+      </div>
+      
+      <a href="./srcs/remote_game.html">
+        <button class="start-btn">START GAME</button>
+      </a>
+    </div>
+
+  </div>
+</div>
+
+</body>
+</html>
