@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'; 
 import { AppDataProvider } from "@/contexts/AppDataContext"; 
 import MainLayout from "@/layouts/MainLayout";
@@ -7,7 +7,6 @@ import Dashboard from '@/pages/Dashboard';
 import Profile from '@/pages/Profile';
 import Game from '@/pages/Game';
 import Chat from '@/pages/Chat';
-
 
 const ProtectedRoute = ({children}) => {
   const { user, loading } = useAuth();
@@ -21,6 +20,13 @@ const PublicRoute = ({children}) => {
   return children;
 }
 
+// Helper to redirect /reset-password?token=XYZ -> /login?token=XYZ
+// This ensures the token survives the redirect so Login.jsx can catch it.
+const ResetRedirect = () => {
+  const location = useLocation();
+  return <Navigate to={`/login${location.search}`} replace />;
+};
+
 function AppRoutes() {
   return (
     <Routes>
@@ -31,6 +37,9 @@ function AppRoutes() {
             <Login/>
           </PublicRoute>
         } />
+
+        <Route path="/reset-password" element={<ResetRedirect />} />
+
         <Route path="/" element={
           <ProtectedRoute>
             <Dashboard/>
@@ -66,7 +75,6 @@ function AppRoutes() {
     </Routes>
   )
 }
-
 
 export default function App() {
   return (

@@ -126,12 +126,8 @@ export default function Profile() {
         setPassLoading(true);
         try {
             const token = localStorage.getItem('accessToken');
-            const res = await fetch(`${API_BASE}/api/auth/change-password`, {
+            const res = await authenticatedFetch('/api/auth/change-password', {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` 
-                },
                 body: JSON.stringify({ newPassword: newPassword })
             });
             if (res.ok) {

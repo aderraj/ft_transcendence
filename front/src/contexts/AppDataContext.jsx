@@ -3,6 +3,7 @@ import { useAuth } from './AuthContext';
 import { authenticatedFetch } from '@/utils/api';
 import { io } from 'socket.io-client';
 import { useNavigate } from 'react-router-dom';
+import { API_BASE } from '@/utils/api';
 
 const AppDataContext = createContext();
 
@@ -92,7 +93,7 @@ export const AppDataProvider = ({ children }) => {
     const token = localStorage.getItem('accessToken');
     if (!token) return;
 
-    const socket = io('https://10.14.57.32.nip.io:3001/friends', {
+    const socket = io(`${API_BASE}/friends`, {
         auth: { token },
         transports: ['websocket'],
         secure: true,

@@ -365,7 +365,7 @@ export class AuthService {
       },
     });
 
-    return { message: 'Password has been reset successfully' };
+    return { message: 'Password has been reset successfully', username: user.username};
   }
 
   /**
