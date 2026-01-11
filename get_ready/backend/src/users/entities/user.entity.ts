@@ -13,7 +13,7 @@ export class UserEntity {
   @ApiProperty({ example: 'John Doe', nullable: true })
   displayName: string | null;
 
-  @ApiProperty({ example: 'https://host:port/uploads/avatar/avatar.jpg', nullable: true })
+  @ApiProperty({ example: 'https://host:port/uploads/avatars/avatar.jpg', nullable: true })
   avatar: string | null;
 
   @ApiProperty({ example: true })

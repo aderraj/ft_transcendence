@@ -1,4 +1,4 @@
-import { Injectable, UnauthorizedException, ConflictException, BadRequestException } from '@nestjs/common';
+import { Injectable, UnauthorizedException, ConflictException, BadRequestException, ForbiddenException } from '@nestjs/common';
 import { JwtService } from '@nestjs/jwt';
 import { PrismaService } from '../prisma/prisma.service';
 import { EmailService } from '../common/services/email.service';
@@ -8,8 +8,11 @@ import { authenticator } from 'otplib';
 import * as QRCode from 'qrcode';
 import { RegisterDto, LoginDto } from './dto';
 
-@Injectable()
+
+jectable()
 export class AuthService {
+  private readonly SESSION_EXPIRY_HOURS = 24;
+
   constructor(
     private prisma: PrismaService,
     private jwtService: JwtService,
@@ -36,7 +39,28 @@ export class AuthService {
   }
 
   async generateToken(user: { id: string; email: string; username: string; twoFactorEnabled?: boolean }) {
-    const payload = { sub: user.id, email: user.email, username: user.username };
+    // Generate a unique session token
+    const sessionToken = crypto.randomBytes(32).toString('hex');
+    const sessionExpiresAt = new Date(Date.now() + this.SESSION_EXPIRY_HOURS * 60 * 60 * 1000);
+
+    // Store session token in database (invalidates any previous session)
+    await this.prisma.user.update({
+      where: { id: user.id },
+      data: {
+        currentSessionToken: sessionToken,
+        sessionExpiresAt,
+        isOnline: true,
+        lastSeen: new Date(),
+      },
+    });
+
+    const payload = { 
+      sub: user.id, 
+      email: user.email, 
+      username: user.username,
+      sessionToken, // Include session token in JWT for validation
+    };
+    
     return {
       access_token: this.jwtService.sign(payload),
       user: {
@@ -46,6 +70,56 @@ export class AuthService {
         twoFactorEnabled: user.twoFactorEnabled || false,
       },
     };
+  }
+
+  // Validate session token - call this in JWT strategy
+  async validateSession(userId: string, sessionToken: string): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { currentSessionToken: true, sessionExpiresAt: true },
+    });
+
+    if (!user || !user.currentSessionToken || !user.sessionExpiresAt) {
+      return false;
+    }
+
+    // Check if session token matches and hasn't expired
+    if (user.currentSessionToken !== sessionToken) {
+      return false;
+    }
+
+    if (new Date() > user.sessionExpiresAt) {
+      return false;
+    }
+
+    return true;
+  }
+
+  // Check if user already has an active session
+  async hasActiveSession(userId: string): Promise<boolean> {
+    const user = await this.prisma.user.findUnique({
+      where: { id: userId },
+      select: { currentSessionToken: true, sessionExpiresAt: true, isOnline: true },
+    });
+
+    if (!user || !user.currentSessionToken || !user.sessionExpiresAt) {
+      return false;
+    }
+
+    return user.isOnline && new Date() < user.sessionExpiresAt;
+  }
+
+  // Logout - invalidate session
+  async logout(userId: string): Promise<void> {
+    await this.prisma.user.update({
+      where: { id: userId },
+      data: {
+        currentSessionToken: null,
+        sessionExpiresAt: null,
+        isOnline: false,
+        lastSeen: new Date(),
+      },
+    });
   }
 
   // Register new user with username/password
@@ -88,7 +162,6 @@ export class AuthService {
   async login(loginDto: LoginDto) {
     const { username, password } = loginDto;
 
-    // Find user by username or email
     const user = await this.prisma.user.findFirst({
       where: {
         OR: [
@@ -102,20 +175,22 @@ export class AuthService {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Check if user has a password (might be OAuth-only user)
     if (!user.password) {
-      throw new BadRequestException('This account uses 42 OAuth. Please login with 42.');
+      throw new BadRequestException('This account uses OAuth. Please login with your OAuth provider.');
     }
 
-    // Verify password
     const isPasswordValid = await bcrypt.compare(password, user.password);
     if (!isPasswordValid) {
       throw new UnauthorizedException('Invalid credentials');
     }
 
-    // Check if 2FA is enabled
+    // Invalidate any existing session before creating a new one
+    // This allows the user to login from a new device
+    if (await this.hasActiveSession(user.id)) {
+      await this.logout(user.id);
+    }
+
     if (user.twoFactorEnabled) {
-      // Return a temporary response indicating 2FA is required
       return {
         requires2FA: true,
         userId: user.id,
@@ -123,41 +198,18 @@ export class AuthService {
       };
     }
 
-    // Update online status
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: { isOnline: true, lastSeen: new Date() },
-    });
-
     return this.generateToken(user);
-  }
-
-  // For development/testing - create a test user and get token
-  async createTestUser() {
-    const testUser = await this.prisma.user.upsert({
-      where: { email: 'test@test.com' },
-      update: {},
-      create: {
-        email: 'test@test.com',
-        username: 'testuser',
-        displayName: 'Test User',
-        password: await bcrypt.hash('testpassword', 10),
-      },
-    });
-    return this.generateToken(testUser);
   }
 
   // 42 OAuth login handler
   async handleOAuthLogin(oauthUser: any) {
     const { intraId, email, username, displayName, avatar } = oauthUser;
 
-    // Check if user already exists by intraId
     let user = await this.prisma.user.findUnique({
       where: { intraId: intraId },
     });
 
     if (!user) {
-      // First time login - create new user
       const uniqueUsername = await this.generateUniqueUsername(username);
       
       user = await this.prisma.user.create({
@@ -169,15 +221,13 @@ export class AuthService {
           avatar: avatar || 'default-avatar.png',
         },
       });
+    } else {
+      // Invalidate any existing session before creating a new one
+      if (await this.hasActiveSession(user.id)) {
+        await this.logout(user.id);
+      }
     }
 
-    // Update online status and last seen
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: { isOnline: true, lastSeen: new Date() },
-    });
-
-    // Check if 2FA is enabled
     if (user.twoFactorEnabled) {
       return {
         requires2FA: true,
@@ -469,27 +519,32 @@ export class AuthService {
 
     const { googleId, email, displayName, avatar } = req.user;
 
-    // Check if user exists by Google ID
     let user = await this.prisma.user.findUnique({
       where: { googleId },
     });
 
-    // If not found by googleId, check by email
     if (!user) {
       user = await this.prisma.user.findUnique({
         where: { email },
       });
 
-      // If user exists with same email, link Google account
       if (user) {
+        // Invalidate any existing session before linking Google account
+        if (await this.hasActiveSession(user.id)) {
+          await this.logout(user.id);
+        }
         user = await this.prisma.user.update({
           where: { id: user.id },
           data: { googleId },
         });
       }
+    } else {
+      // Invalidate any existing session before creating a new one
+      if (await this.hasActiveSession(user.id)) {
+        await this.logout(user.id);
+      }
     }
 
-    // Create new user if doesn't exist
     if (!user) {
       const username = await this.generateUsernameFromEmail(email);
       
@@ -500,19 +555,11 @@ export class AuthService {
           displayName: displayName || username,
           googleId,
           avatar: avatar || 'default-avatar.png',
-          // OAuth users don't have password
           password: null,
         },
       });
     }
 
-    // Update last seen
-    await this.prisma.user.update({
-      where: { id: user.id },
-      data: { lastSeen: new Date(), isOnline: true },
-    });
-
-    // Check if 2FA is enabled
     if (user.twoFactorEnabled) {
       return {
         requires2FA: true,
@@ -521,7 +568,6 @@ export class AuthService {
       };
     }
 
-    // Generate JWT token
     return this.generateToken(user);
   }
 }

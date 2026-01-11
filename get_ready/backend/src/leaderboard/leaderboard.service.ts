@@ -15,7 +15,7 @@ export class LeaderboardService {
     const protocol = this.configService.get('USE_HTTPS') === 'true' ? 'https' : 'http';
     const host = this.configService.get('HOST_IP') || 'localhost';
     const port = this.configService.get('PORT') || '3001';
-    return `${protocol}://${host}:${port}/uploads/avatar/${filename}`;
+    return `${protocol}://${host}:${port}/uploads/avatars/${filename}`;
   }
 
   // Get global leaderboard ranked by level and experience

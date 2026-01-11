@@ -22,7 +22,7 @@ export class FriendsService {
       this.configService.get('USE_HTTPS') === 'true' ? 'https' : 'http';
     const host = this.configService.get('HOST_IP') || 'localhost';
     const port = this.configService.get('PORT') || '3001';
-    return `${protocol}://${host}:${port}/uploads/avatar/${filename}`;
+    return `${protocol}://${host}:${port}/uploads/avatars/${filename}`;
   }
 
   // Get all friends for a user
@@ -132,8 +132,8 @@ export class FriendsService {
       throw new ConflictException('Already friends with this user');
     }
 
-    // Check for existing request
-    const existingRequest = await this.prisma.friendRequest.findFirst({
+    // Check for existing pending request
+    const existingPendingRequest = await this.prisma.friendRequest.findFirst({
       where: {
         OR: [
           { senderId, receiverId },
@@ -142,8 +142,28 @@ export class FriendsService {
         status: FriendRequestStatus.PENDING,
       },
     });
-    if (existingRequest) {
+    if (existingPendingRequest) {
       throw new ConflictException('Friend request already exists');
+    }
+
+    // Check for any declined or accepted request and delete it
+    // This handles cases where the request was previously declined
+    const oldRequest = await this.prisma.friendRequest.findFirst({
+      where: {
+        OR: [
+          { senderId, receiverId },
+          { senderId: receiverId, receiverId: senderId },
+        ],
+        status: {
+          in: [FriendRequestStatus.DECLINED, FriendRequestStatus.ACCEPTED],
+        },
+      },
+    });
+    
+    if (oldRequest) {
+      await this.prisma.friendRequest.delete({
+        where: { id: oldRequest.id },
+      });
     }
 
     return this.prisma.friendRequest.create({
@@ -152,6 +172,13 @@ export class FriendsService {
         receiverId,
       },
       include: {
+        sender: {
+          select: {
+            id: true,
+            username: true,
+            displayName: true,
+          },
+        },
         receiver: {
           select: {
             id: true,

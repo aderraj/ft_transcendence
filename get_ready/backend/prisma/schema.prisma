@@ -35,6 +35,10 @@ model User {
   twoFactorEnabled  Boolean   @default(false)
   twoFactorSecret   String?
   
+  // Session management - only one active session per user
+  currentSessionToken  String?   @unique
+  sessionExpiresAt     DateTime?
+  
   // Status
   isOnline      Boolean   @default(false)
   lastSeen      DateTime  @default(now())

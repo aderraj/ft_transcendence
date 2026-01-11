@@ -5,9 +5,30 @@ import { PrismaPg } from '@prisma/adapter-pg';
 import { PrismaClient } from './generated/client/index.js';
 import swagger from '@fastify/swagger';
 import swaggerUI from '@fastify/swagger-ui';
+import cors from '@fastify/cors';
+
+// Parse allowed origins from environment
+const getAllowedOrigins = () => {
+    const allowedOriginsEnv = process.env.ALLOWED_ORIGINS || '';
+    const origins = allowedOriginsEnv
+        .split(',')
+        .map(origin => origin.trim())
+        .filter(origin => origin.length > 0);
+    
+    if (origins.length === 0) {
+        return ['http://localhost:3000', 'https://localhost:3000'];
+    }
+    return origins;
+};
 
 const fastify = Fastify({
     logger: true 
+});
+
+// Register CORS
+await fastify.register(cors, {
+    origin: getAllowedOrigins(),
+    credentials: true,
 });
 
 // Register Swagger

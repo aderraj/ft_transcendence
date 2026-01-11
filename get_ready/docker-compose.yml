@@ -79,10 +79,11 @@ services:
       EMAIL_FROM: ${EMAIL_FROM}
       USE_HTTPS: ${USE_HTTPS:-false}
       HOST_IP: ${HOST_IP:-localhost}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
     volumes:
       - ./backend:/app
       - /app/node_modules
-      - uploads_data:/app/uploads
+      - ./backend/uploads:/app/uploads
       - ./ssl:/app/ssl:ro
     depends_on:
       ssl-init:
@@ -141,6 +142,7 @@ services:
       DATABASE_URL: postgresql://${POSTGRES_USER:-transcendence}:${POSTGRES_PASSWORD:-transcendence}@postgres:5432/${POSTGRES_DB:-transcendence}?schema=public
       PORT: 3002
       NODE_ENV: ${NODE_ENV:-development}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
     volumes:
       - ./ft_transcendence-pong_game:/app
       - /app/node_modules
@@ -162,4 +164,3 @@ networks:
 
 volumes:
   postgres_data:
-  uploads_data:

@@ -1,208 +1,129 @@
-# Transcendence Backend - AI Coding Instructions
+# Transcendence - AI Coding Instructions
 
 ## Project Overview
-A NestJS microservice backend for a multiplayer Pong game with user management, matchmaking, friends system, and leaderboards. Uses 42 OAuth for authentication.
+A full-stack multiplayer Pong game with NestJS backend, React frontend, and Fastify game server. Features user management, friends system, real-time chat, OAuth authentication (42 & Google), and 2FA.
 
 ## Tech Stack
-- **Framework**: NestJS (microservices architecture)
-- **ORM**: Prisma with PostgreSQL
-- **Auth**: JWT + OAuth 2.0 (42 intra)
-- **API Docs**: Swagger/OpenAPI at `/api`
+- **Backend**: NestJS (microservices) + Prisma + PostgreSQL
+- **Frontend**: React + TypeScript + Vite
+- **Game Server**: Fastify + WebSocket
+- **Auth**: JWT + OAuth 2.0 (42 intra, Google) + TOTP 2FA
+- **API Docs**: Swagger at `/api/docs` (backend) and game server
 
-## Architecture Patterns
+## Architecture
 
-### Module Structure
-Follow NestJS modular architecture. Each feature gets its own module:
+### Services (Docker)
 ```
-src/
-├── auth/           # JWT, OAuth, 2FA, guards
-├── users/          # Profile, avatar, settings
-├── friends/        # Friend requests, online status
-├── game/           # Matchmaking, game rooms, Pong logic
-├── leaderboard/    # Rankings, seasonal stats
+┌─────────────────────────────────────────────────────────────┐
+│  Frontend (:3000)  │  Backend API (:3001)  │  Game (:3002)  │
+│  React + Vite      │  NestJS               │  Fastify + WS  │
+└─────────────────────────────────────────────────────────────┘
+                           ↓
+                    PostgreSQL (:5432)
+```
+
+### Backend Module Structure
+```
+backend/src/
+├── auth/           # JWT, OAuth (42, Google), 2FA, guards, strategies
+├── users/          # Profile, avatar upload, settings
+├── friends/        # Friend requests, online status (WebSocket)
+├── chat/           # Real-time messaging (WebSocket)
+├── leaderboard/    # Rankings, game history
 ├── prisma/         # PrismaService singleton
-└── common/         # Guards, decorators, DTOs, filters
+└── common/         # Guards, decorators, utils
 ```
 
-### Prisma Service Pattern
-Create a singleton `PrismaService` extending `PrismaClient`:
-```typescript
-@Injectable()
-export class PrismaServ
-  - Return token in response for frontend storage
-- [ ] Add OAuth guard for `/api/auth/42` route
-- [ ] Update Prisma schema to include `intraId` field ice extends PrismaClient {
-  constructor() {
-    super({ datasources: { db: { url: process.env.DATABASE_URL } } });
-  }
-}
-```
+### Key Patterns
 
-### Authentication Flow
-1. **42 OAuth**: `/auth/42/callback` → validate with 42 API → issue JWT
-2. **JWT Guard**: Apply `@UseGuards(JwtAuthGuard)` or use global guard with `@Public()` decorator for public routes
-3. **2FA**: Optional TOTP verification after initial login
+**Authentication Flow:**
+1. Login/OAuth → Check active session → Generate JWT with sessionToken
+2. JWT includes sessionToken for single-session enforcement
+3. Each login invalidates previous sessions
 
-### API Conventions
-- Prefix all routes with `/api`
-- Use Swagger decorators: `@ApiTags()`, `@ApiOperation()`, `@ApiResponse()`
-- DTOs with `class-validator` decorators for validation
-- Return consistent response shapes
+**WebSocket Namespaces:**
+- `/chat` - Real-time messaging
+- `/friends` - Online status updates, friend requests, game invitations
+- Game server uses raw WebSocket at `/websocket`
 
-### Swagger Setup (main.ts)
-```typescript
-const config = new DocumentBuilder()
-  .setTitle('Transcendence API')
-  .setVersion('1.0')
-  .addBearerAuth()
-  .build();
-const document = SwaggerModule.createDocument(app, config);
-SwaggerModule.setup('api', app, document);
-```
-
-## Key Implementation Guidelines
-
-### User Management
-- Store hashed passwords with bcrypt (for non-OAuth users if any)
-- Default avatar fallback when none uploaded
-- Track `isOnline` status for friends list
-
-### Friends System
-- Friend request states: `PENDING`, `ACCEPTED`, `DECLINED`
-- Query online status from user's last activity or WebSocket connection
-
-### Game/Matchmaking
-- Use WebSockets (`@nestjs/platform-socket.io`) for real-time game state
-- Matchmaking queue with ELO-based pairing
-- Game rooms track player connections and game state
-
-### Rate Limiting
-Apply `@nestjs/throttler` to protect endpoints:
-```typescript
-@UseGuards(ThrottlerGuard)
-@Throttle({ default: { limit: 10, ttl: 60000 } })
+**CORS Configuration:**
+Set `ALLOWED_ORIGINS` in `.env` (comma-separated):
+```env
+ALLOWED_ORIGINS=https://10.14.57.32:3000,https://localhost:3000
 ```
 
 ## Commands
 
-### Docker (Recommended)
+### Docker
 ```bash
-# Start all services (PostgreSQL + Backend)
-docker-compose up -d
-
-# View logs
-docker-compose logs -f backend
-
-# Stop services
-docker-compose down
-
-# Rebuild after dependency changes
-docker-compose up -d --build backend
-
-# Access PostgreSQL CLI
-docker exec -it transcendence-db psql -U transcendence
+make up          # Start all services
+make down        # Stop all services
+make build       # Rebuild containers
+make logs-back   # Backend logs
+make seed        # Seed database with test data (manual)
+make shell-back  # Shell into backend container
 ```
 
-### Local Development (inside container or host)
+### Database
 ```bash
-# Development
-npm run start:dev
-
-# Database migrations
-npx prisma migrate dev --name <name>
-npx prisma generate
-npx prisma studio
-
-# Generate resources
-nest g resource <name>
-nest g module/service/controller <name>
+# Inside backend container
+npx prisma migrate deploy    # Apply migrations
+npx prisma generate          # Regenerate client
+npx prisma studio            # Database GUI
 ```
 
-## Project Structure
+## Environment Variables
+Key variables in `.env`:
+```env
+ALLOWED_ORIGINS=<comma-separated URLs for CORS>
+JWT_SECRET=<strong random string>
+OAUTH_42_CLIENT_ID=<from 42 intra>
+GOOGLE_CLIENT_ID=<from Google Cloud Console>
+USE_HTTPS=true
+HOST_IP=<your server IP>
 ```
-transcendence/
-├── docker-compose.yml     # PostgreSQL + Backend services
-├── .env                   # Environment variables (DO NOT COMMIT)
-├── backend/
-│   ├── Dockerfile.dev     # Development container
-│   ├── src/               # NestJS source code
-│   └── prisma/            # Database schema & migrations
-└── frontend/              # (separate - teammate handles)
-```
 
-## TODO List
+## API Conventions
+- All routes prefixed with `/api`
+- Use Swagger decorators: `@ApiTags()`, `@ApiOperation()`, `@ApiResponse()`
+- Protected routes use `@UseGuards(JwtAuthGuard)` + `@ApiBearerAuth()`
+- Public routes use `@Public()` decorator
+- DTOs validated with `class-validator`
 
-### 🔐 Authentication (Priority: HIGH)
-- [ ] Implement 42 OAuth strategy using Passport
-  - Use `OAUTH_42_CLIENT_ID`, `OAUTH_42_CLIENT_SECRET`, `OAUTH_42_CALLBACK_URL` from .env
-  - Create OAuth42Strategy extending PassportStrategy
-  - Configure OAuth callback route at `/api/auth/42/callback`
-- [ ] Auto-register users on first 42 OAuth login
-  - Check if user exists by 42 intra ID
-  - Create new user with 42 profile data if not exists
-  - Store 42 intra ID in User model
-- [ ] Generate and return JWT token after successful OAuth
-  - Sign JWT with user payload (id, email, username)
-  - Return token in response for frontend storage
-- [ ] Add OAuth guard for `/api/auth/42` route
-- [ ] Update Prisma schema to include `intraId` field for 42 users
+## Session Management
+- Single active session per user enforced
+- `POST /api/auth/logout` invalidates session
+- Login fails with 403 if user has active session
+- Session token stored in JWT and validated on each request
 
-### 💬 Chat System (Priority: HIGH)
-- [ ] Create Chat module with WebSocket gateway
-  - Use `@nestjs/platform-socket.io` for real-time messaging
-  - Implement Socket.IO authentication middleware with JWT
-- [ ] Create database schema for messages
-  - Message model: id, senderId, receiverId, content, timestamp, isRead
-  - Add relation to User model
-- [ ] Implement chat features:
-  - [ ] Send direct message to friend (1-on-1 chat)
-  - [ ] Receive messages in real-time
-  - [ ] Mark messages as read
-  - [ ] Get chat history with a friend
-  - [ ] Get list of conversations with unread count
-- [ ] Chat endpoints:
-  - `GET /api/chat/conversations` - List all conversations
-  - `GET /api/chat/messages/:friendId` - Get messages with specific friend
-  - `POST /api/chat/messages/:friendId` - Send message (fallback to REST)
-  - `PATCH /api/chat/messages/:messageId/read` - Mark as read
-- [ ] WebSocket events:
-  - `message:send` - Send message to friend
-  - `message:receive` - Receive message from friend
-  - `message:read` - Notify sender message was read
-  - `typing:start` - User is typing
-  - `typing:stop` - User stopped typing
+## WebSocket Events
 
-### 🎨 Frontend Integration (Priority: HIGH)
-- [ ] Create OAuth login flow
-  - Add "Login with 42" button that redirects to `/api/auth/42`
-  - Handle OAuth callback and store JWT in localStorage/cookies
-  - Add axios interceptor to include JWT in all requests
-- [ ] Create Chat UI components
-  - Chat list sidebar showing conversations
-  - Chat window with message history
-  - Message input with send button
-  - Typing indicators
-  - Unread message badges
-  - Real-time updates via Socket.IO client
-- [ ] Integrate Socket.IO client
-  - Connect to WebSocket with JWT authentication
-  - Listen for incoming messages
-  - Emit typing indicators
-  - Handle connection/disconnection events
-- [ ] Add online status indicators for friends
-- [ ] Add notification system for new messages
+### Chat (`/chat`)
+- `message:send` → `{ receiverId, content }`
+- `message:receive` → incoming message
+- `typing:start/stop` → typing indicators
 
-### 📝 Database Migrations
-- [ ] Add migration for `intraId` field in User model
-- [ ] Create Message model migration
-- [ ] Create ChatRoom/Conversation model if needed
+### Friends (`/friends`)
+- `friend:status` → online/offline updates
+- `friend:request_received` → new friend request notification
+- `friend:accept_request` → accept friend request via WebSocket
+- `friend:request_accepted` → friend request was accepted
+- `friend:invite_game` → send game invitation
+- `friend:game_invite_received` → receive game invitation
+- `friend:respond_game_invite` → accept/decline game invite
+- `friend:game_start` → match begins (with roomId)
+- `friend:game_invite_declined` → game invite was declined
 
-### 🧪 Testing
-- [ ] Test 42 OAuth flow end-to-end
-- [ ] Test JWT generation and validation
-- [ ] Test WebSocket authentication
-- [ ] Test message sending/receiving
-- [ ] Test chat history retrieval
+### Game Server (`/websocket`)
+- `game_start` → match begins
+- `moveUp/moveDown` → paddle movement
+- `gameOver` → match ends
+
+## File Locations
+- Prisma schema: `backend/prisma/schema.prisma`
+- Migrations: `backend/prisma/migrations/`
+- Swagger docs: `http://localhost:3001/api/docs`
+- Avatar uploads: `backend/uploads/avatars/`
 
 ## References
 - [NestJS Docs](https://docs.nestjs.com/)
