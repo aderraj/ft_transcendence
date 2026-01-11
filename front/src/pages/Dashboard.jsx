@@ -1,23 +1,66 @@
-import React from 'react';
-import HighlightCard from '@/components/HighlightCard';
-import { TrendingUp, Activity, Clock, MoreHorizontal, UserPlus } from 'lucide-react';
+import React, { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { useAppData } from '@/contexts/AppDataContext';
+import { TrendingUp, Activity, MoreHorizontal, Inbox } from 'lucide-react';
+
+import HighlightCard from '@/components/HighlightCard';
+import StatCard from '@/components/StatCard';
+import HistoryRow from '@/components/HistoryRow';
+import FriendRow from '@/components/FriendRow';
+import RequestsModal from '@/components/modals/RequestsModal';
+import ConfirmationModal from '@/components/modals/ConfirmationModal';
 
 const Dashboard = () => {
-  const { friends, stats, history, isLoaded } = useAppData();
+  const navigate = useNavigate();
+  
+  const { 
+    friends, stats, history, isLoaded, 
+    removeFriend, 
+    pendingRequests, sentRequests,
+    acceptFriendRequest, declineFriendRequest, cancelFriendRequest
+  } = useAppData();
+  
+  const [friendToRemove, setFriendToRemove] = useState(null);
+  const [showRequestsModal, setShowRequestsModal] = useState(false);
 
   const onlineFriends = friends.filter(f => f.isOnline === true || f.status === 'online');
   const offlineFriends = friends.filter(f => !f.isOnline && f.status !== 'online');
 
+  const handleConfirmRemove = async () => {
+    if (friendToRemove) {
+        await removeFriend(friendToRemove.id);
+        setFriendToRemove(null);
+    }
+  };
+
   return (
-    <div className="min-h-screen w-full transition-all duration-300 selection:bg-cyan-500/30">
+    <div className="min-h-screen w-full transition-all duration-300 selection:bg-cyan-500/30 relative">
+
+      {friendToRemove && (
+        <ConfirmationModal 
+            title="Remove Friend?"
+            message={`Are you sure you want to remove ${friendToRemove.username}?`}
+            onConfirm={handleConfirmRemove}
+            onCancel={() => setFriendToRemove(null)}
+        />
+      )}
+
+      {showRequestsModal && (
+        <RequestsModal 
+            onClose={() => setShowRequestsModal(false)}
+            pending={pendingRequests}
+            sent={sentRequests}
+            onAccept={acceptFriendRequest}
+            onDecline={declineFriendRequest}
+            onCancel={cancelFriendRequest}
+        />
+      )}
 
       <main className="p-8 pt-6">
     
         <div className="flex flex-col xl:flex-row gap-8">
           
           <div className="flex-1 space-y-8 min-w-0">
-            
             <HighlightCard />
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -72,56 +115,62 @@ const Dashboard = () => {
              <div className="sticky top-6 rounded-3xl bg-[#0bc1021]/40 backdrop-blur-xl border border-white/5 p-6 min-h-[500px] flex flex-col">
                 
                 <div className="flex items-center justify-between mb-6 pl-2">
-                    <h2 className="text-sm font-bold text-white/50 tracking-[0.2em] uppercase">
-                        Friends ({onlineFriends.length})
-                    </h2>
-                    <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]"></div>
+                    <div className="flex items-center gap-2">
+                        <h2 className="text-sm font-bold text-white/50 tracking-[0.2em] uppercase">Friends</h2>
+                        <div className="w-2 h-2 rounded-full bg-emerald-500 shadow-[0_0_10px_#10b981]"></div>
+                    </div>
+
+                    <button 
+                        onClick={() => setShowRequestsModal(true)}
+                        className="relative p-2 rounded-lg bg-white/5 hover:bg-white/10 text-white/50 hover:text-white transition-all group"
+                        title="Manage Requests"
+                    >
+                        <Inbox size={16} />
+                        {(pendingRequests.length > 0 || sentRequests.length > 0) && (
+                            <span className="absolute -top-1 -right-1 flex h-3 w-3">
+                                <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-cyan-400 opacity-75"></span>
+                                <span className="relative inline-flex rounded-full h-3 w-3 bg-cyan-500"></span>
+                            </span>
+                        )}
+                    </button>
                 </div>
 
                 <div className="space-y-1 overflow-y-auto pr-1 custom-scrollbar flex-1">
-                    
-                    {!isLoaded && (
-                        <div className="text-white/20 text-xs text-center py-4">Syncing Friends...</div>
-                    )}
-
-                    {isLoaded && friends.length === 0 && (
-                        <div className="text-white/20 text-xs text-center py-4">No friends added yet</div>
-                    )}
+                    {!isLoaded && <div className="text-white/20 text-xs text-center py-4">Syncing...</div>}
+                    {isLoaded && friends.length === 0 && <div className="text-white/20 text-xs text-center py-4">No friends added</div>}
 
                     {onlineFriends.map((friend) => (
                         <FriendRow 
                             key={friend.id} 
                             name={friend.username || "Unknown"} 
                             status={friend.status || "Online"} 
-                            statusColor="text-emerald-400"
+                            statusColor="text-emerald-400" 
                             avatar={friend.avatar} 
+                            onRemove={() => setFriendToRemove(friend)}
+                            onClick={() => navigate(`/profile/${friend.id}`)}
                         />
                     ))}
                     
                     {offlineFriends.length > 0 && (
                         <>
                             <div className="my-4 border-t border-white/5 mx-2"></div>
-                            <h2 className="text-xs font-bold text-white/20 tracking-[0.2em] uppercase mb-3 pl-2">
-                                Offline ({offlineFriends.length})
-                            </h2>
+                            <h2 className="text-xs font-bold text-white/20 tracking-[0.2em] uppercase mb-3 pl-2">Offline</h2>
                             {offlineFriends.map((friend) => (
                                 <FriendRow 
                                     key={friend.id} 
                                     name={friend.username || "Unknown"} 
                                     status="Offline" 
                                     statusColor="text-white/20" 
-                                    isOffline
+                                    isOffline 
                                     avatar={friend.avatar} 
+                                    onRemove={() => setFriendToRemove(friend)}
+                                    onClick={() => navigate(`/profile/${friend.id}`)}
                                 />
                             ))}
                         </>
                     )}
                 </div>
 
-                <button className="w-full mt-4 py-3 rounded-xl border border-white/10 hover:bg-white/5 hover:border-white/20 text-xs text-white/50 hover:text-white font-bold uppercase tracking-widest transition-all flex items-center justify-center gap-2 group">
-                    <UserPlus size={14} className="group-hover:text-cyan-400 transition-colors"/>
-                    <span>Invite Friend</span>
-                </button>
              </div>
           </div>
 
@@ -130,60 +179,5 @@ const Dashboard = () => {
     </div>
   );
 };
-
-
-const StatCard = ({ title, value, subtitle, icon: Icon, color, glow }) => (
-    <div className={`relative overflow-hidden rounded-3xl bg-[#0bc1021]/40 backdrop-blur-xl border border-white/5 p-8 group hover:border-white/10 transition-all duration-300`}>
-        <div className={`absolute -right-4 -top-4 w-24 h-24 rounded-full opacity-10 blur-3xl ${color.replace('text-', 'bg-')}`}></div>
-        <div className="flex justify-between items-start mb-8">
-            <div className={`p-3 rounded-xl bg-white/5 ${color} ${glow} ring-1 ring-white/5`}>
-                <Icon size={24} />
-            </div>
-            <span className="px-3 py-1 rounded-full text-[10px] font-mono bg-white/5 text-white/40 border border-white/5">WEEKLY</span>
-        </div>
-        <div>
-            <h3 className="text-white/40 text-xs font-mono tracking-widest uppercase mb-1">{title}</h3>
-            <div className="text-4xl font-black text-white mb-2 tracking-tight">{value}</div>
-            <p className={`text-xs ${color} font-medium tracking-wide`}>{subtitle}</p>
-        </div>
-    </div>
-);
-
-const HistoryRow = ({ result, opponent, score, date, isWin }) => (
-    <div className="group flex items-center justify-between p-4 rounded-xl hover:bg-white/5 border border-transparent hover:border-white/5 transition-all cursor-pointer">
-        <div className="flex items-center gap-4">
-            <div className={`w-1 h-10 rounded-full ${isWin ? 'bg-emerald-500 shadow-[0_0_10px_#10b981]' : 'bg-red-500/50'}`}></div>
-            <div>
-                <div className="text-sm font-bold text-white mb-1 group-hover:text-cyan-400 transition-colors">{opponent}</div>
-                <div className={`text-[10px] font-mono tracking-wider uppercase ${isWin ? 'text-emerald-400' : 'text-red-400'}`}>{result}</div>
-            </div>
-        </div>
-        <div className="flex flex-col items-end">
-             <div className="text-lg font-bold text-white/80 tracking-widest font-mono">{score}</div>
-             <div className="flex items-center gap-1 text-[10px] text-white/30"><Clock size={10} />{date}</div>
-        </div>
-    </div>
-);
-
-const FriendRow = ({ name, status, statusColor, isOffline, avatar }) => (
-    <div className={`flex items-center gap-3 p-2 rounded-xl hover:bg-white/5 transition-colors cursor-pointer group ${isOffline ? 'opacity-40 hover:opacity-100' : ''}`}>
-        <div className="relative">
-            <img 
-                src={avatar || "/default-avatar.png"} 
-                alt={name}
-                className="w-9 h-9 rounded-full object-cover bg-gray-800 border border-white/10 group-hover:border-cyan-400/50 transition-colors"
-            />
-
-            {!isOffline && (
-                <div className={`absolute bottom-0 right-0 w-2.5 h-2.5 rounded-full border-2 border-[#050b14] ${statusColor.replace('text-', 'bg-')}`}></div>
-            )}
-        </div>
-        
-        <div className="flex-1 min-w-0">
-            <div className="text-sm font-bold text-white/80 group-hover:text-white truncate transition-colors">{name}</div>
-            <div className={`text-[9px] font-mono uppercase tracking-wider truncate ${statusColor}`}>{status}</div>
-        </div>
-    </div>
-);
 
 export default Dashboard;

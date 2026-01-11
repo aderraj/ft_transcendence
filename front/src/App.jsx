@@ -1,14 +1,16 @@
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'; 
+import { AppDataProvider } from "@/contexts/AppDataContext"; 
 import MainLayout from "@/layouts/MainLayout";
 import Login from '@/pages/Login';
 import Dashboard from '@/pages/Dashboard';
 import Profile from '@/pages/Profile';
 import Game from '@/pages/Game';
 import Chat from '@/pages/Chat';
-import { AppDataProvider } from "./contexts/AppDataContext";
+
+
 const ProtectedRoute = ({children}) => {
-  const { user } = useAuth();
+  const { user, loading } = useAuth();
   if (!user) return <Navigate to="/login" replace/>;
   return children;
 }
@@ -23,35 +25,37 @@ function AppRoutes() {
   return (
     <Routes>
       <Route element={ <MainLayout/> }>
+        
         <Route path="/login" element={
           <PublicRoute>
             <Login/>
           </PublicRoute>
         } />
-
         <Route path="/" element={
           <ProtectedRoute>
             <Dashboard/>
           </ProtectedRoute>
         } />
+        
         <Route path="/dashboard" element={
           <ProtectedRoute>
             <Dashboard/>
           </ProtectedRoute>
         } />
+        
         <Route path="/chat" element={
           <ProtectedRoute>
             <Chat/>
           </ProtectedRoute>
         } />
 
-        <Route path="/game" element={
+        <Route path="/game/:roomId?" element={
           <ProtectedRoute>
             <Game/>
           </ProtectedRoute>
         } />
 
-        <Route path="/profile" element={
+        <Route path="/profile/:userId?" element={
           <ProtectedRoute>
             <Profile/>
           </ProtectedRoute>
@@ -63,14 +67,15 @@ function AppRoutes() {
   )
 }
 
+
 export default function App() {
   return (
-    <AuthProvider>
-      <AppDataProvider>
-        <BrowserRouter>
+    <BrowserRouter>
+      <AuthProvider>
+        <AppDataProvider>
           <AppRoutes/>
-        </BrowserRouter>
-      </AppDataProvider>
-    </AuthProvider>
+        </AppDataProvider>
+      </AuthProvider>
+    </BrowserRouter>
   );
 };
