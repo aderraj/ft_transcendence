@@ -4,3 +4,10 @@ export default {
       autoprefixer: {},
     },
   }
+
+// export default {
+//   plugins: {
+//     tailwindcss: {},
+//     autoprefixer: {},
+//   },
+// }
