@@ -16,9 +16,23 @@ interface AuthenticatedSocket extends Socket {
   userId?: string;
 }
 
+// Parse allowed origins from environment
+const getAllowedOrigins = () => {
+  const allowedOriginsEnv = process.env.ALLOWED_ORIGINS || '';
+  const origins = allowedOriginsEnv
+    .split(',')
+    .map(origin => origin.trim())
+    .filter(origin => origin.length > 0);
+  
+  if (origins.length === 0) {
+    return process.env.FRONTEND_URL || 'http://localhost:3000';
+  }
+  return origins;
+};
+
 @WebSocketGateway({
   cors: {
-    origin: process.env.FRONTEND_URL || 'http://localhost:3000',
+    origin: getAllowedOrigins(),
     credentials: true,
   },
   namespace: '/chat',
@@ -37,7 +51,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
 
   async handleConnection(client: AuthenticatedSocket) {
     try {
-      // Extract JWT from handshake
       const token =
         client.handshake.auth.token ||
         client.handshake.headers.authorization?.split(' ')[1];
@@ -47,19 +60,10 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         return;
       }
 
-      // Verify JWT
       const payload = this.jwtService.verify(token);
       client.userId = payload.sub;
-
-      // Store socket connection
       this.userSockets.set(client.userId, client.id);
-
-      // Note: User online status is now handled by FriendsGateway (namespace /friends)
-      // We still track userSockets here for message routing
-
-      console.log(`Client connected to Chat: ${client.id}, User: ${client.userId}`);
     } catch (error) {
-      console.error('WebSocket auth error:', error);
       client.disconnect();
     }
   }
@@ -67,10 +71,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   async handleDisconnect(client: AuthenticatedSocket) {
     if (client.userId) {
       this.userSockets.delete(client.userId);
-
-      // Note: User offline status handled by FriendsGateway
-      
-      console.log(`Client disconnected from Chat: ${client.id}, User: ${client.userId}`);
     }
   }
 
@@ -86,15 +86,12 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
         data.content,
       );
 
-      // Send message to receiver if online
       const receiverSocketId = this.userSockets.get(data.receiverId);
       if (receiverSocketId) {
         this.server.to(receiverSocketId).emit('message:receive', message);
       }
 
-      // Confirm to sender
       client.emit('message:sent', message);
-
       return message;
     } catch (error) {
       client.emit('message:error', { error: error.message });
@@ -109,7 +106,6 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
     try {
       await this.chatService.markAsRead(data.messageId, client.userId);
 
-      // Notify sender that message was read
       const message = await this.prisma.message.findUnique({
         where: { id: data.messageId },
       });
@@ -117,9 +113,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
       if (message) {
         const senderSocketId = this.userSockets.get(message.senderId);
         if (senderSocketId) {
-          this.server
-            .to(senderSocketId)
-            .emit('message:read', { messageId: data.messageId });
+          this.server.to(senderSocketId).emit('message:read', { messageId: data.messageId });
         }
       }
     } catch (error) {
@@ -134,9 +128,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     const receiverSocketId = this.userSockets.get(data.receiverId);
     if (receiverSocketId) {
-      this.server.to(receiverSocketId).emit('typing:start', {
-        userId: client.userId,
-      });
+      this.server.to(receiverSocketId).emit('typing:start', { userId: client.userId });
     }
   }
 
@@ -147,9 +139,7 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     const receiverSocketId = this.userSockets.get(data.receiverId);
     if (receiverSocketId) {
-      this.server.to(receiverSocketId).emit('typing:stop', {
-        userId: client.userId,
-      });
+      this.server.to(receiverSocketId).emit('typing:stop', { userId: client.userId });
     }
   }
 
@@ -182,51 +172,17 @@ export class ChatGateway implements OnGatewayConnection, OnGatewayDisconnect {
   ) {
     const senderSocketId = this.userSockets.get(data.senderId);
     
-    if (data.accepted) { 
-      // Create room and notify both
+    if (data.accepted) {
       const roomId = `game_${Date.now()}_${Math.random().toString(36).substr(2, 9)}`;
       
-      // Notify Sender (User A)
       if (senderSocketId) {
         this.server.to(senderSocketId).emit('game_start', { roomId });
       }
-      
-      // Notify Accepter (User B - Client)
-      // client is a Socket, which has emit
       (client as Socket).emit('game_start', { roomId });
-      
     } else {
-      // Notify Sender of Refusal
       if (senderSocketId) {
-        this.server.to(senderSocketId).emit('invite_declined', { 
-           receiverId: client.userId 
-        });
+        this.server.to(senderSocketId).emit('invite_declined', { receiverId: client.userId });
       }
     }
-  }
-
-  private async notifyFriendsStatus(userId: string, isOnline: boolean) {
-    // Get user's friends
-    const friends = await this.prisma.friend.findMany({
-      where: {
-        OR: [{ userId: userId }, { friendId: userId }],
-      },
-    });
-
-    // Notify each online friend
-    friends.forEach((friendship) => {
-      const friendId =
-        friendship.userId === userId
-          ? friendship.friendId
-          : friendship.userId;
-      const friendSocketId = this.userSockets.get(friendId);
-
-      if (friendSocketId) {
-        this.server.to(friendSocketId).emit('friend:status', {
-          userId: userId,
-          isOnline: isOnline,
-        });
-      }
-    });
   }
 }

@@ -17,12 +17,9 @@ echo "🔄 Running database migrations..."
 if npx prisma migrate deploy 2>&1 | tee /tmp/migrate.log; then
   echo "✅ Migrations applied successfully"
 else
-  # Check the specific error
   if grep -q "P3005" /tmp/migrate.log || grep -q "database schema is not empty" /tmp/migrate.log; then
     echo "⚠️  Database has existing schema but no migration history"
-    echo "📋 This usually happens when db push was used before migrations"
-    echo "🔄 Applying migrations with force..."
-    # Use db push to ensure schema matches, then try migrations again
+    echo " Applying migrations with force..."
     npx prisma db push --skip-generate --accept-data-loss
     echo "✅ Schema synchronized"
   elif grep -q "No pending migrations" /tmp/migrate.log; then
@@ -33,18 +30,14 @@ else
   fi
 fi
 
-# Generate Prisma Client (in case it's not up to date)
+# Generate Prisma Client
 echo "📦 Generating Prisma Client..."
 npx prisma generate
 
-# Seed database if needed (only in development)
-if [ "$NODE_ENV" != "production" ]; then
-  echo "🌱 Checking if database needs seeding..."
-  npx prisma db seed || echo "⚠️  Seeding skipped or failed (might already have data)"
-fi
+# Seeding is now manual - run 'make seed' to seed the database
+echo "ℹ️  To seed the database, run: make seed"
 
 echo "✅ Database setup complete!"
 echo "🎮 Starting application..."
 
-# Execute the CMD from Dockerfile
 exec "$@"

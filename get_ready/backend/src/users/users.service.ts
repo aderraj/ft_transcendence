@@ -42,7 +42,7 @@ export class UsersService {
 
     const usersWithAvatarUrls = users.map((user) => ({
       ...user,
-      avatar: user.avatar && !user.avatar.startsWith('http') ? `${protocol}://${host}:${port}/uploads/avatar/${user.avatar}` : user.avatar,
+      avatar: user.avatar && !user.avatar.startsWith('http') ? `${protocol}://${host}:${port}/uploads/avatars/${user.avatar}` : user.avatar,
     }));
 
     return { users: usersWithAvatarUrls, total, take, skip };
@@ -77,7 +77,7 @@ export class UsersService {
       const protocol = this.configService.get('USE_HTTPS') === 'true' ? 'https' : 'http';
       const host = this.configService.get('HOST_IP') || 'localhost';
       const port = this.configService.get('PORT') || '3001';
-      user.avatar = `${protocol}://${host}:${port}/uploads/avatar/${user.avatar}`;
+      user.avatar = `${protocol}://${host}:${port}/uploads/avatars/${user.avatar}`;
     }
 
     return user;
@@ -108,7 +108,7 @@ export class UsersService {
       const protocol = this.configService.get('USE_HTTPS') === 'true' ? 'https' : 'http';
       const host = this.configService.get('HOST_IP') || 'localhost';
       const port = this.configService.get('PORT') || '3001';
-      user.avatar = `${protocol}://${host}:${port}/uploads/avatar/${user.avatar}`;
+      user.avatar = `${protocol}://${host}:${port}/uploads/avatars/${user.avatar}`;
     }
 
     return user;

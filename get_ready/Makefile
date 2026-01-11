@@ -1,4 +1,4 @@
-.PHONY: help up down restart build clean logs ps health test
+.PHONY: help up down restart build clean logs ps health test seed
 
 # Default target
 help:
@@ -19,6 +19,7 @@ help:
 	@echo "  make shell-front - Open shell in frontend container"
 	@echo "  make shell-db    - Open PostgreSQL shell"
 	@echo "  make test        - Run backend tests"
+	@echo "  make seed        - Seed the database with test data"
 	@echo ""
 
 # Start all services
@@ -95,3 +96,9 @@ shell-db:
 # Run tests
 test:
 	docker exec transcendence-backend npm test
+
+# Seed the database with test data
+seed:
+	@echo "🌱 Seeding database..."
+	docker exec transcendence-backend npx prisma db seed
+	@echo "✅ Database seeded successfully!"

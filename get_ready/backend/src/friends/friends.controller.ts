@@ -14,6 +14,7 @@ import {
   ApiBearerAuth,
 } from '@nestjs/swagger';
 import { FriendsService } from './friends.service';
+import { FriendsGateway } from './friends.gateway';
 import { JwtAuthGuard } from '../auth/guards/jwt-auth.guard';
 import { CurrentUser } from '../common/decorators';
 import { UserEntity } from '../users/entities/user.entity';
@@ -24,7 +25,10 @@ import { FriendRequestEntity } from './entities/friend-request.entity';
 @UseGuards(JwtAuthGuard)
 @ApiBearerAuth()
 export class FriendsController {
-  constructor(private readonly friendsService: FriendsService) {}
+  constructor(
+    private readonly friendsService: FriendsService,
+    private readonly friendsGateway: FriendsGateway,
+  ) {}
 
   @Get()
   @ApiOperation({ summary: 'Get all friends' })
@@ -52,11 +56,24 @@ export class FriendsController {
   @ApiResponse({ status: 201, description: 'Friend request sent', type: FriendRequestEntity })
   @ApiResponse({ status: 404, description: 'User not found' })
   @ApiResponse({ status: 409, description: 'Already friends or request exists' })
-  sendFriendRequest(
+  async sendFriendRequest(
     @CurrentUser() user: any,
     @Param('userId', ParseUUIDPipe) receiverId: string,
   ) {
-    return this.friendsService.sendFriendRequest(user.sub, receiverId);
+    const request = await this.friendsService.sendFriendRequest(user.sub, receiverId);
+    
+    // Notify the receiver via WebSocket
+    if (request && request.receiver) {
+      await this.friendsGateway.notifyFriendRequest(
+        receiverId,
+        request.id,
+        user.sub,
+        request.sender.username,
+        request.sender.displayName || request.sender.username,
+      );
+    }
+    
+    return request;
   }
 
   @Post('request/:requestId/accept')

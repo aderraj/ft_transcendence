@@ -98,17 +98,21 @@ export class AuthController {
     },
   })
   @ApiResponse({ status: 401, description: 'Invalid credentials' })
+  @ApiResponse({ status: 403, description: 'User already has an active session' })
   async login(@Body() loginDto: LoginDto) {
     return this.authService.login(loginDto);
   }
 
-  @Public()
-  @Post('test-login')
+  @UseGuards(JwtAuthGuard)
+  @Post('logout')
   @HttpCode(HttpStatus.OK)
-  @ApiOperation({ summary: 'Get test token (dev only)' })
-  @ApiResponse({ status: 200, description: 'Returns JWT token for test user' })
-  async testLogin() {
-    return this.authService.createTestUser();
+  @ApiBearerAuth()
+  @ApiOperation({ summary: 'Logout and invalidate current session' })
+  @ApiResponse({ status: 200, description: 'Logged out successfully' })
+  @ApiResponse({ status: 401, description: 'Unauthorized' })
+  async logout(@CurrentUser() user: any) {
+    await this.authService.logout(user.sub);
+    return { message: 'Logged out successfully' };
   }
 
   @UseGuards(JwtAuthGuard)
