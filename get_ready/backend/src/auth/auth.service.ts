@@ -9,7 +9,7 @@ import * as QRCode from 'qrcode';
 import { RegisterDto, LoginDto } from './dto';
 
 
-jectable()
+@Injectable()
 export class AuthService {
   private readonly SESSION_EXPIRY_HOURS = 24;
 

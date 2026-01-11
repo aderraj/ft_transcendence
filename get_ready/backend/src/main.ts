@@ -50,8 +50,8 @@ async function bootstrap() {
   }
 
   // Always allow this frontend service
-  if (!allowedOrigins.includes('http://10.14.5.8:5173')) {
-    allowedOrigins.push('http://10.14.5.8:5173');
+  if (!allowedOrigins.includes('http://10.14.5.32:3000')) {
+    allowedOrigins.push('http://10.14.5.32:3000');
   }
 
   app.enableCors({
