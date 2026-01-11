@@ -31,8 +31,8 @@ async function bootstrap() {
         const hostIp = process.env.HOST_IP || 'localhost';
         allowedOrigins.push(frontendUrl, `http://${hostIp}:3000`, `https://${hostIp}:3000`, 'http://localhost:3000', 'https://localhost:3000');
     }
-    if (!allowedOrigins.includes('http://10.14.5.8:5173')) {
-        allowedOrigins.push('http://10.14.5.8:5173');
+    if (!allowedOrigins.includes('http://10.14.5.32:3000')) {
+        allowedOrigins.push('http://10.14.5.32:3000');
     }
     app.enableCors({
         origin: (origin, callback) => {
