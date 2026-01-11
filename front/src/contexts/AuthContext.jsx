@@ -99,6 +99,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     const mapUserData = (data) => ({
+        id: data.id,
         username: data.username || "Commander",
         level: `Level ${data.elo || '1'}`,
         title: data.title || "Rookie",

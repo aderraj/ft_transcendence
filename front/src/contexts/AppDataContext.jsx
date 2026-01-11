@@ -92,7 +92,7 @@ export const AppDataProvider = ({ children }) => {
     const token = localStorage.getItem('accessToken');
     if (!token) return;
 
-    const socket = io('https://10.14.57.32:3001/friends', {
+    const socket = io('https://localhost:3001/friends', {
         auth: { token },
         transports: ['websocket'],
         secure: true,
