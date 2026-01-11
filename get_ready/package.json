@@ -1,0 +1,12 @@
+{
+  "devDependencies": {
+    "@types/node": "^25.0.5"
+  },
+  "dependencies": {
+    "@nestjs/jwt": "^11.0.2",
+    "@nestjs/platform-socket.io": "^11.1.11",
+    "@nestjs/swagger": "^11.2.4",
+    "@nestjs/websockets": "^11.1.11",
+    "socket.io": "^4.8.3"
+  }
+}

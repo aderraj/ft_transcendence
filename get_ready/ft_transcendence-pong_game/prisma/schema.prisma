@@ -1,0 +1,65 @@
+// This is your Prisma schema file
+// Connects to the same database as the main backend
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/client"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// Match the User model from main backend
+model User {
+  id                   String    @id @default(uuid())
+  email                String    @unique
+  username             String    @unique
+  password             String?
+  displayName          String?
+  avatar               String?
+  isOnline             Boolean   @default(false)
+  lastSeen             DateTime?
+  wins                 Int       @default(0)
+  losses               Int       @default(0)
+  level                Int       @default(1)
+  experience           Int       @default(0)
+  twoFactorSecret      String?
+  twoFactorEnabled     Boolean   @default(false)
+  intraId              String?   @unique
+  googleId             String?   @unique
+  resetPasswordToken   String?
+  resetPasswordExpires DateTime?
+  createdAt            DateTime  @default(now())
+  updatedAt            DateTime  @updatedAt
+
+  matchesAsUser1       Match[]   @relation("MatchUser1")
+  matchesAsUser2       Match[]   @relation("MatchUser2")
+
+  @@map("users")
+}
+
+// Match model - maps to backend's "games" table
+model Match {
+  id         String    @id @default(uuid())
+  user1Id    String    @map("player1Id")
+  user2Id    String    @map("player2Id")
+  user1Score Int       @default(0) @map("player1Score")
+  user2Score Int       @default(0) @map("player2Score")
+  winnerId   String?
+  status     GameStatus @default(PENDING)
+  createdAt  DateTime  @default(now())
+  endedAt    DateTime? @map("finishedAt")
+
+  user1 User @relation("MatchUser1", fields: [user1Id], references: [id], onDelete: Cascade)
+  user2 User @relation("MatchUser2", fields: [user2Id], references: [id], onDelete: Cascade)
+
+  @@map("games")
+}
+
+enum GameStatus {
+  PENDING
+  IN_PROGRESS
+  FINISHED
+  CANCELLED
+}
