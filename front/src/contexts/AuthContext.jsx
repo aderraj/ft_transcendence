@@ -7,25 +7,37 @@ export const AuthProvider = ({ children }) => {
     const [user, setUser] =  useState(null);
     const [loading, setLoading] = useState(true);
 
+    const processUserData = (data) => {
+        return {
+            ...data,
+            displayName: data.displayName || data.username || "Commander",
+            avatar: data.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=fallback",
+
+            levelLabel: `Level ${data.level || 1}`, 
+            rankTitle: data.title || "Rookie" 
+        };
+    };
+
     const fetchProfile = async () => {
         try {
-            const res = await authenticatedFetch('/api/users/me');
+            const res = await authenticatedFetch('/api/leaderboard/me');
             
             if (res.ok) {
                 const text = await res.text();
+                if (!text) return false;
                 
-                if (!text)
-                    return false;
                 try {
                     const userData = JSON.parse(text);
-                    setUser(mapUserData(userData));
+                    setUser(processUserData(userData));
                     return true;
                 } catch (e) {
+                    console.error("Auth: Failed to parse user data", e);
                     return false;
                 }
             } 
             return false;
         } catch (err) {
+            console.error("Auth: Profile fetch error", err);
             return false;
         }
     };
@@ -36,13 +48,11 @@ export const AuthProvider = ({ children }) => {
             
             if (token) {
                 const success = await fetchProfile();
-
                 if (!success) {
                     localStorage.removeItem('accessToken');
                     setUser(null);
                 }
             }
-            
             setLoading(false);
         };
         initAuth();
@@ -98,16 +108,8 @@ export const AuthProvider = ({ children }) => {
         setUser(null);
     };
 
-    const mapUserData = (data) => ({
-        id: data.id,
-        username: data.username || "Commander",
-        level: `Level ${data.elo || '1'}`,
-        title: data.title || "Rookie",
-        avatar: data.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=fallback"
-    });
-
     return (
-        <AuthContext.Provider value={{ user, loading, login, verifyTwoFactor, logout }}>
+        <AuthContext.Provider value={{ user, loading, login, verifyTwoFactor, logout, refreshProfile: fetchProfile }}>
             {!loading && children}
         </AuthContext.Provider>
     );

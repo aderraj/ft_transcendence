@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useAuth } from '@/contexts/AuthContext';
 import { ShieldCheck, Lock, User, AlertCircle, Mail, ArrowLeft, UserPlus, Smartphone } from 'lucide-react';
 import '@/styles/index.css';
-import { API_BASE } from '@/utils/api'; // Import API_BASE
+import { API_BASE } from '@/utils/api';
 
 const GoogleIcon = () => (
   <svg viewBox="0 0 24 24" className="w-5 h-5" fill="currentColor">
@@ -149,7 +149,7 @@ const Login = () => {
     }
 
     try {
-        const res = await fetch(`${API_BASE}/api/auth/register`, { // Use API_BASE
+        const res = await fetch(`${API_BASE}/api/auth/register`, {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
             body: JSON.stringify({
@@ -197,14 +197,13 @@ const Login = () => {
     }
   };
 
-  // ... (handleResetSubmit, handleSocialLogin remain unchanged) ...
   const handleResetSubmit = async (e) => {
     e.preventDefault();
     setIsLoading(true);
     setError('');
     setSuccessMsg('');
     try {
-      const res = await fetch(`${API_BASE}/api/auth/forgot-password`, { // Use API_BASE
+      const res = await fetch(`${API_BASE}/api/auth/forgot-password`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email: resetEmail })
@@ -218,13 +217,11 @@ const Login = () => {
     }
   };
   
-  const handleSocialLogin = (provider) => { window.location.href = `${API_BASE}/api/auth/${provider}`; }; // Use API_BASE
+  const handleSocialLogin = (provider) => { window.location.href = `${API_BASE}/api/auth/${provider}`; };
 
-  // --- RENDER ---
   return (
     <div className="w-full max-w-md">
       
-      {/* SHAKE ANIMATION KEYFRAMES (Required for triggerValidationError) */}
       <style>{`
         @keyframes shake {
           10%, 90% { transform: translate3d(-1px, 0, 0); }
@@ -242,7 +239,6 @@ const Login = () => {
                       border border-white/10 border-t-white/20
                       shadow-[0_0_40px_rgba(0,0,0,0.5)]">
         
-        {/* LOGO AREA */}
         <div className="flex justify-center mb-6">
           <div className="w-16 h-16 rounded-full bg-cyan-500/10 flex items-center justify-center border border-cyan-400/30 shadow-[0_0_15px_rgba(34,211,238,0.2)]">
             <ShieldCheck className="w-8 h-8 text-cyan-400" />
@@ -262,7 +258,6 @@ const Login = () => {
            'INITIATE CREDENTIAL RESET'}
         </p>
 
-        {/* FEEDBACK BANNERS */}
         {error && (
           <div className="mb-6 p-3 rounded-lg bg-red-500/10 border border-red-500/20 flex items-center gap-3 animate-pulse">
             <AlertCircle className="w-5 h-5 text-red-400 shrink-0" />
@@ -277,7 +272,6 @@ const Login = () => {
           </div>
         )}
 
-        {/* --- VIEW: LOGIN --- */}
         {view === 'login' && (
           <div className="animate-in fade-in slide-in-from-left-4 duration-300">
             <form onSubmit={handleLoginSubmit} className="space-y-6">
@@ -324,7 +318,6 @@ const Login = () => {
                </button>
             </div>
             
-            {/* SOCIALS */}
             <div className="relative my-8">
                 <div className="absolute inset-0 flex items-center"><span className="w-full border-t border-white/10"></span></div>
                 <div className="relative flex justify-center text-xs uppercase tracking-widest"><span className="bg-transparent px-2 text-white/30 backdrop-blur-xl">Or Authenticate via</span></div>
@@ -342,7 +335,6 @@ const Login = () => {
           </div>
         )}
 
-        {/* --- VIEW: 2FA --- */}
         {view === '2fa' && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
             <form onSubmit={handle2FASubmit} className="space-y-6">
@@ -376,11 +368,9 @@ const Login = () => {
           </div>
         )}
 
-        {/* --- VIEW: REGISTER (Same logic as before, just kept for completeness) --- */}
         {view === 'register' && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
             <form onSubmit={handleRegisterSubmit} className="space-y-4">
-                {/* ... (Register form fields - Email, Username, DisplayName, Password, Confirm) ... */}
                 <div className="group space-y-1">
                     <label className="text-xs font-semibold text-cyan-300/70 uppercase tracking-wider ml-1">Email</label>
                     <div className="relative">
@@ -388,7 +378,6 @@ const Login = () => {
                         <input type="email" required value={registerData.email} onChange={e => {setRegisterData({...registerData, email: e.target.value}); clearFieldError('email');}} className={getInputClass('email')} placeholder="user@example.com" />
                     </div>
                 </div>
-                {/* ... other fields ... */}
                 <div className="group space-y-1">
                     <label className="text-xs font-semibold text-cyan-300/70 uppercase tracking-wider ml-1">Username</label>
                     <div className="relative">
@@ -431,7 +420,6 @@ const Login = () => {
           </div>
         )}
 
-        {/* --- VIEW: FORGOT PASSWORD --- */}
         {view === 'forgot' && (
           <div className="animate-in fade-in slide-in-from-right-4 duration-300">
              <form onSubmit={handleResetSubmit} className="space-y-6">

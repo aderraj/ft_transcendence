@@ -1,7 +1,8 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import { useAuth } from '@/contexts/AuthContext';
 import { useAppData } from '@/contexts/AppDataContext';
-import { TrendingUp, Activity, MoreHorizontal, Inbox } from 'lucide-react';
+import { TrendingUp, Activity, MoreHorizontal, Inbox, Loader2 } from 'lucide-react';
 
 import HighlightCard from '@/components/HighlightCard';
 import StatCard from '@/components/StatCard';
@@ -13,8 +14,11 @@ import ConfirmationModal from '@/components/modals/ConfirmationModal';
 const Dashboard = () => {
   const navigate = useNavigate();
   
+
+  const { user } = useAuth();
+
   const { 
-    friends, stats, history, isLoaded, 
+    friends, history, isLoaded,
     removeFriend, 
     pendingRequests, sentRequests,
     acceptFriendRequest, declineFriendRequest, cancelFriendRequest
@@ -66,7 +70,7 @@ const Dashboard = () => {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                <StatCard 
                  title="Total Matches" 
-                 value={isLoaded ? stats.totalMatches.toLocaleString() : "..."}
+                 value={(user.totalGames || 0).toLocaleString()} 
                  subtitle="+12% from last week"
                  icon={Activity}
                  color="text-cyan-400"
@@ -74,8 +78,8 @@ const Dashboard = () => {
                />
                <StatCard 
                  title="Win Rate" 
-                 value={isLoaded ? `${stats.winRate}%` : "..."} 
-                 subtitle={`${stats.rank} Rank`}
+                 value={`${user.winRate || 0}%`} 
+                 subtitle={`${user.rankTitle || user.rank || 'Unranked'} Rank`}
                  icon={TrendingUp}
                  color="text-emerald-400"
                  glow="shadow-[0_0_20px_rgba(52,211,153,0.2)]"
@@ -104,7 +108,7 @@ const Dashboard = () => {
                         ))
                     ) : (
                         <div className="text-white/20 text-sm py-4 text-center">
-                            {isLoaded ? "No recent matches found." : "Loading history..."}
+                            {isLoaded ? "No recent matches found." : <Loader2 className="h-6 w-6 animate-spin mx-auto text-cyan-400" />}
                         </div>
                     )}
                 </div>
@@ -136,7 +140,7 @@ const Dashboard = () => {
                 </div>
 
                 <div className="space-y-1 overflow-y-auto pr-1 custom-scrollbar flex-1">
-                    {!isLoaded && <div className="text-white/20 text-xs text-center py-4">Syncing...</div>}
+                    {!isLoaded && <div className="text-white/20 text-xs text-center py-4"><Loader2 className="h-4 w-4 animate-spin mx-auto" /></div>}
                     {isLoaded && friends.length === 0 && <div className="text-white/20 text-xs text-center py-4">No friends added</div>}
 
                     {onlineFriends.map((friend) => (

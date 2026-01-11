@@ -23,3 +23,28 @@ export const authenticatedFetch = async (endpoint, options = {}) => {
 
   return response;
 };
+
+
+export const authenticatedFileUpload = async (endpoint, formData, options = {}) => {
+  const token = localStorage.getItem('accessToken');
+  const headers = { ...options.headers };
+
+  if (token)
+      headers['Authorization'] = `Bearer ${token}`;
+
+  const url = endpoint.startsWith('http') ? endpoint : `${API_BASE}${endpoint}`;
+  
+  const response = await fetch(url, {
+    ...options,
+    method: options.method || 'POST',
+    headers,
+    body: formData,
+  });
+
+  if (response.status === 401) {
+    localStorage.removeItem('accessToken');
+    window.location.href = '/login';
+  }
+
+  return response;
+};

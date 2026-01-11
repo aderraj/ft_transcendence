@@ -40,12 +40,24 @@ export default function Chat() {
         });
     }, []);
 
+    const refreshActiveChat = useCallback(async () => {
+        const currentId = activeConversationIdRef.current;
+        if (!currentId) return;
+        try {
+            const res = await authenticatedFetch(`/api/chat/messages/${currentId}`);
+            if (res.ok) {
+                const data = await res.json();
+                setMessageCache(prev => ({ ...prev, [String(currentId)]: data }));
+            }
+        } catch (e) { console.error("Sync failed", e); }
+    }, []);
+
     const allChatEntries = useMemo(() => {
         const convMap = new Map();
         if (Array.isArray(conversations)) {
             conversations.forEach(c => {
-                const partner = c.friend || c.user; 
-                if (partner?.id) convMap.set(String(partner.id), { ...c, friend: partner });
+                const partnerId = c.friend?.id || c.user?.id;
+                if (partnerId) convMap.set(String(partnerId), c);
             });
         }
 
@@ -53,19 +65,9 @@ export default function Chat() {
             const fId = String(friend.id);
             const existingConv = convMap.get(fId);
             if (existingConv) {
-                return {
-                    ...existingConv,
-                    friend: { ...existingConv.friend, ...friend }, 
-                    hasHistory: true
-                };
+                return { ...existingConv, friend: friend, hasHistory: true };
             } else {
-                return {
-                    id: `new-${fId}`,
-                    friend: friend,
-                    lastMessage: null,
-                    unreadCount: 0,
-                    hasHistory: false
-                };
+                return { id: `new-${fId}`, friend: friend, lastMessage: null, unreadCount: 0, hasHistory: false };
             }
         });
 
@@ -100,14 +102,7 @@ export default function Chat() {
     const fetchConversations = async () => {
         try {
             const res = await authenticatedFetch('/api/chat/conversations');
-            if (res.ok) {
-                const rawData = await res.json();
-                const normalized = rawData.map(c => ({
-                    ...c,
-                    friend: c.user 
-                }));
-                setConversations(normalized);
-            }
+            if (res.ok) setConversations(await res.json());
         } catch (err) { console.error("Failed to fetch conversations", err); }
     };
 
@@ -137,49 +132,47 @@ export default function Chat() {
             
             if (String(activeConversationIdRef.current) === senderIdStr) {
                 newSocket.emit('message:read', { messageId: message.id });
+                updateCache(senderIdStr, (prev) => 
+                    prev.map(m => m.id === message.id ? { ...m, isRead: true } : m)
+                );
             } else {
                 setConversations(prev => {
-                    const index = prev.findIndex(c => String(c.friend?.id) === senderIdStr);
+                    const index = prev.findIndex(c => String(c.friend?.id || c.user?.id) === senderIdStr);
                     if (index !== -1) {
-                        const updated = { 
-                            ...prev[index], 
-                            lastMessage: message, 
-                            unreadCount: (prev[index].unreadCount || 0) + 1 
-                        };
+                        const updated = { ...prev[index], lastMessage: message, unreadCount: (prev[index].unreadCount || 0) + 1 };
                         const newArr = [...prev];
                         newArr.splice(index, 1);
                         return [updated, ...newArr];
                     } else {
-                        const newConv = {
-                            friend: { id: senderIdStr }, 
-                            lastMessage: message,
-                            unreadCount: 1
-                        };
-                        return [newConv, ...prev];
+                        return [{ friend: { id: senderIdStr }, lastMessage: message, unreadCount: 1 }, ...prev];
                     }
                 });
             }
         });
 
         newSocket.on('message:read', (data) => {
-            const targetId = data?.messageId || data?.id;
+            const targetId = String(data?.messageId || data?.id);
             if (!targetId) return;
+
 
             setMessageCache(prevCache => {
                 const newCache = { ...prevCache };
                 let found = false;
 
-                for (const friendId in newCache) {
+                Object.keys(newCache).forEach(friendId => {
                     const messages = newCache[friendId];
-                    const msgIndex = messages.findIndex(m => m.id === targetId);
+                    const msgIndex = messages.findIndex(m => String(m.id) === targetId);
 
                     if (msgIndex !== -1) {
                         const newMessages = [...messages];
-                        newMessages[msgIndex] = { ...newMessages[msgIndex], isRead: true };
+                        newMessages[msgIndex] = { ...newMessages[msgIndex], isRead: true, read: true };
                         newCache[friendId] = newMessages;
                         found = true;
-                        break;
                     }
+                });
+
+                if (!found && activeConversationIdRef.current) {
+                    refreshActiveChat();
                 }
                 
                 return found ? newCache : prevCache;
@@ -197,7 +190,7 @@ export default function Chat() {
         fetchConversations();
 
         return () => newSocket.disconnect();
-    }, [user, updateCache]);
+    }, [user, updateCache, refreshActiveChat]);
 
     useEffect(() => {
         if (!activeConversationId) return;
@@ -214,19 +207,31 @@ export default function Chat() {
                     const data = await res.json();
                     const msgs = Array.isArray(data) ? data : [];
                     setMessageCache(prev => ({ ...prev, [idStr]: msgs }));
-                    
+
                     await authenticatedFetch(`/api/chat/messages/${idStr}/read-all`, { method: 'PATCH' });
-                    
+
                     setConversations(prev => prev.map(c => 
-                        String(c.friend?.id) === idStr ? { ...c, unreadCount: 0 } : c
+                        String(c.friend?.id || c.user?.id) === idStr ? { ...c, unreadCount: 0 } : c
                     ));
+
+                    if (chatSocket) {
+                        const unreadFromFriend = msgs.filter(m => 
+                            !m.isRead && 
+                            !m.read && 
+                            String(m.senderId) === idStr
+                        );
+                        
+                        unreadFromFriend.forEach(m => {
+                            chatSocket.emit('message:read', { messageId: m.id });
+                        });
+                    }
                 }
-            } catch (err) { console.error("Failed to fetch messages", err); } 
+            } catch (err) { console.error("Fetch error", err); } 
             finally { setIsLoadingMessages(false); }
         };
 
         loadMessages();
-    }, [activeConversationId]);
+    }, [activeConversationId, chatSocket]); 
 
     const handleSendMessage = async (e) => {
         e?.preventDefault();
@@ -238,12 +243,14 @@ export default function Chat() {
 
         const receiverId = String(activeConversationId);
         const tempId = `temp-${Date.now()}`;
+        
         const tempMsg = {
             id: tempId,
             senderId: user?.id || "me", 
             receiverId: receiverId,
             content: content,
             createdAt: new Date().toISOString(),
+            isRead: false,
             read: false,
             isTemp: true
         };
@@ -251,10 +258,9 @@ export default function Chat() {
         updateCache(receiverId, (prev) => [...prev, tempMsg]);
 
         setConversations(prev => {
-            const index = prev.findIndex(c => String(c.friend?.id) === receiverId);
-            const oldEntry = index !== -1 ? prev[index] : { friend: { id: receiverId } };
-            const updated = { ...oldEntry, lastMessage: tempMsg };
-            
+            const index = prev.findIndex(c => String(c.friend?.id || c.user?.id) === receiverId);
+            const updated = index !== -1 ? { ...prev[index] } : { friend: { id: receiverId } };
+            updated.lastMessage = tempMsg;
             if (index === -1) return [updated, ...prev]; 
             const newArr = [...prev];
             newArr.splice(index, 1);
@@ -265,6 +271,10 @@ export default function Chat() {
             if (response && !response.error) {
                 updateCache(receiverId, (prev) => 
                     prev.map(m => m.id === tempId ? { ...response, ...m, id: response.id || m.id, isTemp: false } : m)
+                );
+            } else {
+                updateCache(receiverId, (prev) => 
+                    prev.map(m => m.id === tempId ? { ...m, isError: true } : m)
                 );
             }
         });
@@ -310,7 +320,6 @@ export default function Chat() {
                 onSendMessage={handleSendMessage}
                 onTyping={handleTyping}
                 inputText={inputText}
-                setInputText={setInputText}
                 onInviteGame={() => sendGameInvite(activeConversationId)}
                 onBack={() => setActiveConversationId(null)}
             />
