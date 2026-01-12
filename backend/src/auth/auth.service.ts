@@ -364,8 +364,11 @@ export class AuthService {
         resetPasswordExpires: null,
       },
     });
+    return {
+       message: 'Password has been reset successfully',
+       username: user.username
+     };
 
-    return { message: 'Password has been reset successfully' };
   }
 
   /**

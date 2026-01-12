@@ -61,6 +61,8 @@ model User {
   gamesAsPlayer2         Game[]          @relation("Player2Games")
   sentMessages           Message[]       @relation("SentMessages")
   receivedMessages       Message[]       @relation("ReceivedMessages")
+  sentGameInvitations    GameInvitation[] @relation("SentGameInvitations")
+  receivedGameInvitations GameInvitation[] @relation("ReceivedGameInvitations")
 
   @@map("users")
 }
@@ -99,6 +101,32 @@ model Friend {
 
   @@unique([userId, friendId])
   @@map("friends")
+}
+
+// Game invitation model - for inviting friends to play
+model GameInvitation {
+  id         String   @id @default(uuid())
+  inviterId  String
+  inviteeId  String
+  gameMode   String   @default("remote") // "remote" or "local"
+  status     GameInvitationStatus @default(PENDING)
+  expiresAt  DateTime // Game invitations expire after 5 minutes
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  inviter    User     @relation("SentGameInvitations", fields: [inviterId], references: [id], onDelete: Cascade)
+  invitee    User     @relation("ReceivedGameInvitations", fields: [inviteeId], references: [id], onDelete: Cascade)
+
+  @@index([inviterId, status])
+  @@index([inviteeId, status])
+  @@index([expiresAt])
+  @@map("game_invitations")
+}
+
+enum GameInvitationStatus {
+  PENDING
+  ACCEPTED
+  DECLINED
 }
 
 // Game model - match history

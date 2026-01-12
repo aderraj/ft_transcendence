@@ -16,27 +16,27 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  server: {
-    host: '0.0.0.0',
-    port: 5173,
-    allowedHosts: 'all',
-    proxy: {
-      '/api': {
-        target: process.env.VITE_API_URL || 'https://localhost',
-        changeOrigin: true,
-        secure: false
-      },
-      '/game': {
-        target: process.env.VITE_API_URL || 'https://localhost',
-        changeOrigin: true,
-        secure: false
-      },
-      '/socket.io': {
-        target: process.env.VITE_API_URL || 'https://localhost',
-        changeOrigin: true,
-        secure: false,
-        ws: true
-      },
+
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        // Vendor chunking (optional, helps caching)
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        }
+      }
+    }
+  },
+
+  server : {
+    fs: {
+      allow: ['..']
     },
   },
+
 })

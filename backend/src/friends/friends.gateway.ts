@@ -226,4 +226,74 @@ export class FriendsGateway
       return { success: false, error: error.message };
     }
   }
+
+  // ============================================
+  // Game Invitation WebSocket Methods
+  // ============================================
+
+  /**
+   * Notify user about game invitation
+   */
+  async notifyGameInvitation(
+    userId: string,
+    invitationId: string,
+    inviterId: string,
+    inviterUsername: string,
+    inviterDisplayName: string,
+    gameMode: string,
+  ) {
+    const socketId = this.userSockets.get(userId);
+    if (socketId) {
+      this.server.to(socketId).emit('friend:game_invitation_received', {
+        invitationId,
+        inviterId,
+        inviterUsername,
+        inviterDisplayName,
+        gameMode,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * Notify inviter that invitation was accepted
+   */
+   async notifyGameInvitationAccepted(
+    inviterId: string,
+    invitationId: string,
+    acceptedByUserId: string,
+    gameMode: string,
+    roomId: string,
+    gameServerUrl: string,
+  ) {
+    const socketId = this.userSockets.get(inviterId);
+    if (socketId) {
+      this.server.to(socketId).emit('friend:game_invitation_accepted', {
+        invitationId,
+        acceptedByUserId,
+        gameMode,
+        roomId,
+        gameServerUrl,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
+
+  /**
+   * Notify user that game invitation was declined/cancelled
+   */
+  async notifyGameInvitationDeclined(
+    userId: string,
+    invitationId: string,
+    declinedByUserId: string,
+  ) {
+    const socketId = this.userSockets.get(userId);
+    if (socketId) {
+      this.server.to(socketId).emit('friend:game_invitation_declined', {
+        invitationId,
+        declinedByUserId,
+        timestamp: new Date().toISOString(),
+      });
+    }
+  }
 }

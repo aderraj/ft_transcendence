@@ -1,8 +1,8 @@
 import React, { createContext, useContext, useState, useEffect, useRef, useCallback } from 'react';
 import { useAuth } from './AuthContext';
-import { authenticatedFetch } from '@/utils/api';
+import { authenticatedFetch, API_BASE } from '@/utils/api';
 import { io } from 'socket.io-client';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const AppDataContext = createContext();
 
@@ -11,8 +11,10 @@ export const useAppData = () => useContext(AppDataContext);
 export const AppDataProvider = ({ children }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const location = useLocation(); // Used to check if we are currently on the chat page
   
   const friendsSocketRef = useRef(null);
+  const chatSocketRef = useRef(null);
   const isFetchingRef = useRef(false);
 
   const [state, setState] = useState({
@@ -21,12 +23,14 @@ export const AppDataProvider = ({ children }) => {
     pendingRequests: [],
     sentRequests: [],
     gameInvites: [],
+    sentGameInvites: [],
     stats: { totalMatches: 0, winRate: 0, rank: 'Unranked' },
     history: [],
+    unreadChatCount: 0, // NEW: Track unread messages
     isLoaded: false, 
   });
 
-
+  // ... (Helper functions: fetchAndPatchFriend, fetchAndPatchPendingRequest, updateFriendStatus) ...
   const fetchAndPatchFriend = async (friendId) => {
     try {
         const res = await authenticatedFetch(`/api/users/${friendId}`);
@@ -59,7 +63,6 @@ export const AppDataProvider = ({ children }) => {
     } catch (e) { }
   };
 
-
   const updateFriendStatus = useCallback((userId, isOnline) => {
     setState(prev => ({
         ...prev,
@@ -71,115 +74,167 @@ export const AppDataProvider = ({ children }) => {
     }));
   }, []);
 
-  const addGameInvite = useCallback((invite) => {
-    setState(prev => {
-        if (prev.gameInvites.some(i => i.senderId === invite.senderId)) return prev;
-        return { ...prev, gameInvites: [invite, ...prev.gameInvites] };
-    });
+  const fetchGameInvites = useCallback(async () => {
+      try {
+          const res = await authenticatedFetch('/api/friends/game-invitations/pending');
+          if (res.ok) {
+              const rawData = await res.json();
+              
+              let receivedInvites = [];
+              let sentInvites = [];
+
+              if (rawData && Array.isArray(rawData.received)) {
+                  receivedInvites = rawData.received;
+                  sentInvites = rawData.sent || [];
+              } else if (Array.isArray(rawData)) {
+                  receivedInvites = rawData;
+              }
+
+              const processedInvites = receivedInvites.map(invite => ({
+                  id: invite.id,
+                  senderId: invite.sender?.id || invite.senderId || invite.inviter?.id || invite.inviterId,
+                  senderName: invite.sender?.username || invite.sender?.displayName || invite.inviter?.username || "Unknown",
+                  createdAt: invite.createdAt
+              }));
+
+              setState(prev => ({ 
+                  ...prev, 
+                  gameInvites: processedInvites,
+                  sentGameInvites: sentInvites 
+              }));
+          }
+      } catch (error) {
+          console.error("Failed to fetch game invites", error);
+      }
   }, []);
 
-  const removeGameInvite = useCallback((senderId) => {
-    setState(prev => ({
-        ...prev,
-        gameInvites: prev.gameInvites.filter(i => i.senderId !== senderId)
-    }));
+  // NEW: Fetch unread count explicitly (re-using conversations endpoint)
+  const fetchUnreadChatCount = useCallback(async () => {
+      try {
+          const res = await authenticatedFetch('/api/chat/conversations');
+          if (res.ok) {
+              const conversations = await res.json();
+              const count = Array.isArray(conversations) 
+                  ? conversations.reduce((acc, conv) => acc + (conv.unreadCount || 0), 0)
+                  : 0;
+              setState(prev => ({ ...prev, unreadChatCount: count }));
+          }
+      } catch (error) {
+          console.error("Failed to fetch chat counts", error);
+      }
   }, []);
 
   useEffect(() => {
     if (!user) return;
-    if (friendsSocketRef.current) return;
-
-    const token = localStorage.getItem('accessToken');
-    if (!token) return;
-
-    const socket = io('https://10.14.57.32.nip.io:3001/friends', {
-        auth: { token },
-        transports: ['websocket'],
-        secure: true,
-        rejectUnauthorized: false
-    });
-
-    socket.on('friend:status', (data) => {
-        if (data?.userId) updateFriendStatus(data.userId, data.isOnline);
-    });
-
-    socket.on('friend:request_received', (data) => {
-        const cachedUser = state.users.find(u => u.id === data.senderId);
-        
-        const newRequest = {
-            id: data.requestId, 
-            senderId: data.senderId,
-            sender: {
-                id: data.senderId,
-                username: data.senderUsername,
-                displayName: data.senderDisplayName,
-                avatar: cachedUser?.avatar || '/default-avatar.png', 
-            },
-            status: 'PENDING',
-            createdAt: new Date().toISOString()
-        };
-
-        setState(prev => {
-             if (prev.pendingRequests.some(r => r.id === newRequest.id)) return prev;
-             return { ...prev, pendingRequests: [newRequest, ...prev.pendingRequests] };
+    
+    // --- FRIENDS SOCKET ---
+    if (!friendsSocketRef.current) {
+        const token = localStorage.getItem('accessToken');
+        const friendsSocket = io(`${API_BASE}/friends`, {
+            auth: { token },
+            transports: ['websocket'],
+            secure: API_BASE.startsWith('https'), 
+            rejectUnauthorized: false 
         });
 
-        if (!cachedUser?.avatar) {
-            fetchAndPatchPendingRequest(data.requestId, data.senderId);
-        }
-    });
+        friendsSocket.on('friend:status', (data) => {
+            if (data?.userId) updateFriendStatus(data.userId, data.isOnline);
+        });
 
-    socket.on('friend:request_accepted', (data) => {
-        setState(prev => {
-            const fromPending = prev.pendingRequests.find(r => r.senderId === data.userId)?.sender;
-            const fromSent = prev.sentRequests.find(r => r.receiverId === data.userId)?.receiver;
-            const fromCache = prev.users.find(u => u.id === data.userId);
-            const resolvedAvatar = fromPending?.avatar || fromSent?.avatar || fromCache?.avatar;
-
-            const newFriend = {
-                id: data.userId,
-                username: data.username,
-                displayName: data.displayName,
-                avatar: resolvedAvatar || '/default-avatar.png',
-                isOnline: true, 
-                status: 'Online'
+        friendsSocket.on('friend:request_received', (data) => {
+            const cachedUser = state.users.find(u => u.id === data.senderId);
+            const newRequest = {
+                id: data.requestId, 
+                senderId: data.senderId,
+                sender: {
+                    id: data.senderId,
+                    username: data.senderUsername,
+                    displayName: data.senderDisplayName,
+                    avatar: cachedUser?.avatar || '/default-avatar.png', 
+                },
+                status: 'PENDING',
+                createdAt: new Date().toISOString()
             };
-
-            if (!resolvedAvatar)
-                fetchAndPatchFriend(data.userId);
-
-            return {
-                ...prev,
-                pendingRequests: prev.pendingRequests.filter(r => r.senderId !== data.userId),
-                sentRequests: prev.sentRequests.filter(r => r.receiverId !== data.userId),
-                friends: [...prev.friends, newFriend]
-            };
+            setState(prev => {
+                if (prev.pendingRequests.some(r => r.id === newRequest.id)) return prev;
+                return { ...prev, pendingRequests: [newRequest, ...prev.pendingRequests] };
+            });
+            if (!cachedUser?.avatar) fetchAndPatchPendingRequest(data.requestId, data.senderId);
         });
-    });
 
-    socket.on('friend:game_invite_received', (data) => {
-        addGameInvite({
-            id: `invite-${Date.now()}`,
-            senderId: data.senderId,
-            senderName: data.senderDisplayName || data.senderUsername || "Unknown"
+        friendsSocket.on('friend:request_accepted', (data) => {
+            setState(prev => {
+                const fromPending = prev.pendingRequests.find(r => r.senderId === data.userId)?.sender;
+                const fromSent = prev.sentRequests.find(r => r.receiverId === data.userId)?.receiver;
+                const fromCache = prev.users.find(u => u.id === data.userId);
+                const resolvedAvatar = fromPending?.avatar || fromSent?.avatar || fromCache?.avatar;
+
+                const newFriend = {
+                    id: data.userId,
+                    username: data.username,
+                    displayName: data.displayName,
+                    avatar: resolvedAvatar || '/default-avatar.png',
+                    isOnline: true, 
+                    status: 'Online'
+                };
+                if (!resolvedAvatar) fetchAndPatchFriend(data.userId);
+                return {
+                    ...prev,
+                    pendingRequests: prev.pendingRequests.filter(r => r.senderId !== data.userId),
+                    sentRequests: prev.sentRequests.filter(r => r.receiverId !== data.userId),
+                    friends: [...prev.friends, newFriend]
+                };
+            });
         });
-    });
 
-    socket.on('friend:game_start', (data) => {
-        if (data.roomId) navigate(`/game/${data.roomId}`);
-    });
+        friendsSocket.on('friend:game_invitation_received', () => fetchGameInvites());
+        friendsSocket.on('friend:game_invitation_accepted', (data) => {
+            const roomId = data.roomId || (data.gameSession && data.gameSession.roomId);
+            if (roomId) navigate(`/game/${roomId}`);
+        });
+        friendsSocket.on('friend:game_start', (data) => {
+            if (data.roomId) navigate(`/game/${data.roomId}`);
+        });
 
-    socket.on('friend:game_invite_declined', (data) => { /* Toast */ });
+        friendsSocketRef.current = friendsSocket;
+    }
 
-    friendsSocketRef.current = socket;
+    // --- CHAT SOCKET (NEW) ---
+    if (!chatSocketRef.current) {
+        const token = localStorage.getItem('accessToken');
+        const chatSocket = io(`${API_BASE}/chat`, {
+            auth: { token },
+            transports: ['websocket'],
+            secure: API_BASE.startsWith('https'),
+            rejectUnauthorized: false
+        });
+
+        chatSocket.on('message:receive', (message) => {
+            // If we are NOT on the chat page, or we are but not in this specific conversation (handling that is complex here, so we simplify),
+            // we increment the badge.
+            // Ideally, Chat.jsx handles 'read' status which triggers 'message:read' event below.
+            setState(prev => ({ ...prev, unreadChatCount: prev.unreadChatCount + 1 }));
+        });
+
+        // When a message is read (by us or updated by server), refresh the true count
+        chatSocket.on('message:read', () => {
+             fetchUnreadChatCount();
+        });
+
+        chatSocketRef.current = chatSocket;
+    }
 
     return () => {
         if (friendsSocketRef.current) {
             friendsSocketRef.current.disconnect();
             friendsSocketRef.current = null;
         }
+        if (chatSocketRef.current) {
+            chatSocketRef.current.disconnect();
+            chatSocketRef.current = null;
+        }
     };
-  }, [user, navigate, updateFriendStatus, addGameInvite, state.users]);
+  }, [user, navigate, updateFriendStatus, fetchGameInvites, state.users, fetchUnreadChatCount]);
 
 
   const fetchAllData = useCallback(async () => {
@@ -187,13 +242,15 @@ export const AppDataProvider = ({ children }) => {
     isFetchingRef.current = true;
 
     try {
-      const [friendsRes, receivedRes, sentRes, statsRes, historyRes, usersRes] = await Promise.all([
+      const [friendsRes, receivedRes, sentRes, statsRes, historyRes, usersRes, invitesRes, conversationsRes] = await Promise.all([
          authenticatedFetch('/api/friends'),
          authenticatedFetch('/api/friends/requests/pending'),
          authenticatedFetch('/api/friends/requests/sent'),
          authenticatedFetch('/api/leaderboard/me'),
          authenticatedFetch('/api/leaderboard/me/history?take=5'),
-         authenticatedFetch('/api/users?take=100')
+         authenticatedFetch('/api/users?take=100'),
+         authenticatedFetch('/api/friends/game-invitations/pending'),
+         authenticatedFetch('/api/chat/conversations') // Fetch conversations to calc unread
       ]);
 
       const friendsData = await friendsRes.json();
@@ -202,6 +259,8 @@ export const AppDataProvider = ({ children }) => {
       const statsData = await statsRes.json();
       const historyData = await historyRes.json();
       const usersData = await usersRes.json();
+      const rawInvites = await invitesRes.json();
+      const conversationsData = await conversationsRes.json();
 
       const processedStats = {
           totalMatches: statsData.totalGames || 0,
@@ -209,14 +268,44 @@ export const AppDataProvider = ({ children }) => {
           rank: statsData.title || `Rank #${statsData.rank || '-'}` 
       };
 
-      const processedHistory = Array.isArray(historyData) ? historyData.map(match => ({
-           id: match.id,
-           result: match.winnerId === user.id ? "VICTORY" : "DEFEAT",
-           opponent: match.winnerId === user.id ? match.loser?.username : match.winner?.username,
-           score: `${match.winnerScore} - ${match.loserScore}`,
-           date: new Date(match.createdAt).toLocaleDateString(),
-           isWin: match.winnerId === user.id
-      })) : [];
+      const processedHistory = Array.isArray(historyData) ? historyData.map(match => {
+           const isPlayer1 = match.player1Id === user.id;
+           const opponent = isPlayer1 ? match.player2 : match.player1;
+           const opponentName = opponent?.username || opponent?.displayName || "Unknown";
+           const isWin = match.winnerId === user.id;
+           let winnerScore = match.winnerId === match.player1Id ? match.player1Score : match.player2Score;
+           let loserScore = match.winnerId === match.player1Id ? match.player2Score : match.player1Score;
+
+           return {
+               id: match.id,
+               result: isWin ? "VICTORY" : "DEFEAT",
+               opponent: opponentName,
+               score: `${winnerScore} - ${loserScore}`,
+               date: match.finishedAt ? new Date(match.finishedAt).toLocaleDateString() : "Recent",
+               isWin: isWin
+           };
+      }) : [];
+
+      let receivedInvites = [];
+      let sentInvites = [];
+      if (rawInvites && Array.isArray(rawInvites.received)) {
+          receivedInvites = rawInvites.received;
+          sentInvites = rawInvites.sent || [];
+      } else if (Array.isArray(rawInvites)) {
+          receivedInvites = rawInvites;
+      }
+
+      const processedInvites = receivedInvites.map(invite => ({
+          id: invite.id,
+          senderId: invite.sender?.id || invite.senderId || invite.inviter?.id || invite.inviterId,
+          senderName: invite.sender?.username || invite.sender?.displayName || invite.inviter?.username || "Unknown",
+          createdAt: invite.createdAt
+      }));
+
+      // Calculate initial unread chat count
+      const initialUnreadCount = Array.isArray(conversationsData) 
+          ? conversationsData.reduce((acc, c) => acc + (c.unreadCount || 0), 0) 
+          : 0;
 
       setState(prev => ({
         ...prev,
@@ -224,8 +313,11 @@ export const AppDataProvider = ({ children }) => {
         pendingRequests: Array.isArray(receivedData) ? receivedData : [],
         sentRequests: Array.isArray(sentData) ? sentData : [],
         users: usersData.users || [],
+        gameInvites: processedInvites,
+        sentGameInvites: sentInvites,
         stats: processedStats,
         history: processedHistory,
+        unreadChatCount: initialUnreadCount,
         isLoaded: true
       }));
 
@@ -237,30 +329,43 @@ export const AppDataProvider = ({ children }) => {
     }
   }, [user]);
 
-  const respondToGameInvite = (senderId, accepted) => {
-    if (friendsSocketRef.current) {
-        friendsSocketRef.current.emit('friend:respond_game_invite', { senderId, accepted });
-        removeGameInvite(senderId);
-    }
+  // ... (respondToGameInvite, sendGameInvite, acceptFriendRequest, declineFriendRequest, sendFriendRequest, removeFriend, cancelFriendRequest) ...
+
+  const respondToGameInvite = async (invitationId, accepted) => {
+      try {
+          if (accepted) {
+              const res = await authenticatedFetch('/api/friends/accept-game', {
+                  method: 'POST',
+                  headers: { 'Content-Type': 'application/json' },
+                  body: JSON.stringify({ invitationId })
+              });
+              if (res.ok) {
+                  const data = await res.json();
+                  setState(prev => ({ ...prev, gameInvites: prev.gameInvites.filter(i => i.id !== invitationId) }));
+                  if (data.gameSession && data.gameSession.roomId) navigate(`/game/${data.gameSession.roomId}`);
+              }
+          } else {
+              const res = await authenticatedFetch(`/api/friends/game-invitation/${invitationId}`, { method: 'DELETE' });
+              if (res.ok) setState(prev => ({ ...prev, gameInvites: prev.gameInvites.filter(i => i.id !== invitationId) }));
+          }
+      } catch (e) { console.error("Error responding to invite:", e); }
   };
 
-  const sendGameInvite = (friendId) => {
-    if (friendsSocketRef.current) {
-        friendsSocketRef.current.emit('friend:invite_game', { friendId });
-        return { success: true };
-    }
-    return { success: false };
+  const sendGameInvite = async (friendId) => {
+      try {
+          const res = await authenticatedFetch('/api/friends/invite-game', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ friendId, gameMode: 'remote' })
+          });
+          return { success: res.ok };
+      } catch (e) { console.error("Error sending invite:", e); return { success: false }; }
   };
 
   const acceptFriendRequest = async (requestId) => {
     if (friendsSocketRef.current) {
         friendsSocketRef.current.emit('friend:accept_request', { requestId }, (response) => {
-            if (response.success) {
-                setState(prev => ({
-                   ...prev,
-                   pendingRequests: prev.pendingRequests.filter(r => r.id !== requestId)
-                }));
-            }
+            if (response.success) setState(prev => ({ ...prev, pendingRequests: prev.pendingRequests.filter(r => r.id !== requestId) }));
         });
     }
   };
@@ -268,9 +373,7 @@ export const AppDataProvider = ({ children }) => {
   const declineFriendRequest = async (requestId) => {
     try {
         const res = await authenticatedFetch(`/api/friends/request/${requestId}/decline`, { method: 'POST' });
-        if (res.ok) {
-            setState(prev => ({ ...prev, pendingRequests: prev.pendingRequests.filter(r => r.id !== requestId) }));
-        }
+        if (res.ok) setState(prev => ({ ...prev, pendingRequests: prev.pendingRequests.filter(r => r.id !== requestId) }));
     } catch (e) { console.error(e); }
   };
 
@@ -289,18 +392,14 @@ export const AppDataProvider = ({ children }) => {
   const removeFriend = async (friendId) => {
     try {
         const res = await authenticatedFetch(`/api/friends/${friendId}`, { method: 'DELETE' });
-        if (res.ok) {
-            setState(prev => ({ ...prev, friends: prev.friends.filter(f => f.id !== friendId) }));
-        }
+        if (res.ok) setState(prev => ({ ...prev, friends: prev.friends.filter(f => f.id !== friendId) }));
     } catch (e) { console.error(e); }
   };
 
   const cancelFriendRequest = async (requestId) => {
     try {
         const res = await authenticatedFetch(`/api/friends/request/${requestId}`, { method: 'DELETE' });
-        if (res.ok) {
-            setState(prev => ({ ...prev, sentRequests: prev.sentRequests.filter(r => r.id !== requestId) }));
-        }
+        if (res.ok) setState(prev => ({ ...prev, sentRequests: prev.sentRequests.filter(r => r.id !== requestId) }));
     } catch (e) { console.error(e); }
   };
 

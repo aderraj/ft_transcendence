@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppData } from '@/contexts/AppDataContext';
-import { Bell, Search, ChevronDown, Check, X, UserPlus, Gamepad2, Loader2 } from 'lucide-react';
+import { Bell, Search, ChevronDown, Check, X, UserPlus, Gamepad2 } from 'lucide-react';
 
 const UserSkeleton = () => (
   <div className="flex items-center gap-3 pl-4 pr-2 py-1.5 rounded-full bg-[#0b1021]/60 border border-white/5 backdrop-blur-xl animate-pulse">
@@ -89,7 +89,8 @@ const TopBar = () => {
   return (
     <header className="w-full flex items-center justify-between px-8 pt-8 pb-4 relative z-50">
       
-      <h1 className="text-3xl font-light text-white tracking-[0.15em] uppercase drop-shadow-[0_0_10px_rgba(34,211,238,0.5)]">
+      {/* Updated Font Styles: font-black, italic, slightly increased shadow */}
+      <h1 className="text-3xl font-black italic text-white tracking-widest uppercase drop-shadow-[0_0_15px_rgba(34,211,238,0.6)]">
         {getPageTitle(location.pathname)}
       </h1>
 
@@ -165,7 +166,7 @@ const TopBar = () => {
                 ) : (
                   <>
                     {gameInvites.map((invite) => (
-                      <div key={invite.senderId} className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center gap-3">
+                      <div key={invite.id} className="p-3 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center gap-3">
                         <div className="w-10 h-10 rounded-full bg-purple-500/20 flex items-center justify-center text-purple-400">
                             <Gamepad2 size={20} />
                         </div>
@@ -174,8 +175,8 @@ const TopBar = () => {
                           <p className="text-[10px] text-purple-300">Invited you to play</p>
                         </div>
                         <div className="flex gap-1">
-                           <button onClick={() => respondToGameInvite(invite.senderId, true)} className="p-2 bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-white rounded-lg"><Check size={14}/></button>
-                           <button onClick={() => respondToGameInvite(invite.senderId, false)} className="p-2 bg-white/10 hover:bg-white/20 text-white/50 hover:text-white rounded-lg"><X size={14}/></button>
+                           <button onClick={() => respondToGameInvite(invite.id, true)} className="p-2 bg-emerald-500/20 hover:bg-emerald-500 text-emerald-400 hover:text-white rounded-lg"><Check size={14}/></button>
+                           <button onClick={() => respondToGameInvite(invite.id, false)} className="p-2 bg-white/10 hover:bg-white/20 text-white/50 hover:text-white rounded-lg"><X size={14}/></button>
                         </div>
                       </div>
                     ))}

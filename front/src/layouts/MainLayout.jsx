@@ -27,7 +27,7 @@ const MainLayout = () => {
             
             <main className='flex-1 flex flex-col relative pl-24 h-full overflow-hidden'>
                 <TopBar/>
-                <div className='flex-11 overflow-y-auto px-8 pb-8 scrollbar-hide'>
+                <div className='flex-1 overflow-y-auto px-8 pb-8 scrollbar-hide'>
                   <Outlet/>
                 </div>
             </main>

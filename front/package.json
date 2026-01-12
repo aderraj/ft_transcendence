@@ -30,7 +30,8 @@
     "socket.io-client": "^4.8.3",
     "tailwind-merge": "^3.4.0",
     "tailwindcss-animate": "^1.0.7",
-    "three": "^0.182.0"
+    "three": "^0.182.0",
+    "@pixelpong/shared": "file:../shared"
   },
   "devDependencies": {
     "@eslint/js": "^9.39.1",

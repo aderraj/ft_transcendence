@@ -2,31 +2,22 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Install netcat for healthcheck
-RUN apk add --no-cache netcat-openbsd
+# 1. Copy Shared Library First
+COPY shared ./shared
 
-# Copy package files
-COPY package*.json ./
+# 2. Copy Game Server
+COPY ft_transcendence-pong_game ./ft_transcendence-pong_game
 
-# Install dependencies
+# 3. Install Shared Dependencies
+WORKDIR /app/shared
 RUN npm install
 
-# Copy prisma schema and config
-COPY prisma ./prisma
-COPY prisma.config.ts ./
+# 4. Install Game Server Dependencies
+WORKDIR /app/ft_transcendence-pong_game
+RUN npm install
 
-# Copy application code
-COPY . .
-
-# Copy entrypoint script
-COPY docker-entrypoint.sh /usr/local/bin/
-RUN chmod +x /usr/local/bin/docker-entrypoint.sh
-
-# Expose port
+# 5. Expose Port
 EXPOSE 3002
 
-# Use entrypoint script
-ENTRYPOINT ["docker-entrypoint.sh"]
-
-# Generate Prisma client and start application
-CMD ["npm", "start"]
+# 6. Run Server
+CMD sh -c "npx prisma generate && npm start"

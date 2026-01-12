@@ -12,42 +12,45 @@ export const AuthProvider = ({ children }) => {
             ...data,
             displayName: data.displayName || data.username || "Commander",
             avatar: data.avatar || "https://api.dicebear.com/7.x/avataaars/svg?seed=fallback",
-
             levelLabel: `Level ${data.level || 1}`, 
             rankTitle: data.title || "Rookie" 
         };
     };
 
-    const fetchProfile = async () => {
+    const refreshUser = async () => {
         try {
             const res = await authenticatedFetch('/api/leaderboard/me');
-            
             if (res.ok) {
                 const text = await res.text();
                 if (!text) return false;
-                
                 try {
                     const userData = JSON.parse(text);
                     setUser(processUserData(userData));
                     return true;
-                } catch (e) {
-                    console.error("Auth: Failed to parse user data", e);
-                    return false;
-                }
+                } catch (e) { return false; }
             } 
             return false;
-        } catch (err) {
-            console.error("Auth: Profile fetch error", err);
-            return false;
-        }
+        } catch (err) { return false; }
     };
 
     useEffect(() => {
         const initAuth = async () => {
+            const isResetPage = window.location.pathname.includes('reset-password');
+            
+            if (!isResetPage) {
+                const params = new URLSearchParams(window.location.search);
+                const tokenFromUrl = params.get('token');
+
+                if (tokenFromUrl) {
+                    localStorage.setItem('accessToken', tokenFromUrl);
+                    window.history.replaceState({}, document.title, window.location.pathname);
+                }
+            }
+
             const token = localStorage.getItem('accessToken');
             
             if (token) {
-                const success = await fetchProfile();
+                const success = await refreshUser();
                 if (!success) {
                     localStorage.removeItem('accessToken');
                     setUser(null);
@@ -78,10 +81,9 @@ export const AuthProvider = ({ children }) => {
 
         if (data.access_token) {
             localStorage.setItem('accessToken', data.access_token);
-            await fetchProfile();
+            await refreshUser();
             return { success: true };
         }
-
         throw new Error("Unexpected server response");
     };
 
@@ -94,10 +96,9 @@ export const AuthProvider = ({ children }) => {
         if (!res.ok) throw new Error('Invalid Code');
 
         const data = await res.json();
-
         if (data.access_token) {
             localStorage.setItem('accessToken', data.access_token);
-            await fetchProfile();
+            await refreshUser();
             return true;
         }
         return false;
@@ -109,7 +110,7 @@ export const AuthProvider = ({ children }) => {
     };
 
     return (
-        <AuthContext.Provider value={{ user, loading, login, verifyTwoFactor, logout, refreshProfile: fetchProfile }}>
+        <AuthContext.Provider value={{ user, loading, login, verifyTwoFactor, logout, refreshUser }}>
             {!loading && children}
         </AuthContext.Provider>
     );

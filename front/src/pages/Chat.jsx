@@ -95,9 +95,11 @@ export default function Chat() {
         allChatEntries.find(c => String(c?.friend?.id) === String(activeConversationId)), 
     [allChatEntries, activeConversationId]);
 
-    const activeMessages = useMemo(() => 
-        (activeConversationId ? messageCache[String(activeConversationId)] : []) || [], 
-    [messageCache, activeConversationId]);
+    // UPDATED: Sort messages by creation time
+    const activeMessages = useMemo(() => {
+        const msgs = (activeConversationId ? messageCache[String(activeConversationId)] : []) || [];
+        return [...msgs].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));
+    }, [messageCache, activeConversationId]);
 
     const fetchConversations = async () => {
         try {

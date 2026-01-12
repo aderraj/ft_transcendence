@@ -4,9 +4,7 @@
 # ============================================
 
 services:
-  # ============================================
-  # SSL Certificate Generator (runs once)
-  # ============================================
+  # ... (ssl-init and postgres remain the same) ...
   ssl-init:
     image: alpine:latest
     container_name: pong-ssl-init
@@ -78,7 +76,15 @@ services:
   # ============================================
   postgres:
     image: postgres:16-alpine
-    container_name: pong-postgres
+    container_name: transcendence-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-transcendence}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-transcendence}
+      POSTGRES_DB: ${POSTGRES_DB:-transcendence}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - '5433:5432'
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - secrets-data:/secrets:ro
@@ -160,16 +166,19 @@ services:
   # ============================================
   frontend:
     build:
-      context: ./front
-      dockerfile: Dockerfile.dev
-    container_name: pong-frontend
-    expose:
-      - "5173"
+      context: .
+      dockerfile: ./front/Dockerfile.dev
+    container_name: transcendence-frontend
+    restart: unless-stopped
     ports:
       - "3000:5173"  # Map external 3000 to Vite's 5173
     volumes:
-      - ./front:/app
-      - /app/node_modules
+      # Mount 'front' SUBDIRECTORY to '/app/front'
+      - ./front:/app/front
+      # Prevent node_modules from being overwritten by the mount
+      - /app/front/node_modules
+      # Mount 'shared' to '/app/shared'
+      - ./shared:/app/shared
       - ./ssl:/app/ssl:ro
     environment:
       - NODE_ENV=${NODE_ENV:-development}
@@ -197,24 +206,19 @@ services:
   # ============================================
   game:
     build:
-      context: ./ft_transcendence-pong_game
-      dockerfile: Dockerfile
-    container_name: pong-game
-    expose:
-      - "3002"
+      context: .
+      dockerfile: ./ft_transcendence-pong_game/Dockerfile
+    container_name: transcendence-game
+    restart: unless-stopped
     ports:
       - "3002:3002"  # Direct access for debugging
     volumes:
-      - ./ft_transcendence-pong_game:/app
-      - /app/node_modules
-      - secrets-data:/secrets:ro
-    environment:
-      - PORT=3002
-      - NODE_ENV=${NODE_ENV:-development}
-      - VAULT_SECRETS_PATH=/secrets
-      - HOST_IP=${HOST_IP:-localhost}
-      # CORS
-      - ALLOWED_ORIGINS=https://${HOST_IP:-localhost},http://${HOST_IP:-localhost}:3000,https://${HOST_IP:-localhost}:3000,http://localhost:3000,https://localhost:3000,http://localhost:5173,https://localhost
+      # Mount 'game' SUBDIRECTORY to match directory name
+      - ./ft_transcendence-pong_game:/app/ft_transcendence-pong_game
+      # Prevent node_modules overwrite
+      - /app/ft_transcendence-pong_game/node_modules
+      # Mount shared
+      - ./shared:/app/shared
     depends_on:
       vault:
         condition: service_healthy
