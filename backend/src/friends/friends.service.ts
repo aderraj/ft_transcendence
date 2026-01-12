@@ -308,4 +308,287 @@ export class FriendsService {
     });
     return !!friendship;
   }
+
+  // ============================================
+  // Game Invitation Methods
+  // ============================================
+
+  /**
+   * Invite a friend to play a game
+   */
+  async inviteFriendToGame(
+    inviterId: string,
+    inviteeId: string,
+    gameMode: string = 'remote',
+  ) {
+    // Check if users are friends
+    const areFriends = await this.areFriends(inviterId, inviteeId);
+    if (!areFriends) {
+      throw new BadRequestException('You can only invite friends to play');
+    }
+
+    // Check if invitee exists and is online (optional check)
+    const invitee = await this.prisma.user.findUnique({
+      where: { id: inviteeId },
+      select: { id: true, username: true, displayName: true, isOnline: true },
+    });
+
+    if (!invitee) {
+      throw new NotFoundException('Friend not found');
+    }
+
+    // Optional: Check if user is online
+    // if (!invitee.isOnline) {
+    //   throw new BadRequestException('Friend is currently offline');
+    // }
+
+    // Check for existing pending game invitation
+    const existingInvitation = await this.prisma.gameInvitation.findFirst({
+      where: {
+        inviterId,
+        inviteeId,
+        status: 'PENDING',
+        expiresAt: {
+          gt: new Date(), // Not expired
+        },
+      },
+    });
+
+    if (existingInvitation) {
+      throw new ConflictException('Game invitation already sent to this friend');
+    }
+
+    // Create game invitation (expires in 5 minutes)
+    const expiresAt = new Date(Date.now() + 5 * 60 * 1000);
+
+    const invitation = await this.prisma.gameInvitation.create({
+      data: {
+        inviterId,
+        inviteeId,
+        gameMode,
+        status: 'PENDING',
+        expiresAt,
+      },
+      include: {
+        inviter: {
+          select: {
+            id: true,
+            username: true,
+            displayName: true,
+            avatar: true,
+          },
+        },
+        invitee: {
+          select: {
+            id: true,
+            username: true,
+            displayName: true,
+            avatar: true,
+          },
+        },
+      },
+    });
+
+    return {
+      invitationId: invitation.id,
+      gameMode: invitation.gameMode,
+      inviter: {
+        ...invitation.inviter,
+        avatar: this.getAvatarUrl(invitation.inviter.avatar),
+      },
+      invitee: {
+        ...invitation.invitee,
+        avatar: this.getAvatarUrl(invitation.invitee.avatar),
+      },
+      createdAt: invitation.createdAt,
+      expiresAt: invitation.expiresAt,
+    };
+  }
+
+  /**
+   * Accept game invitation
+   */
+  async acceptGameInvitation(userId: string, invitationId: string) {
+    // Find invitation
+    const invitation = await this.prisma.gameInvitation.findUnique({
+      where: { id: invitationId },
+      include: {
+        inviter: {
+          select: { id: true, username: true, displayName: true },
+        },
+        invitee: {
+          select: { id: true, username: true, displayName: true },
+        },
+      },
+    });
+
+    if (!invitation) {
+      throw new NotFoundException('Game invitation not found');
+    }
+
+    // Verify the user is the invitee
+    if (invitation.inviteeId !== userId) {
+      throw new BadRequestException('This invitation is not for you');
+    }
+
+    // Check if invitation is still pending
+    if (invitation.status !== 'PENDING') {
+      throw new BadRequestException('Invitation has already been processed');
+    }
+
+    // Check if invitation has expired
+    if (new Date() > invitation.expiresAt) {
+      // Delete expired invitation
+      await this.prisma.gameInvitation.delete({ where: { id: invitationId } });
+      throw new BadRequestException('Invitation has expired');
+    }
+
+    // Update invitation status
+    await this.prisma.gameInvitation.update({
+      where: { id: invitationId },
+      data: { status: 'ACCEPTED' },
+    });
+
+    // Generate game session details
+    const gameServerUrl = process.env.GAME_SERVER_URL || 'ws://localhost:3002/websocket';
+    const roomId = `game-${invitation.inviterId}-${invitation.inviteeId}-${Date.now()}`;
+
+    return {
+      message: 'Game invitation accepted',
+      gameSession: {
+        invitationId: invitation.id,
+        gameMode: invitation.gameMode,
+        player1Id: invitation.inviterId,
+        player1Username: invitation.inviter.username,
+        player2Id: invitation.inviteeId,
+        player2Username: invitation.invitee.username,
+        gameServerUrl,
+        roomId,
+        connectionParams: {
+          user_id: userId,
+          room: roomId,
+          mode: invitation.gameMode,
+        },
+      },
+    };
+  }
+
+  /**
+   * Decline game invitation
+   */
+  async declineGameInvitation(userId: string, invitationId: string) {
+    const invitation = await this.prisma.gameInvitation.findUnique({
+      where: { id: invitationId },
+    });
+
+    if (!invitation) {
+      throw new NotFoundException('Game invitation not found');
+    }
+
+    // User can decline if they are invitee or cancel if they are inviter
+    if (invitation.inviteeId !== userId && invitation.inviterId !== userId) {
+      throw new BadRequestException('You are not part of this invitation');
+    }
+
+    // Check if invitation is still pending
+    if (invitation.status !== 'PENDING') {
+      throw new BadRequestException('Invitation has already been processed');
+    }
+
+    // Update status
+    await this.prisma.gameInvitation.update({
+      where: { id: invitationId },
+      data: { status: 'DECLINED' },
+    });
+
+    return {
+      message:
+        invitation.inviteeId === userId
+          ? 'Game invitation declined'
+          : 'Game invitation cancelled',
+      inviterId: invitation.inviterId,
+      inviteeId: invitation.inviteeId,
+    };
+  }
+
+  /**
+   * Get pending game invitations (received and sent)
+   */
+  async getPendingGameInvitations(userId: string) {
+    const now = new Date();
+
+    // Get received invitations
+    const received = await this.prisma.gameInvitation.findMany({
+      where: {
+        inviteeId: userId,
+        status: 'PENDING',
+        expiresAt: { gt: now },
+      },
+      include: {
+        inviter: {
+          select: {
+            id: true,
+            username: true,
+            displayName: true,
+            avatar: true,
+            isOnline: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Get sent invitations
+    const sent = await this.prisma.gameInvitation.findMany({
+      where: {
+        inviterId: userId,
+        status: 'PENDING',
+        expiresAt: { gt: now },
+      },
+      include: {
+        invitee: {
+          select: {
+            id: true,
+            username: true,
+            displayName: true,
+            avatar: true,
+            isOnline: true,
+          },
+        },
+      },
+      orderBy: { createdAt: 'desc' },
+    });
+
+    // Clean up expired invitations
+    await this.prisma.gameInvitation.deleteMany({
+      where: {
+        OR: [{ inviterId: userId }, { inviteeId: userId }],
+        status: 'PENDING',
+        expiresAt: { lte: now },
+      },
+    });
+
+    return {
+      received: received.map((inv) => ({
+        id: inv.id,
+        gameMode: inv.gameMode,
+        inviter: {
+          ...inv.inviter,
+          avatar: this.getAvatarUrl(inv.inviter.avatar),
+        },
+        createdAt: inv.createdAt,
+        expiresAt: inv.expiresAt,
+      })),
+      sent: sent.map((inv) => ({
+        id: inv.id,
+        gameMode: inv.gameMode,
+        invitee: {
+          ...inv.invitee,
+          avatar: this.getAvatarUrl(inv.invitee.avatar),
+        },
+        createdAt: inv.createdAt,
+        expiresAt: inv.expiresAt,
+      })),
+    };
+  }
 }
