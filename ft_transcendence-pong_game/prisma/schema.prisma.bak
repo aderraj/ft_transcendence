@@ -8,30 +8,34 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+  url      = env("DATABASE_URL")
 }
 
 // Match the User model from main backend
 model User {
-  id                   String    @id @default(uuid())
-  email                String    @unique
-  username             String    @unique
-  password             String?
-  displayName          String?
-  avatar               String?
-  isOnline             Boolean   @default(false)
-  lastSeen             DateTime?
-  wins                 Int       @default(0)
-  losses               Int       @default(0)
-  level                Int       @default(1)
-  experience           Int       @default(0)
-  twoFactorSecret      String?
-  twoFactorEnabled     Boolean   @default(false)
-  intraId              String?   @unique
-  googleId             String?   @unique
-  resetPasswordToken   String?
-  resetPasswordExpires DateTime?
-  createdAt            DateTime  @default(now())
-  updatedAt            DateTime  @updatedAt
+  id                    String    @id @default(uuid())
+  email                 String    @unique
+  username              String    @unique
+  password              String?
+  displayName           String?
+  avatar                String?
+  isOnline              Boolean   @default(false)
+  lastSeen              DateTime?
+  wins                  Int       @default(0)
+  losses                Int       @default(0)
+  level                 Int       @default(1)
+  experience            Int       @default(0)
+  twoFactorSecret       String?
+  twoFactorEnabled      Boolean   @default(false)
+  intraId               String?   @unique
+  fortytwoId            String?   @unique
+  googleId              String?   @unique
+  resetPasswordToken    String?
+  resetPasswordExpires  DateTime?
+  currentSessionToken   String?   @unique
+  sessionExpiresAt      DateTime?
+  createdAt             DateTime  @default(now())
+  updatedAt             DateTime  @updatedAt
 
   matchesAsUser1       Match[]   @relation("MatchUser1")
   matchesAsUser2       Match[]   @relation("MatchUser2")
@@ -48,6 +52,7 @@ model Match {
   user2Score Int       @default(0) @map("player2Score")
   winnerId   String?
   status     GameStatus @default(PENDING)
+  startedAt  DateTime?
   createdAt  DateTime  @default(now())
   endedAt    DateTime? @map("finishedAt")
 
@@ -63,3 +68,4 @@ enum GameStatus {
   FINISHED
   CANCELLED
 }
+

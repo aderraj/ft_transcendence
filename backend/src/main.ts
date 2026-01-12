@@ -38,12 +38,12 @@ async function bootstrap() {
 
   // Add default origins if none specified
   if (allowedOrigins.length === 0) {
-    const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
-    const hostIp = process.env.HOST_IP || 'localhost';
+    // const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
+    // const hostIp = process.env.HOST_IP || 'localhost';
     allowedOrigins.push(
-      frontendUrl,
-      `http://${hostIp}:3000`,
-      `https://${hostIp}:3000`,
+      // frontendUrl,
+      // `http://${hostIp}:3000`,
+      // `https://${hostIp}:3000`,
       'http://localhost:3000',
       'https://localhost:3000',
       'https://localhost:3001',
@@ -55,24 +55,24 @@ async function bootstrap() {
     allowedOrigins.push('http://localhost:3000');
   }
 
-  app.enableCors({
-    origin: (origin, callback) => {
-      // Allow requests with no origin (like mobile apps, Postman, curl)
-      if (!origin || allowedOrigins.includes(origin)) {
-        // Only log actual origins, not undefined (from curl/Postman/etc)
-        if (origin) {
-          console.log(`CORS allowed origin: ${origin}`);
-        }
-        callback(null, true);
-      } else {
-        console.log(`CORS blocked origin: ${origin}`);
-        callback(new Error('Not allowed by CORS'));
-      }
-    },
-    credentials: true,
-  });
+  // app.enableCors({
+  //   origin: (origin, callback) => {
+  //     // Allow requests with no origin (like mobile apps, Postman, curl)
+  //     if (!origin || allowedOrigins.includes(origin)) {
+  //       // Only log actual origins, not undefined (from curl/Postman/etc)
+  //       if (origin) {
+  //         console.log(`CORS allowed origin: ${origin}`);
+  //       }
+  //       callback(null, true);
+  //     } else {
+  //       console.log(`CORS blocked origin: ${origin}`);
+  //       callback(new Error('Not allowed by CORS'));
+  //     }
+  //   },
+  //   credentials: true,
+  // });
 
-  console.log('✅ Allowed CORS origins:', allowedOrigins);
+  // console.log('✅ Allowed CORS origins:', allowedOrigins);
 
   // Swagger setup
   const config = new DocumentBuilder()

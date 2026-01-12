@@ -1,17 +1,40 @@
-# Development Dockerfile with hot-reload
+# # Development Dockerfile with hot-reload
+# FROM node:20-alpine
+
+# WORKDIR /app
+# COPY shared ./shared
+# COPY front ./
+
+# WORKDIR /app/shared
+# RUN npm install
+
+# WORKDIR /app
+# RUN npm install
+
+# EXPOSE 5173
+
+# # Start development server
+# CMD ["npm", "run", "dev", "--", "--host"]
+
+
 FROM node:20-alpine
 
 WORKDIR /app
-COPY shared ./shared
-COPY front ./
 
+# Copy shared first
+COPY shared ./shared
+
+# Copy front to subdirectory (matches volume mount)
+COPY front ./front
+
+# Install shared dependencies
 WORKDIR /app/shared
 RUN npm install
 
-WORKDIR /app
+# Install front dependencies
+WORKDIR /app/front
 RUN npm install
 
 EXPOSE 5173
 
-# Start development server
 CMD ["npm", "run", "dev", "--", "--host"]
