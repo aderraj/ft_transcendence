@@ -1,8 +1,3 @@
-# ============================================
-# ft_transcendence - Merged Docker Compose
-# Backend, Frontend, Game, Vault + DevOps Infra
-# ============================================
-
 services:
   # ============================================
   # SSL Certificate Generator (runs once)
@@ -11,7 +6,7 @@ services:
     image: alpine:latest
     container_name: pong-ssl-init
     volumes:
-      - ./ssl:/ssl
+      - ./get_ready/ssl:/ssl
       - ssl-certs:/certs
     entrypoint: /bin/sh
     command:
@@ -24,8 +19,7 @@ services:
           openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
             -keyout /ssl/key.pem \
             -out /ssl/cert.pem \
-            -subj "/C=US/ST=State/L=City/O=Transcendence/CN=$${HOST_IP:-localhost}" \
-            -addext "subjectAltName = IP:$${HOST_IP:-127.0.0.1},DNS:$${HOST_IP:-localhost}.nip.io";
+            -subj "/C=US/ST=State/L=City/O=Transcendence/CN=$${HOST_IP:-localhost}";
           chmod 644 /ssl/cert.pem /ssl/key.pem;
           echo '✅ SSL certificates generated successfully';
         else
@@ -37,7 +31,7 @@ services:
     environment:
       - HOST_IP=${HOST_IP:-localhost}
     networks:
-      - transcendence-network
+      - secure_net
 
   # ============================================
   # Vault (Secrets Management - starts first)
@@ -65,7 +59,7 @@ services:
       - ./infra/vault/config:/vault/config:ro
       - secrets-data:/secrets
     networks:
-      - transcendence-network
+      - secure_net
     healthcheck:
       test: ["CMD-SHELL", "[ -f /secrets/.ready ] || exit 1"]
       interval: 5s
@@ -77,23 +71,21 @@ services:
   # PostgreSQL Database
   # ============================================
   postgres:
-    image: postgres:16-alpine
+    image: postgres:15-alpine
     container_name: pong-postgres
     volumes:
       - postgres-data:/var/lib/postgresql/data
       - secrets-data:/secrets:ro
     expose:
       - "5432"
-    ports:
-      - "5433:5432"  # External access for debugging
     networks:
-      - transcendence-network
+      - secure_net
     entrypoint: ["/bin/sh", "-c", "while [ ! -f /secrets/.ready ]; do sleep 1; done; export POSTGRES_PASSWORD=$$(cat /secrets/db_password); docker-entrypoint.sh postgres"]
     environment:
-      - POSTGRES_USER=transcendence
-      - POSTGRES_DB=transcendence
+      - POSTGRES_USER=pong
+      - POSTGRES_DB=pong
     healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U transcendence -d transcendence"]
+      test: ["CMD-SHELL", "pg_isready -U pong -d pong"]
       interval: 5s
       timeout: 5s
       retries: 10
@@ -103,31 +95,29 @@ services:
     restart: unless-stopped
 
   # ============================================
-  # NestJS Backend
+  # NestJS Backend (from get_ready)
   # ============================================
   backend:
     build:
-      context: ./backend
+      context: ./get_ready/backend
       dockerfile: Dockerfile.dev
     container_name: pong-backend
     expose:
       - "3001"
-    ports:
-      - "3001:3001"  # Direct access for debugging
     volumes:
-      - ./backend:/app
+      - ./get_ready/backend:/app
       - /app/node_modules
       - uploads-data:/app/uploads
-      - ./ssl:/app/ssl:ro
+      - ./get_ready/ssl:/app/ssl:ro
       - secrets-data:/secrets:ro
     environment:
-      # Secrets read from /secrets volume (populated by Vault)
+      # All secrets are read from /secrets volume (populated by Vault)
       - VAULT_SECRETS_PATH=/secrets
       - NODE_ENV=${NODE_ENV:-development}
       - PORT=3001
       - USE_HTTPS=false
       - HOST_IP=${HOST_IP:-localhost}
-      # URLs constructed from HOST_IP
+      # URLs constructed from HOST_IP (non-sensitive)
       - FRONTEND_URL=https://${HOST_IP:-localhost}
       - OAUTH_42_CALLBACK_URL=https://${HOST_IP:-localhost}/api/auth/42/callback
       - GOOGLE_CALLBACK_URL=https://${HOST_IP:-localhost}/api/auth/google/callback
@@ -136,8 +126,6 @@ services:
       - SMTP_PORT=${SMTP_PORT:-587}
       - SMTP_SECURE=${SMTP_SECURE:-false}
       - EMAIL_FROM=${EMAIL_FROM:-noreply@localhost}
-      # CORS - allow all services
-      - ALLOWED_ORIGINS=https://${HOST_IP:-localhost},http://${HOST_IP:-localhost}:3000,https://${HOST_IP:-localhost}:3000,http://localhost:3000,https://localhost:3000,http://localhost:5173,https://localhost
     depends_on:
       ssl-init:
         condition: service_completed_successfully
@@ -152,25 +140,23 @@ services:
       retries: 10
       start_period: 60s
     networks:
-      - transcendence-network
+      - secure_net
     restart: unless-stopped
 
   # ============================================
-  # React Frontend (Vite)
+  # React Frontend (from get_ready)
   # ============================================
   frontend:
     build:
-      context: ./front
+      context: ./get_ready/frontend
       dockerfile: Dockerfile.dev
     container_name: pong-frontend
     expose:
       - "5173"
-    ports:
-      - "3000:5173"  # Map external 3000 to Vite's 5173
     volumes:
-      - ./front:/app
+      - ./get_ready/frontend:/app
       - /app/node_modules
-      - ./ssl:/app/ssl:ro
+      - ./get_ready/ssl:/app/ssl:ro
     environment:
       - NODE_ENV=${NODE_ENV:-development}
       - VITE_HOST_IP=${HOST_IP:-localhost}
@@ -183,51 +169,13 @@ services:
       backend:
         condition: service_healthy
     healthcheck:
-      test: ['CMD', 'wget', '-q', '--spider', 'http://localhost:5173']
+      test: ['CMD', 'curl', '-f', 'http://localhost:5173']
       interval: 30s
       timeout: 10s
       retries: 3
       start_period: 40s
     networks:
-      - transcendence-network
-    restart: unless-stopped
-
-  # ============================================
-  # Pong Game Service (Fastify)
-  # ============================================
-  game:
-    build:
-      context: ./ft_transcendence-pong_game
-      dockerfile: Dockerfile
-    container_name: pong-game
-    expose:
-      - "3002"
-    ports:
-      - "3002:3002"  # Direct access for debugging
-    volumes:
-      - ./ft_transcendence-pong_game:/app
-      - /app/node_modules
-      - secrets-data:/secrets:ro
-    environment:
-      - PORT=3002
-      - NODE_ENV=${NODE_ENV:-development}
-      - VAULT_SECRETS_PATH=/secrets
-      - HOST_IP=${HOST_IP:-localhost}
-      # CORS
-      - ALLOWED_ORIGINS=https://${HOST_IP:-localhost},http://${HOST_IP:-localhost}:3000,https://${HOST_IP:-localhost}:3000,http://localhost:3000,https://localhost:3000,http://localhost:5173,https://localhost
-    depends_on:
-      vault:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-    healthcheck:
-      test: ['CMD', 'sh', '-c', 'nc -z localhost 3002 || exit 1']
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 30s
-    networks:
-      - transcendence-network
+      - secure_net
     restart: unless-stopped
 
   # ============================================
@@ -247,13 +195,11 @@ services:
       - BACKEND_PORT=3001
       - FRONTEND_HOST=frontend
       - FRONTEND_PORT=5173
-      - GAME_HOST=game
-      - GAME_PORT=3002
       - ALLOWED_METHODS=GET HEAD POST OPTIONS PUT PATCH DELETE
       - ALLOWED_REQUEST_CONTENT_TYPE=|application/x-www-form-urlencoded| |multipart/form-data| |text/xml| |application/xml| |application/json|
     volumes:
       - ssl-certs:/etc/nginx/ssl:ro
-      - ./ssl:/etc/nginx/ssl-app:ro
+      - ./get_ready/ssl:/etc/nginx/ssl-app:ro
       - ./infra/modsecurity/rules-exclusions.conf:/etc/modsecurity.d/owasp-crs/rules/REQUEST-900-EXCLUSION-RULES-BEFORE-CRS.conf
     depends_on:
       ssl-init:
@@ -262,11 +208,8 @@ services:
         condition: service_healthy
       frontend:
         condition: service_started
-      game:
-        condition: service_healthy
     networks:
-      - transcendence-network
-    restart: unless-stopped
+      - secure_net
 
   # ============================================
   # ELK Stack - Log Management
@@ -293,7 +236,7 @@ services:
       - "9200"
       - "9300"
     networks:
-      - transcendence-network
+      - secure_net
     depends_on:
       vault:
         condition: service_healthy
@@ -323,7 +266,7 @@ services:
       elasticsearch:
         condition: service_healthy
     networks:
-      - transcendence-network
+      - secure_net
     restart: unless-stopped
 
   # --- Kibana ---
@@ -341,7 +284,7 @@ services:
       elasticsearch:
         condition: service_healthy
     networks:
-      - transcendence-network
+      - secure_net
     healthcheck:
       test: ["CMD-SHELL", "curl -sk https://localhost:5601/api/status | grep -q 'available'"]
       interval: 15s
@@ -362,7 +305,7 @@ services:
       logstash:
         condition: service_started
     networks:
-      - transcendence-network
+      - secure_net
     restart: unless-stopped
 
   # ============================================
@@ -384,7 +327,7 @@ services:
     ports:
       - "9090:9090"
     networks:
-      - transcendence-network
+      - secure_net
     restart: unless-stopped
 
   # --- Grafana ---
@@ -397,9 +340,9 @@ services:
     environment:
       - GF_SECURITY_ADMIN_USER=admin
     ports:
-      - "3003:3000"
+      - "3000:3000"
     networks:
-      - transcendence-network
+      - secure_net
     depends_on:
       - prometheus
       - vault
@@ -418,7 +361,7 @@ services:
     ports:
       - "9093:9093"
     networks:
-      - transcendence-network
+      - secure_net
     restart: unless-stopped
 
   # --- Node Exporter (System Metrics) ---
@@ -437,7 +380,7 @@ services:
     expose:
       - "9100"
     networks:
-      - transcendence-network
+      - secure_net
     restart: unless-stopped
 
   # --- cAdvisor (Container Metrics) ---
@@ -452,7 +395,7 @@ services:
     expose:
       - "8080"
     networks:
-      - transcendence-network
+      - secure_net
     restart: unless-stopped
 
   # --- PostgreSQL Exporter ---
@@ -462,13 +405,17 @@ services:
     volumes:
       - secrets-data:/secrets:ro
     environment:
-      - DATA_SOURCE_URI=postgres:5432/transcendence?sslmode=disable
-      - DATA_SOURCE_USER=transcendence
-    entrypoint: ["/bin/sh", "-c", "export DATA_SOURCE_NAME=\"postgresql://transcendence:$(cat /secrets/db_password)@postgres:5432/transcendence?sslmode=disable\"; /bin/postgres_exporter"]
+      - DATA_SOURCE_URI=postgres:5432/pong?sslmode=disable
+      - DATA_SOURCE_USER_FILE=/secrets/db_password
+      - DATA_SOURCE_USER=pong
+    # We need to construct the DATA_SOURCE_NAME with the password from file.
+    # The default image doesn't support generic file reading for password in URI easily without shell.
+    # We use entrypoint to read secret.
+    entrypoint: ["/bin/sh", "-c", "export DATA_SOURCE_NAME=\"postgresql://pong:$(cat /secrets/db_password)@postgres:5432/pong?sslmode=disable\"; /bin/postgres_exporter"]
     expose:
       - "9187"
     networks:
-      - transcendence-network
+      - secure_net
     depends_on:
       - postgres
       - vault
@@ -483,7 +430,7 @@ services:
     expose:
       - "9113"
     networks:
-      - transcendence-network
+      - secure_net
     depends_on:
       - waf
     restart: unless-stopped
@@ -499,13 +446,13 @@ services:
     expose:
       - "9114"
     networks:
-      - transcendence-network
+      - secure_net
     depends_on:
       - elasticsearch
     restart: unless-stopped
 
 networks:
-  transcendence-network:
+  secure_net:
     driver: bridge
 
 volumes:
@@ -519,3 +466,179 @@ volumes:
   alertmanager-data:
   uploads-data:
   ssl-certs:
+
+
+
+
+
+
+
+### the docker compose to merge with
+
+
+services:
+  # SSL Certificate Generator (runs once to create certificates if they don't exist)
+  ssl-init:
+    image: alpine:latest
+    container_name: transcendence-ssl-init
+    volumes:
+      - ./ssl:/ssl
+    entrypoint: /bin/sh
+    command:
+      - -c
+      - |
+        if [ ! -f /ssl/cert.pem ] || [ ! -f /ssl/key.pem ]; then
+          echo '🔐 Generating SSL certificates...';
+          apk add --no-cache openssl;
+          mkdir -p /ssl;
+          openssl req -x509 -nodes -days 365 -newkey rsa:2048 \
+            -keyout /ssl/key.pem \
+            -out /ssl/cert.pem \
+            -subj "/C=US/ST=State/L=City/O=Transcendence/CN=$${HOST_IP:-localhost}" \
+            -addext "subjectAltName = IP:$${HOST_IP:-127.0.0.1},DNS:$${HOST_IP:-localhost}.nip.io";
+          chmod 644 /ssl/cert.pem /ssl/key.pem;
+          echo '✅ SSL certificates generated successfully';
+        else
+          echo '✅ SSL certificates already exist';
+        fi
+    environment:
+      - HOST_IP=${HOST_IP:-localhost}
+    networks:
+      - transcendence-network
+
+  postgres:
+    image: postgres:16-alpine
+
+    container_name: transcendence-db
+    restart: unless-stopped
+    environment:
+      POSTGRES_USER: ${POSTGRES_USER:-transcendence}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-transcendence}
+      POSTGRES_DB: ${POSTGRES_DB:-transcendence}
+      PGDATA: /var/lib/postgresql/data/pgdata
+    ports:
+      - '5433:5432'
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U ${POSTGRES_USER:-transcendence} -d ${POSTGRES_DB:-transcendence}']
+      interval: 5s
+      timeout: 5s
+      retries: 10
+      start_period: 10s
+    networks:
+      - transcendence-network
+
+  backend:
+    build:
+      context: ./backend
+      dockerfile: Dockerfile.dev
+    container_name: transcendence-backend
+    restart: unless-stopped
+    ports:
+      - '3001:3001'
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-transcendence}:${POSTGRES_PASSWORD:-transcendence}@postgres:5432/${POSTGRES_DB:-transcendence}?schema=public
+      JWT_SECRET: ${JWT_SECRET:-your-super-secret-jwt-key-change-in-production}
+      OAUTH_42_CLIENT_ID: ${OAUTH_42_CLIENT_ID}
+      OAUTH_42_CLIENT_SECRET: ${OAUTH_42_CLIENT_SECRET}
+      OAUTH_42_CALLBACK_URL: ${OAUTH_42_CALLBACK_URL:-http://localhost:3001/api/auth/42/callback}
+      GOOGLE_CLIENT_ID: ${GOOGLE_CLIENT_ID}
+      GOOGLE_CLIENT_SECRET: ${GOOGLE_CLIENT_SECRET}
+      GOOGLE_CALLBACK_URL: ${GOOGLE_CALLBACK_URL:-http://localhost:3001/api/auth/google/callback}
+      NODE_ENV: ${NODE_ENV:-development}
+      PORT: ${PORT:-3001}
+      FRONTEND_URL: ${FRONTEND_URL:-http://localhost:3000}
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_SECURE: ${SMTP_SECURE:-false}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASS: ${SMTP_PASS}
+      EMAIL_FROM: ${EMAIL_FROM}
+      USE_HTTPS: ${USE_HTTPS:-false}
+      HOST_IP: ${HOST_IP:-localhost}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
+    volumes:
+      - ./backend:/app
+      - /app/node_modules
+      - ./backend/uploads:/app/uploads
+      - ./ssl:/app/ssl:ro
+    depends_on:
+      ssl-init:
+        condition: service_completed_successfully
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'sh', '-c', 'nc -z localhost 3001 || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 60s
+    networks:
+      - transcendence-network
+
+  frontend:
+    build:
+      context: ./front
+      dockerfile: Dockerfile.dev
+    container_name: transcendence-frontend
+    restart: unless-stopped
+    ports:
+      - '3000:5173'
+    environment:
+      NODE_ENV: ${NODE_ENV:-development}
+      VITE_HOST_IP: ${HOST_IP:-localhost}
+      VITE_USE_HTTPS: ${USE_HTTPS:-false}
+      VITE_BACKEND_PORT: ${PORT:-3001}
+    volumes:
+      - ./front:/app
+      - /app/node_modules
+      - ./ssl:/app/ssl:ro
+    depends_on:
+      ssl-init:
+        condition: service_completed_successfully
+      backend:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'curl', '-kf', 'https://localhost:5173']
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
+    networks:
+      - transcendence-network
+
+  game:
+    build:
+      context: ./ft_transcendence-pong_game
+      dockerfile: Dockerfile
+    container_name: transcendence-game
+    restart: unless-stopped
+    ports:
+      - '3002:3002'
+    environment:
+      DATABASE_URL: postgresql://${POSTGRES_USER:-transcendence}:${POSTGRES_PASSWORD:-transcendence}@postgres:5432/${POSTGRES_DB:-transcendence}?schema=public
+      PORT: 3002
+      NODE_ENV: ${NODE_ENV:-development}
+      ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
+    volumes:
+      - ./ft_transcendence-pong_game:/app
+      - /app/node_modules
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ['CMD', 'sh', '-c', 'nc -z localhost 3002 || exit 1']
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 30s
+    networks:
+      - transcendence-network
+
+networks:
+  transcendence-network:
+    driver: bridge
+
+volumes:
+  postgres_data:

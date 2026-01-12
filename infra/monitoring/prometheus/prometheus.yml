@@ -45,12 +45,22 @@ scrape_configs:
   # NestJS Backend (via prom-client)
   - job_name: 'backend'
     static_configs:
-      - targets: ['backend:3000']
-    metrics_path: /metrics
+      - targets: ['backend:3001']
+    metrics_path: /api/metrics
     relabel_configs:
       - source_labels: [__address__]
         target_label: instance
         replacement: 'pong-backend'
+
+  # Pong Game Service
+  - job_name: 'game'
+    static_configs:
+      - targets: ['game:3002']
+    metrics_path: /metrics
+    relabel_configs:
+      - source_labels: [__address__]
+        target_label: instance
+        replacement: 'pong-game'
 
   # Docker container metrics via cAdvisor
   - job_name: 'cadvisor'

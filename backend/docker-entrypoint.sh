@@ -3,7 +3,59 @@ set -e
 
 echo "🚀 Starting Transcendence Backend..."
 
+# ============================================
+# Load secrets from Vault (shared volume)
+# ============================================
+SECRETS_PATH="${VAULT_SECRETS_PATH:-/secrets}"
+
+echo "⏳ Waiting for Vault secrets..."
+while [ ! -f "$SECRETS_PATH/.ready" ]; do
+  echo "Vault secrets not ready - sleeping"
+  sleep 2
+done
+echo "✅ Vault secrets are ready"
+
+# Load secrets into environment variables
+if [ -f "$SECRETS_PATH/db_password" ]; then
+  DB_PASSWORD=$(cat "$SECRETS_PATH/db_password")
+  export DATABASE_URL="postgresql://transcendence:${DB_PASSWORD}@postgres:5432/transcendence?schema=public"
+  echo "✅ DATABASE_URL configured from Vault"
+fi
+
+if [ -f "$SECRETS_PATH/jwt_secret" ]; then
+  export JWT_SECRET=$(cat "$SECRETS_PATH/jwt_secret")
+  echo "✅ JWT_SECRET loaded from Vault"
+fi
+
+if [ -f "$SECRETS_PATH/oauth_42_client_id" ]; then
+  export OAUTH_42_CLIENT_ID=$(cat "$SECRETS_PATH/oauth_42_client_id")
+fi
+
+if [ -f "$SECRETS_PATH/oauth_42_client_secret" ]; then
+  export OAUTH_42_CLIENT_SECRET=$(cat "$SECRETS_PATH/oauth_42_client_secret")
+fi
+
+if [ -f "$SECRETS_PATH/google_client_id" ]; then
+  export GOOGLE_CLIENT_ID=$(cat "$SECRETS_PATH/google_client_id")
+fi
+
+if [ -f "$SECRETS_PATH/google_client_secret" ]; then
+  export GOOGLE_CLIENT_SECRET=$(cat "$SECRETS_PATH/google_client_secret")
+fi
+
+if [ -f "$SECRETS_PATH/smtp_user" ]; then
+  export SMTP_USER=$(cat "$SECRETS_PATH/smtp_user")
+fi
+
+if [ -f "$SECRETS_PATH/smtp_pass" ]; then
+  export SMTP_PASS=$(cat "$SECRETS_PATH/smtp_pass")
+fi
+
+echo "✅ All secrets loaded from Vault"
+
+# ============================================
 # Wait for PostgreSQL to be ready
+# ============================================
 echo "⏳ Waiting for PostgreSQL..."
 until npx prisma db execute --stdin <<< "SELECT 1;" 2>/dev/null; do
   echo "PostgreSQL is unavailable - sleeping"
@@ -34,8 +86,13 @@ fi
 echo "📦 Generating Prisma Client..."
 npx prisma generate
 
-# Seeding is now manual - run 'make seed' to seed the database
-echo "ℹ️  To seed the database, run: make seed"
+# Seed the database with test data
+echo "🌱 Seeding database..."
+if npx prisma db seed 2>&1; then
+  echo "✅ Database seeded successfully!"
+else
+  echo "⚠️  Seeding skipped or already seeded"
+fi
 
 echo "✅ Database setup complete!"
 echo "🎮 Starting application..."

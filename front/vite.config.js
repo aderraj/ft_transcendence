@@ -18,16 +18,24 @@ export default defineConfig({
   },
   server: {
     host: '0.0.0.0',
-    allowedHosts: [
-      '10.14.57.32.nip.io',
-      'localhost',
-      '10.14.57.32'
-    ],
+    port: 5173,
+    allowedHosts: 'all',
     proxy: {
       '/api': {
-        target: 'https://10.14.57.32.nip.io:3001',
+        target: process.env.VITE_API_URL || 'https://localhost',
         changeOrigin: true,
         secure: false
+      },
+      '/game': {
+        target: process.env.VITE_API_URL || 'https://localhost',
+        changeOrigin: true,
+        secure: false
+      },
+      '/socket.io': {
+        target: process.env.VITE_API_URL || 'https://localhost',
+        changeOrigin: true,
+        secure: false,
+        ws: true
       },
     },
   },

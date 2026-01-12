@@ -27,9 +27,12 @@ all: build up
 	@echo ""
 	@echo "$(CYAN)📱 Application$(NC)"
 	@echo "   → Frontend:      $(GREEN)https://$(HOST_IP)$(NC)"
+	@echo "   → Backend API:   $(GREEN)https://$(HOST_IP)/api$(NC)"
+	@echo "   → Game Service:  $(GREEN)https://$(HOST_IP)/game$(NC)"
+	@echo "   → API Docs:      $(GREEN)https://$(HOST_IP)/api/docs$(NC)"
 	@echo ""
 	@echo "$(CYAN)📊 Monitoring & Dashboards$(NC)"
-	@echo "   → Grafana:       $(GREEN)http://$(HOST_IP):3000$(NC)       (admin/admin)"
+	@echo "   → Grafana:       $(GREEN)http://$(HOST_IP):3003$(NC)       (admin/see vault-secrets)"
 	@echo "   → Prometheus:    $(GREEN)http://$(HOST_IP):9090$(NC)"
 	@echo "   → Alertmanager:  $(GREEN)http://$(HOST_IP):9093$(NC)"
 	@echo ""
@@ -92,11 +95,11 @@ dev: build-core up-core
 
 build-core:
 	@echo "$(YELLOW)Building core services...$(NC)"
-	@$(COMPOSE) build ssl-init vault postgres backend frontend waf
+	@$(COMPOSE) build ssl-init vault postgres backend frontend game waf
 
 up-core:
 	@echo "$(YELLOW)Starting core services...$(NC)"
-	@$(COMPOSE) up -d ssl-init vault postgres backend frontend waf
+	@$(COMPOSE) up -d ssl-init vault postgres backend frontend game waf
 	@echo "$(GREEN)✓ Core services started$(NC)"
 
 # ============================================
@@ -128,19 +131,19 @@ vault-update:
 
 db-studio:
 	@echo "$(YELLOW)Opening Prisma Studio...$(NC)"
-	@docker exec -it pong-backend npx prisma studio
+	@docker exec -it pong-backend sh -c 'export DATABASE_URL="postgresql://transcendence:$$(cat /secrets/db_password)@postgres:5432/transcendence?schema=public" && npx prisma studio'
 
 db-migrate:
 	@echo "$(YELLOW)Running database migrations...$(NC)"
-	@docker exec -it pong-backend npx prisma migrate deploy
+	@docker exec -it pong-backend sh -c 'export DATABASE_URL="postgresql://transcendence:$$(cat /secrets/db_password)@postgres:5432/transcendence?schema=public" && npx prisma migrate deploy'
 
 db-seed:
 	@echo "$(YELLOW)Seeding database...$(NC)"
-	@docker exec -it pong-backend npx prisma db seed
+	@docker exec -it pong-backend sh -c 'export DATABASE_URL="postgresql://transcendence:$$(cat /secrets/db_password)@postgres:5432/transcendence?schema=public" && npx prisma db seed'
 
 db-reset:
 	@echo "$(RED)Resetting database...$(NC)"
-	@docker exec -it pong-backend npx prisma migrate reset --force
+	@docker exec -it pong-backend sh -c 'export DATABASE_URL="postgresql://transcendence:$$(cat /secrets/db_password)@postgres:5432/transcendence?schema=public" && npx prisma migrate reset --force'
 
 # ============================================
 # Logs & Monitoring
@@ -167,9 +170,12 @@ links:
 	@echo ""
 	@echo "$(CYAN)📱 Application$(NC)"
 	@echo "   → Frontend:      $(GREEN)https://$(HOST_IP)$(NC)"
+	@echo "   → Backend API:   $(GREEN)https://$(HOST_IP)/api$(NC)"
+	@echo "   → Game Service:  $(GREEN)https://$(HOST_IP)/game$(NC)"
+	@echo "   → API Docs:      $(GREEN)https://$(HOST_IP)/api/docs$(NC)"
 	@echo ""
 	@echo "$(CYAN)📊 Monitoring & Dashboards$(NC)"
-	@echo "   → Grafana:       $(GREEN)http://$(HOST_IP):3000$(NC)       (admin/admin)"
+	@echo "   → Grafana:       $(GREEN)http://$(HOST_IP):3003$(NC)       (admin/see vault-secrets)"
 	@echo "   → Prometheus:    $(GREEN)http://$(HOST_IP):9090$(NC)"
 	@echo "   → Alertmanager:  $(GREEN)http://$(HOST_IP):9093$(NC)"
 	@echo ""
@@ -225,7 +231,7 @@ clean: down
 fclean:
 	@echo "$(YELLOW)Removing everything...$(NC)"
 	@$(COMPOSE) down -v --rmi local --remove-orphans 2>/dev/null || true
-	@rm -rf get_ready/ssl/*.pem 2>/dev/null || true
+	@rm -rf ssl/*.pem 2>/dev/null || true
 	@echo "$(GREEN)✓ Full clean complete$(NC)"
 
 prune: fclean
@@ -249,7 +255,7 @@ help:
 	@echo ""
 	@echo "$(CYAN)Logs & Status:$(NC)"
 	@echo "  make logs       Follow all logs"
-	@echo "  make logs-X     Follow logs for service X"
+	@echo "  make logs-X     Follow logs for service X (backend, frontend, game, etc.)"
 	@echo "  make ps         Show container status"
 	@echo "  make status     Show detailed status"
 	@echo "  make links      Show all available URLs"
@@ -261,7 +267,7 @@ help:
 	@echo "  make db-reset   Reset database"
 	@echo ""
 	@echo "$(CYAN)Development:$(NC)"
-	@echo "  make shell-X    Shell into container X"
+	@echo "  make shell-X    Shell into container X (backend, frontend, game)"
 	@echo "  make rebuild    Rebuild all (no cache)"
 	@echo "  make rebuild-X  Rebuild service X"
 	@echo "  make test       Run tests"
