@@ -126,13 +126,9 @@ export default function Profile() {
         setPassLoading(true);
         try {
             const token = localStorage.getItem('accessToken');
-            const res = await fetch(`${API_BASE}/api/auth/reset-password`, {
+            const res = await authenticatedFetch('/api/auth/change-password', {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` 
-                },
-                body: JSON.stringify({ token: token, newPassword: newPassword })
+                body: JSON.stringify({ newPassword: newPassword })
             });
             if (res.ok) {
                 setPassSuccess(true);
@@ -144,8 +140,11 @@ export default function Profile() {
                 const data = await res.json();
                 setPassError(data.message || "Failed to update password.");
             }
-        } catch (e) { setPassError("Connection error."); } 
-        finally { setPassLoading(false); }
+        } catch (err) {
+            setPassError("An error occurred.");
+        } finally {
+            setPassLoading(false);
+        }
     };
 
     const open2FAModal = async () => {
