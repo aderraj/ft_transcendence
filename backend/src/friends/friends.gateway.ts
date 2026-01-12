@@ -258,11 +258,13 @@ export class FriendsGateway
   /**
    * Notify inviter that invitation was accepted
    */
-  async notifyGameInvitationAccepted(
+   async notifyGameInvitationAccepted(
     inviterId: string,
     invitationId: string,
     acceptedByUserId: string,
     gameMode: string,
+    roomId: string,
+    gameServerUrl: string,
   ) {
     const socketId = this.userSockets.get(inviterId);
     if (socketId) {
@@ -270,6 +272,8 @@ export class FriendsGateway
         invitationId,
         acceptedByUserId,
         gameMode,
+        roomId,
+        gameServerUrl,
         timestamp: new Date().toISOString(),
       });
     }

@@ -46,6 +46,7 @@ async function bootstrap() {
       `https://${hostIp}:3000`,
       'http://localhost:3000',
       'https://localhost:3000',
+      'https://localhost:3001',
     );
   }
 

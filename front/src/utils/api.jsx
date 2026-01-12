@@ -1,4 +1,4 @@
-export const API_BASE = 'https://10.14.57.32.nip.io:3001';
+export const API_BASE = import.meta.env.VITE_API_URL;
 
 export const authenticatedFetch = async (endpoint, options = {}) => {
   const token = localStorage.getItem('accessToken');

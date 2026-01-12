@@ -2,21 +2,22 @@ FROM node:20-alpine
 
 WORKDIR /app
 
-# Copy package files
-COPY package*.json ./
+# 1. Copy Shared Library First
+COPY shared ./shared
 
-# Install dependencies
+# 2. Copy Game Server
+COPY ft_transcendence-pong_game ./ft_transcendence-pong_game
+
+# 3. Install Shared Dependencies
+WORKDIR /app/shared
 RUN npm install
 
-# Copy prisma schema and config
-COPY prisma ./prisma
-COPY prisma.config.ts ./
+# 4. Install Game Server Dependencies
+WORKDIR /app/ft_transcendence-pong_game
+RUN npm install
 
-# Copy application code
-COPY . .
-
-# Expose port
+# 5. Expose Port
 EXPOSE 3002
 
-# Generate Prisma client and start application
+# 6. Run Server
 CMD sh -c "npx prisma generate && npm start"

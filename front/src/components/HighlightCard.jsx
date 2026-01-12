@@ -42,24 +42,29 @@ const HighlightCard = () => {
               Dominate the grid in real-time. Rise through the ranks, unlock cyber-badges, and become the ultimate champion.
           </p>
         </div>
+        
+        {/* Right Side: Cyan/Blue Action Button */}
         <div className="flex flex-col items-center gap-5 mt-2">
             
             <button 
                 onClick={() => navigate('/game')}
                 className="relative group/btn cursor-pointer"
             >
+                {/* 1. Cyan Gradient Glow */}
                 <div className="absolute -inset-1 bg-gradient-to-r from-cyan-600 via-blue-500 to-cyan-600 rounded-full blur opacity-25 group-hover/btn:opacity-75 transition duration-500 group-hover/btn:animate-tilt"></div>
                 
-                <div className="relative px-10 py-5 bg-black/40 backdrop-blur-xl rounded-full border border-white/10 flex items-center gap-4 transition-all duration-300 group-hover/btn:bg-white/5 group-hover/btn:border-white/20">
+                <div className="relative px-10 py-5 bg-black/40 backdrop-blur-xl rounded-full border border-white/10 flex items-center gap-4 transition-all duration-300 group-hover/btn:bg-white/5 group-hover/btn:border-cyan-500/20">
                     
                     <div className="absolute inset-0 flex h-full w-full justify-center [transform:skew(-12deg)_translateX(-100%)] group-hover/btn:duration-1000 group-hover/btn:[transform:skew(-12deg)_translateX(100%)] overflow-hidden">
                         <div className="relative h-full w-8 bg-white/10"></div>
                     </div>
 
-                    <span className="font-bold tracking-[0.2em] text-white uppercase text-sm group-hover/btn:text-white group-hover/btn:drop-shadow-[0_0_8px_rgba(34,211,238,0.8)] transition-all">
+                    {/* 2. Text: Cyan/White Hover Effects */}
+                    <span className="font-black italic tracking-[0.2em] text-white uppercase text-sm group-hover/btn:text-cyan-100 group-hover/btn:drop-shadow-[0_0_8px_rgba(34,211,238,0.8)] transition-all">
                         Enter Arena
                     </span>
 
+                    {/* 3. Icon Box: Cyan Gradient & Border */}
                     <div className="w-10 h-10 rounded-lg bg-gradient-to-br from-cyan-500/20 to-blue-500/20 flex items-center justify-center border border-white/10 group-hover/btn:scale-110 group-hover/btn:border-cyan-500/50 group-hover/btn:shadow-[0_0_15px_rgba(34,211,238,0.4)] transition-all duration-300">
                         <Play className="w-4 h-4 text-cyan-400 fill-current group-hover/btn:text-white transition-colors" />
                     </div>

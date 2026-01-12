@@ -237,6 +237,8 @@ export class FriendsController {
       result.gameSession.invitationId,
       user.sub,
       result.gameSession.gameMode,
+      result.gameSession.roomId,
+      result.gameSession.gameServerUrl,
     );
 
     return result;

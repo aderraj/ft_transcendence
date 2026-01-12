@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, Navigate, useLocation } from "react-router-dom";
 import { AuthProvider, useAuth } from '@/contexts/AuthContext'; 
 import { AppDataProvider } from "@/contexts/AppDataContext"; 
 import MainLayout from "@/layouts/MainLayout";
@@ -7,7 +7,7 @@ import Dashboard from '@/pages/Dashboard';
 import Profile from '@/pages/Profile';
 import Game from '@/pages/Game';
 import Chat from '@/pages/Chat';
-
+import Leaderboard from '@/pages/LeaderBoard'; // Or '@/pages/Leaderboard' if you create a page wrapper
 
 const ProtectedRoute = ({children}) => {
   const { user, loading } = useAuth();
@@ -21,6 +21,11 @@ const PublicRoute = ({children}) => {
   return children;
 }
 
+const ResetRedirect = () => {
+  const location = useLocation();
+  return <Navigate to={`/login${location.search}`} replace />;
+};
+
 function AppRoutes() {
   return (
     <Routes>
@@ -31,6 +36,9 @@ function AppRoutes() {
             <Login/>
           </PublicRoute>
         } />
+
+        <Route path="/reset-password" element={<ResetRedirect />} />
+
         <Route path="/" element={
           <ProtectedRoute>
             <Dashboard/>
@@ -46,6 +54,14 @@ function AppRoutes() {
         <Route path="/chat" element={
           <ProtectedRoute>
             <Chat/>
+          </ProtectedRoute>
+        } />
+
+        <Route path="/leaderboard" element={
+          <ProtectedRoute>
+            <div className="p-8 max-w-4xl mx-auto w-full">
+               <Leaderboard/>
+            </div>
           </ProtectedRoute>
         } />
 
@@ -66,7 +82,6 @@ function AppRoutes() {
     </Routes>
   )
 }
-
 
 export default function App() {
   return (

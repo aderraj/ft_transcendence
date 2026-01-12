@@ -3,7 +3,7 @@ import { useParams } from 'react-router-dom';
 import { Loader2 } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppData } from '@/contexts/AppDataContext';
-import { authenticatedFetch, authenticatedFileUpload, API_BASE } from '@/utils/api';
+import { authenticatedFetch, authenticatedFileUpload } from '@/utils/api'; 
 import ProfileHeader from '@/components/ProfileHeader';
 import EditProfileForm from '@/components/ProfileEditForm';
 import SecuritySettings from '@/components/ProfileSecuritySettings';
@@ -11,7 +11,8 @@ import PasswordResetModal from '@/components/modals/PasswordResetModal';
 import TwoFactorModal from '@/components/modals/TwoFactorModal';
 
 export default function Profile() {
-    const { user: authUser, refreshProfile } = useAuth(); 
+
+    const { user: authUser, refreshUser } = useAuth(); 
     const { friends, users: cachedUsers } = useAppData();
     const { userId } = useParams();
 
@@ -37,7 +38,6 @@ export default function Profile() {
     const [twoFactorStep, setTwoFactorStep] = useState('init'); 
     const [twoFactorLoading, setTwoFactorLoading] = useState(false);
     const [securityError, setSecurityError] = useState('');
-
 
     const [isChangePassModalOpen, setIsChangePassModalOpen] = useState(false);
     const [newPassword, setNewPassword] = useState('');
@@ -83,7 +83,7 @@ export default function Profile() {
             if (res.ok) {
                 const updated = await res.json();
                 setProfile(prev => ({ ...prev, ...updated }));
-                refreshProfile();
+                if (refreshUser) await refreshUser();
             }
         } catch (error) { console.error(error); } 
         finally { setIsSaving(false); }
@@ -102,7 +102,7 @@ export default function Profile() {
                 if (profileRes.ok) {
                     const data = await profileRes.json();
                     setProfile(prev => ({ ...prev, avatar: data.avatar }));
-                    refreshProfile(); 
+                    if (refreshUser) await refreshUser(); 
                 }
             }
         } catch (error) { console.error(error); } 
@@ -125,13 +125,8 @@ export default function Profile() {
         setPassError('');
         setPassLoading(true);
         try {
-            const token = localStorage.getItem('accessToken');
-            const res = await fetch(`${API_BASE}/api/auth/change-password`, {
+            const res = await authenticatedFetch('/api/auth/change-password', {
                 method: 'POST',
-                headers: { 
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}` 
-                },
                 body: JSON.stringify({ newPassword: newPassword })
             });
             if (res.ok) {
@@ -185,6 +180,9 @@ export default function Profile() {
                 const newState = twoFactorStep !== 'disable';
                 setProfile(prev => ({ ...prev, isTwoFactorEnabled: newState }));
                 setIs2FAModalOpen(false);
+                
+                // Optional: Refresh global user if 2FA status is shown elsewhere
+                if (refreshUser) await refreshUser();
             } else {
                 setSecurityError("Invalid Code.");
             }

@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppData } from '@/contexts/AppDataContext';
@@ -13,12 +13,10 @@ import ConfirmationModal from '@/components/modals/ConfirmationModal';
 
 const Dashboard = () => {
   const navigate = useNavigate();
-  
-
   const { user } = useAuth();
 
   const { 
-    friends, history, isLoaded,
+    friends, history, isLoaded, refreshData, // Import refreshData
     removeFriend, 
     pendingRequests, sentRequests,
     acceptFriendRequest, declineFriendRequest, cancelFriendRequest
@@ -26,6 +24,11 @@ const Dashboard = () => {
   
   const [friendToRemove, setFriendToRemove] = useState(null);
   const [showRequestsModal, setShowRequestsModal] = useState(false);
+
+  // Auto-refresh data on mount to get latest game history
+  useEffect(() => {
+    refreshData();
+  }, [refreshData]);
 
   const onlineFriends = friends.filter(f => f.isOnline === true || f.status === 'online');
   const offlineFriends = friends.filter(f => !f.isOnline && f.status !== 'online');

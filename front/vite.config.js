@@ -16,19 +16,27 @@ export default defineConfig({
       "@": path.resolve(__dirname, "./src"),
     },
   },
-  server: {
-    host: '0.0.0.0',
-    allowedHosts: [
-      '10.14.57.32.nip.io',
-      'localhost',
-      '10.14.57.32'
-    ],
-    proxy: {
-      '/api': {
-        target: 'https://10.14.57.32.nip.io:3001',
-        changeOrigin: true,
-        secure: false
-      },
+
+  build: {
+    outDir: 'dist',
+    sourcemap: false,
+    emptyOutDir: true,
+    rollupOptions: {
+      output: {
+        // Vendor chunking (optional, helps caching)
+        manualChunks(id) {
+          if (id.includes('node_modules')) {
+            return 'vendor';
+          }
+        }
+      }
+    }
+  },
+
+  server : {
+    fs: {
+      allow: ['..']
     },
   },
+
 })

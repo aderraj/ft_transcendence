@@ -1,5 +1,5 @@
 services:
-  # SSL Certificate Generator (runs once to create certificates if they don't exist)
+  # ... (ssl-init and postgres remain the same) ...
   ssl-init:
     image: alpine:latest
     container_name: transcendence-ssl-init
@@ -30,7 +30,6 @@ services:
 
   postgres:
     image: postgres:16-alpine
-
     container_name: transcendence-db
     restart: unless-stopped
     environment:
@@ -101,8 +100,8 @@ services:
 
   frontend:
     build:
-      context: ./front
-      dockerfile: Dockerfile.dev
+      context: .
+      dockerfile: ./front/Dockerfile.dev
     container_name: transcendence-frontend
     restart: unless-stopped
     ports:
@@ -113,8 +112,12 @@ services:
       VITE_USE_HTTPS: ${USE_HTTPS:-false}
       VITE_BACKEND_PORT: ${PORT:-3001}
     volumes:
-      - ./front:/app
-      - /app/node_modules
+      # Mount 'front' SUBDIRECTORY to '/app/front'
+      - ./front:/app/front
+      # Prevent node_modules from being overwritten by the mount
+      - /app/front/node_modules
+      # Mount 'shared' to '/app/shared'
+      - ./shared:/app/shared
       - ./ssl:/app/ssl:ro
     depends_on:
       ssl-init:
@@ -132,8 +135,8 @@ services:
 
   game:
     build:
-      context: ./ft_transcendence-pong_game
-      dockerfile: Dockerfile
+      context: .
+      dockerfile: ./ft_transcendence-pong_game/Dockerfile
     container_name: transcendence-game
     restart: unless-stopped
     ports:
@@ -144,8 +147,12 @@ services:
       NODE_ENV: ${NODE_ENV:-development}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
     volumes:
-      - ./ft_transcendence-pong_game:/app
-      - /app/node_modules
+      # Mount 'game' SUBDIRECTORY to match directory name
+      - ./ft_transcendence-pong_game:/app/ft_transcendence-pong_game
+      # Prevent node_modules overwrite
+      - /app/ft_transcendence-pong_game/node_modules
+      # Mount shared
+      - ./shared:/app/shared
     depends_on:
       postgres:
         condition: service_healthy

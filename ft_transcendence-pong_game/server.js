@@ -7,6 +7,9 @@ import swagger from '@fastify/swagger';
 import swaggerUI from '@fastify/swagger-ui';
 import cors from '@fastify/cors';
 
+// IMPORT SHARED LOGIC
+import { Ball, Paddle, GAME_CONFIG } from '@pixelpong/shared';
+
 // Parse allowed origins from environment
 const getAllowedOrigins = () => {
     const allowedOriginsEnv = process.env.ALLOWED_ORIGINS || '';
@@ -66,63 +69,6 @@ const playerQueu = [];
 const privateLobbies = new Map(); // roomId -> { player1: connection }
 
 
-/**
- * Game Messages Template:
-
-########################### GAME START ######################
-    {
-        type: "game_start", 
-        random : Math.random(), 
-        game : {
-            gameId: gameState.gameId,
-            leftPlayer: {
-                userId: gameState.leftPlayer.userId,
-                score: gameState.leftPlayer.score
-            },
-            rightPlayer: {
-                userId: gameState.rightPlayer.userId,
-                score: gameState.rightPlayer.score
-            },
-            winner: gameState.winner,
-            createdAt: gameState.createdAt
-        }
-    }
-######################### GAME RESET ROUND #################
-    {
-        type: "reset_game_round",
-        random: Math.random(),
-        timeStamp: Date.now(),
-        players: {
-            leftPlayer: { score: currentGameState.leftPlayer.score },
-            rightPlayer: { score: currentGameState.rightPlayer.score }
-        }
-    }
-
-##################### GAME ON SCORE #############################
-    {
-        type: "reset_game_round",
-        random: Math.random(),
-        timeStamp: Date.now(),
-        players: {
-            leftPlayer: { score: currentGameState.leftPlayer.score },
-            rightPlayer: { score: currentGameState.rightPlayer.score }
-        }
-    }
-
-################## PLAYER LEFT #####################################
-    {
-        type: 'player_left',
-        exited_paddel: isLeft ? 'left' : 'right'
-    }
-*/
-
-
-/*
-    player[]
-    games[romms[]]
-    room-> room_id | left_player - right_player
-
-*/
 await fastify.register(import('@fastify/static'), {
     root: new URL('public', import.meta.url).pathname
 });
@@ -290,17 +236,14 @@ fastify.get('/api/history', {
 function addPlayer(userId, connection)
 {
     players.set(userId, {
-        // TO do send A request to db to get user meta data
         socket : connection,
         timeStamp : Date.now(),
-        score: 0 // Initialize score if not present
+        score: 0 
     });
 }
 
 function formulateGameState(player1, player2, gameID)
 {
-    // Fetch persistent player data (like score) from the map if needed, 
-    // but use the provided sockets for the active game connection.
     const leftPlayerData = players.get(player1.userId);
     const rightPlayerData = players.get(player2.userId);
 
@@ -321,96 +264,350 @@ function formulateGameState(player1, player2, gameID)
         createdAt: Date.now()
     };
     return data;
-
 }
 
-function startNewGame(player1, player2)
-{
+// =========================================================================================
+//  GAME LOOP & PHYSICS LOGIC
+// =========================================================================================
 
-    const gameState = formulateGameState(player1, player2, gameCounter);
+
+function checkPaddleHit(ball, paddle, side) {
+    // Check if ball is within paddle bounds (AABB collision)
+    const hitX = ball.x + ball.radius > paddle.x && ball.x - ball.radius < paddle.x + paddle.width;
+    const hitY = ball.y + ball.radius > paddle.y && ball.y - ball.radius < paddle.y + paddle.height;
     
-    // Create a version of the game state for the client that excludes sockets
-    const clientGameState = {
-        gameId: gameState.gameId,
-        leftPlayer: {
-            userId: gameState.leftPlayer.userId,
-            score: gameState.leftPlayer.score
-        },
-        rightPlayer: {
-            userId: gameState.rightPlayer.userId,
-            score: gameState.rightPlayer.score
-        },
-        winner: gameState.winner,
-        createdAt: gameState.createdAt
+    if (hitX && hitY) {
+        console.log(`[COLLISION] Ball hit ${side} paddle! Ball: (${ball.x.toFixed(1)}, ${ball.y.toFixed(1)}), Paddle Y: ${paddle.y.toFixed(1)}`);
+        
+        if (side === 'left') {
+            // Hit Left Paddle: Push ball to right side of paddle
+            ball.x = paddle.x + paddle.width + ball.radius;
+            ball.dx = Math.abs(ball.dx);
+        } else {
+            // Hit Right Paddle: Push ball to left side of paddle
+            ball.x = paddle.x - ball.radius;
+            ball.dx = -Math.abs(ball.dx);
+        }
+
+        // Add Spin/English based on hit position
+        const hitPoint = ball.y - (paddle.y + paddle.height / 2);
+        ball.dy += hitPoint * 0.005; 
+        
+        // Increase Speed
+        ball.dx *= 1.05;
+        ball.dy *= 1.05;
+    }
+}
+
+
+function startCountdown(gameId) {
+    const gameSession = game.get(gameId);
+    if (!gameSession) return;
+
+    let count = 3;
+    const { data } = gameSession;
+
+    const sendCountdown = (value) => {
+        const msg = JSON.stringify({ type: 'countdown', value });
+        data.connections.forEach(conn => {
+            if (conn.readyState === 1) conn.send(msg);
+        });
     };
 
-    let data = 
-    {
-        type: "game_start", 
-        random : Math.random(), 
-        game : clientGameState
-    };
-    game.set(gameState.gameId, {
-        data : gameState
+    // Send initial countdown
+    sendCountdown(count);
+    console.log(`[COUNTDOWN] ${count}`);
+
+    const countdownInterval = setInterval(() => {
+        count--;
+        if (count > 0) {
+            sendCountdown(count);
+            console.log(`[COUNTDOWN] ${count}`);
+        } else if (count === 0) {
+            sendCountdown('GO!');
+            console.log(`[COUNTDOWN] GO!`);
+        } else {
+            // Countdown finished, start the actual game
+            clearInterval(countdownInterval);
+            sendCountdown(null); // Signal countdown is over
+            
+            // Set the actual start time NOW (after countdown)
+            gameSession.startTime = Date.now();
+            startGameLoop(gameId);
+        }
+    }, 1000);
+
+    // Store countdown interval for cleanup
+    gameSession.countdownIntervalId = countdownInterval;
+}
+
+function startGameLoop(gameId) {
+    const gameSession = game.get(gameId);
+    if (!gameSession) return;
+
+    // Run at ~60 FPS (16ms)
+    gameSession.intervalId = setInterval(() => {
+        const { entities, data } = gameSession;
+        
+        // 0. Check Timer (End game if time is up)
+        const elapsed = Date.now() - gameSession.startTime;
+        const timeLeft = Math.max(0, Math.floor((gameSession.gameDuration - elapsed) / 1000));
+        
+        if (elapsed >= gameSession.gameDuration) {
+            endGame(gameId);
+            return;
+        }
+        
+        // 1. Update Physics (16ms step)
+        entities.ball.update(16); 
+
+        // 2. Simple Wall Collision (Top/Bottom)
+        if (entities.ball.y - entities.ball.radius <= 0) {
+            entities.ball.y = entities.ball.radius;
+            entities.ball.dy = Math.abs(entities.ball.dy); // Force down
+        } else if (entities.ball.y + entities.ball.radius >= GAME_CONFIG.CANVAS_HEIGHT) {
+            entities.ball.y = GAME_CONFIG.CANVAS_HEIGHT - entities.ball.radius;
+            entities.ball.dy = -Math.abs(entities.ball.dy); // Force up
+        }
+
+        // 3. Check Paddle Collision (This was missing previously)
+        checkPaddleHit(entities.ball, entities.leftPaddle, 'left');
+        checkPaddleHit(entities.ball, entities.rightPaddle, 'right');
+
+        // 4. Check Scoring (Server Authoritative)
+        if (entities.ball.x < 0) {
+            console.log(`[SCORE] Right player scored! Ball X: ${entities.ball.x.toFixed(1)}, Left Paddle: x=${entities.leftPaddle.x}, y=${entities.leftPaddle.y.toFixed(1)}`);
+            data.rightPlayer.score++;
+            handleServerScore(gameId, "right");
+        } else if (entities.ball.x > GAME_CONFIG.CANVAS_WIDTH) {
+            console.log(`[SCORE] Left player scored! Ball X: ${entities.ball.x.toFixed(1)}, Right Paddle: x=${entities.rightPaddle.x}, y=${entities.rightPaddle.y.toFixed(1)}`);
+            data.leftPlayer.score++;
+            handleServerScore(gameId, "left");
+        }
+
+        // 5. Broadcast State to Clients
+        // We manually construct the ball object here to avoid issues if .serialize() is missing
+        const updateMsg = JSON.stringify({
+            type: 'game_update',
+            ball: {
+                x: entities.ball.x,
+                y: entities.ball.y,
+                dx: entities.ball.dx,
+                dy: entities.ball.dy
+            },
+            leftPaddleY: entities.leftPaddle.y,
+            rightPaddleY: entities.rightPaddle.y,
+            scores: {
+                left: data.leftPlayer.score,
+                right: data.rightPlayer.score
+            },
+            timeLeft: timeLeft
+        });
+
+        data.connections.forEach(conn => {
+            if (conn.readyState === 1) conn.send(updateMsg);
+        });
+
+    }, 16); 
+}
+
+function handleServerScore(gameId, scorerSide) {
+    const gameSession = game.get(gameId);
+    if (!gameSession) return;
+
+    const { entities, data } = gameSession;
+
+    // Check for Game Over by score
+    const MAX_SCORE = 5;
+    if (data.leftPlayer.score >= MAX_SCORE || data.rightPlayer.score >= MAX_SCORE) {
+        endGame(gameId);
+        return;
+    }
+
+    // Reset Ball
+    entities.ball.reset(GAME_CONFIG.CANVAS_WIDTH / 2, GAME_CONFIG.CANVAS_HEIGHT / 2);
+
+    // Calculate time left for the score update message
+    const elapsed = Date.now() - gameSession.startTime;
+    const timeLeft = Math.max(0, Math.floor((gameSession.gameDuration - elapsed) / 1000));
+
+    // Notify Clients of Score Update (Explicit Event)
+    const scoreMsg = JSON.stringify({
+        type: 'score_update',
+        scorer: scorerSide,
+        scores: {
+            left: data.leftPlayer.score,
+            right: data.rightPlayer.score
+        },
+        timeLeft: timeLeft
     });
 
-    gameState.connections.forEach(connection =>{
-        try
-        {
-            if (gameState.connections[0] == connection)
-                data.isLeft = true;
-            else
-                data.isLeft = false;
-            if (connection.readyState == 1)
-                connection.send(JSON.stringify(data));
-        }
-        catch (e)
-        {
-            console.error(e);
-        }
-    })
-
+    data.connections.forEach(conn => {
+        if (conn.readyState === 1) conn.send(scoreMsg);
+    });
 }
+
+function endGame(gameId) {
+    const gameSession = game.get(gameId);
+    if (!gameSession) return;
+    
+    // Stop all intervals
+    if (gameSession.intervalId) clearInterval(gameSession.intervalId);
+    if (gameSession.countdownIntervalId) clearInterval(gameSession.countdownIntervalId);
+
+    const { data } = gameSession;
+    
+    // Determine Winner based on score
+    let winnerId = null;
+    let winnerName = 'Draw';
+    
+    if (data.leftPlayer.score > data.rightPlayer.score) {
+        winnerId = data.leftPlayer.userId;
+        winnerName = data.leftPlayer.userId;
+    } else if (data.rightPlayer.score > data.leftPlayer.score) {
+        winnerId = data.rightPlayer.userId;
+        winnerName = data.rightPlayer.userId;
+    }
+
+    // Notify Clients
+    const endMsg = JSON.stringify({
+        type: "gameOver",
+        winner: winnerName,
+        players: {
+            leftPlayer: { userId: data.leftPlayer.userId, score: data.leftPlayer.score },
+            rightPlayer: { userId: data.rightPlayer.userId, score: data.rightPlayer.score }
+        }
+    });
+
+    data.connections.forEach(conn => {
+        if (conn.readyState === 1) conn.send(endMsg);
+    });
+
+    // Save to DB (only if there's a winner, not a draw)
+    if (winnerId) {
+        saveMatchResult(data, winnerId);
+    }
+
+    // Cleanup
+    game.delete(gameId);
+    console.log(`Game ${gameId} ended. Winner: ${winnerName}`);
+}
+
+async function saveMatchResult(gameState, winnerId) {
+    try {
+        const user1Id = gameState.leftPlayer.userId;
+        const user2Id = gameState.rightPlayer.userId;
+        const user1Score = gameState.leftPlayer.score;
+        const user2Score = gameState.rightPlayer.score;
+        const loserId = (winnerId === user1Id) ? user2Id : user1Id;
+
+        const updateUserStats = async (userId, isWinner) => {
+             const user = await prisma.user.findUnique({ where: { id: userId } });
+             if (!user) {
+                 await prisma.user.create({
+                     data: {
+                        id: userId,
+                        username: `User_${userId}`,
+                        wins: isWinner ? 1 : 0,
+                        losses: isWinner ? 0 : 1,
+                        experience: isWinner ? 50 : 10,
+                        level: 1
+                     }
+                 });
+                 return;
+             }
+             const newWins = user.wins + (isWinner ? 1 : 0);
+             const newLosses = user.losses + (isWinner ? 0 : 1);
+             const newXp = user.experience + (isWinner ? 50 : 10);
+             const newLevel = Math.floor(newXp / 100) + 1;
+
+             await prisma.user.update({
+                 where: { id: userId },
+                 data: {
+                     wins: newWins,
+                     losses: newLosses,
+                     experience: newXp,
+                     level: newLevel
+                 }
+             });
+        };
+
+        await Promise.all([
+            updateUserStats(winnerId, true),
+            updateUserStats(loserId, false)
+        ]);
+
+        await prisma.match.create({
+            data: {
+                user1Id,
+                user2Id,
+                user1Score,
+                user2Score,
+                winnerId,
+                status: 'FINISHED',
+                endedAt: new Date()
+            }
+        });
+        console.log(`Match saved to DB: ${user1Id} vs ${user2Id}`);
+    } catch (error) {
+        console.error("Error saving match:", error);
+    }
+}
+
+
+function startNewGame(player1, player2) {
+    const gameState = formulateGameState(player1, player2, gameCounter);
+    
+    // Initialize entities using shared logic
+    const ball = new Ball(GAME_CONFIG.CANVAS_WIDTH / 2, GAME_CONFIG.CANVAS_HEIGHT / 2, 10, 'white', 0.3);
+    const leftPaddle = new Paddle(30, GAME_CONFIG.CANVAS_HEIGHT / 2 - GAME_CONFIG.PADDLE_HEIGHT / 2, GAME_CONFIG.PADDLE_WIDTH, GAME_CONFIG.PADDLE_HEIGHT, 'yellow');
+    const rightPaddle = new Paddle(GAME_CONFIG.CANVAS_WIDTH - 40, GAME_CONFIG.CANVAS_HEIGHT / 2 - GAME_CONFIG.PADDLE_HEIGHT / 2, GAME_CONFIG.PADDLE_WIDTH, GAME_CONFIG.PADDLE_HEIGHT, 'purple');
+
+    console.log(`[GAME START] Ball: x=${ball.x}, y=${ball.y}, dx=${ball.dx}, dy=${ball.dy}, radius=${ball.radius}`);
+    console.log(`[GAME START] Left Paddle: x=${leftPaddle.x}, y=${leftPaddle.y}, w=${leftPaddle.width}, h=${leftPaddle.height}`);
+    console.log(`[GAME START] Right Paddle: x=${rightPaddle.x}, y=${rightPaddle.y}, w=${rightPaddle.width}, h=${rightPaddle.height}`);
+
+    game.set(gameState.gameId, {
+        data: gameState,
+        entities: { ball, leftPaddle, rightPaddle },
+        intervalId: null,
+        startTime: Date.now(),
+        gameDuration: 60000 // 60 seconds in milliseconds
+    });
+
+    // Send individual start messages to each player with their side
+    const baseMsg = {
+        type: "game_start",
+        gameId: gameState.gameId,
+        config: GAME_CONFIG
+    };
+
+    if (player1.socket.readyState === 1) {
+        player1.socket.send(JSON.stringify({ ...baseMsg, side: 'left' }));
+    }
+    if (player2.socket.readyState === 1) {
+        player2.socket.send(JSON.stringify({ ...baseMsg, side: 'right' }));
+    }
+
+    // Start countdown before actual game
+    startCountdown(gameState.gameId);
+}
+
+// =========================================================================================
+//  WEBSOCKET ROUTES
+// =========================================================================================
+
 // WebSocket Documentation Endpoint
 fastify.get('/api/websocket-info', {
     schema: {
-        description: 'WebSocket connection information and event documentation',
+        description: 'WebSocket connection info',
         tags: ['websocket'],
-        summary: 'How to connect and use the WebSocket for real-time gameplay',
         response: {
             200: {
                 type: 'object',
                 properties: {
-                    endpoint: { type: 'string', example: 'ws://localhost:3002/websocket?user_id=YOUR_USER_ID' },
-                    protocol: { type: 'string', example: 'WebSocket' },
-                    authentication: { type: 'string', example: 'Pass user_id as query parameter' },
-                    clientEvents: {
-                        type: 'object',
-                        description: 'Events that clients can send',
-                        properties: {
-                            moveUp: { type: 'string', example: 'Send string "moveUp" to move paddle up' },
-                            moveDown: { type: 'string', example: 'Send string "moveDown" to move paddle down' },
-                            resetGameRound: { type: 'string', example: 'JSON: {"type": "resetGameRound"}' },
-                            gameOver: { type: 'string', example: 'JSON: {"type": "gameOver", "winner": "user-123"}' },
-                            onScore: { type: 'string', example: 'JSON: {"type": "onScore"}' }
-                        }
-                    },
-                    serverEvents: {
-                        type: 'object',
-                        description: 'Events that server sends to clients',
-                        properties: {
-                            game_start: { type: 'string', example: 'Sent when match starts with game state' },
-                            reset_game_round: { type: 'string', example: 'Sent to reset ball between points' },
-                            gameOver: { type: 'string', example: 'Sent when game ends' },
-                            player_left: { type: 'string', example: 'Sent when opponent disconnects' },
-                            moveUp: { type: 'string', example: 'Broadcast opponent paddle movement' },
-                            moveDown: { type: 'string', example: 'Broadcast opponent paddle movement' }
-                        }
-                    },
-                    exampleConnection: {
-                        type: 'string',
-                        example: 'const ws = new WebSocket("ws://localhost:3002/websocket?user_id=user123"); ws.onmessage = (e) => console.log(e.data);'
-                    }
+                    endpoint: { type: 'string' },
+                    clientEvents: { type: 'object' },
                 }
             }
         }
@@ -418,52 +615,23 @@ fastify.get('/api/websocket-info', {
 }, async (request, reply) => {
     return {
         endpoint: 'ws://localhost:3002/websocket?user_id=YOUR_USER_ID',
-        protocol: 'WebSocket',
-        authentication: 'Pass user_id as query parameter',
         clientEvents: {
-            moveUp: 'Send string "moveUp" to move your paddle up',
-            moveDown: 'Send string "moveDown" to move your paddle down',
-            resetGameRound: 'Send JSON: {"type": "resetGameRound"} to reset round',
-            gameOver: 'Send JSON: {"type": "gameOver", "winner": "userId"} when game ends',
-            onScore: 'Send JSON: {"type": "onScore"} when point is scored'
-        },
-        serverEvents: {
-            game_start: 'Received when matched with opponent. Contains full game state',
-            reset_game_round: 'Received to reset ball position between points',
-            gameOver: 'Received when game ends with winner information',
-            player_left: 'Received when opponent disconnects (you win by forfeit)',
-            moveUp: 'Received when opponent moves paddle up',
-            moveDown: 'Received when opponent moves paddle down'
-        },
-        gameFlow: [
-            '1. Connect to WebSocket with your user_id',
-            '2. Server adds you to matchmaking queue',
-            '3. When matched, receive "game_start" event',
-            '4. Send moveUp/moveDown to control paddle',
-            '5. Opponent movements are broadcast to you',
-            '6. Send onScore when ball crosses goal',
-            '7. Send gameOver when match ends',
-            '8. Match is saved to database automatically'
-        ],
-        exampleConnection: 'const ws = new WebSocket("ws://localhost:3002/websocket?user_id=user123"); ws.onmessage = (e) => console.log(e.data); ws.send("moveUp");'
+            moveUp: 'Send string "moveUp"',
+            moveDown: 'Send string "moveDown"',
+        }
     };
 });
 
-//web socket route handler
 fastify.register(async function (fastify) {
     fastify.get('/websocket', { websocket: true }, async (connection, request) =>
     {
         console.log('Client Connected');
-
-//=============================================================================================================================================================
-
         let userId = request.query.user_id;
         const token = request.query.token;
 
-        // Token Verification Logic
+        // Token Verification
         if (token) {
             try {
-                // Try container request first, then localhost fallback
                 let verifyUrl = process.env.BACKEND_URL ? `${process.env.BACKEND_URL}/api/users/me` : 'http://backend:3001/api/users/me';
                 let res = await fetch(verifyUrl, {
                     headers: { 'Authorization': `Bearer ${token}` }
@@ -477,118 +645,120 @@ fastify.register(async function (fastify) {
 
                 if (res && res.ok) {
                     const profile = await res.json();
-                    userId = profile.id; // Securely set ID from token
+                    userId = profile.id; 
                     console.log(`Auth Success: ${profile.username} (${userId})`);
-                } else {
-                    console.warn("Auth Failed: Invalid Token");
-                    // connection.socket.send("Auth Failed");
-                    // connection.socket.close();
-                    // return;
                 }
             } catch (err) {
                 console.error("Auth Error:", err);
             }
         }
 
-        if (!userId) {
-             // connection.socket.close(); // Uncomment to enforce auth
-             // return;
-        } 
-
-        if (! connections.has(connection))
+        if (!connections.has(connection))
         {
-            if (! players.has(userId))
-            {
+            // Add or update player
+            if (!players.has(userId)) {
                 addPlayer(userId, connection);
+            } else {
+                // Update existing player's socket
+                players.set(userId, {
+                    ...players.get(userId),
+                    socket: connection,
+                    timeStamp: Date.now()
+                });
             }
             connections.add(connection);
 
             const roomId = request.query.roomId;
 
             if (roomId) {
-                 // Private Match Logic
+                // Private Match Logic
                 console.log(`Checking private lobby for room ${roomId}`);
                 if (privateLobbies.has(roomId)) {
                     const opponent = privateLobbies.get(roomId);
-                    // Prevent playing against yourself in same tab (or ensure safety)
                     if (opponent.userId === userId) {
-                         // Reconnecting? 
+                         // Same user reconnecting - update socket
                          opponent.socket = connection;
                          privateLobbies.set(roomId, opponent);
+                         console.log(`User ${userId} reconnected to lobby ${roomId}`);
                     } else if (opponent.socket.readyState === 1) {
-                         console.log("Found opponent in private lobby! Starting match...");
+                         console.log("Found opponent! Starting match...");
                          startNewGame(opponent, { userId, socket: connection });
                          gameCounter++;
                          privateLobbies.delete(roomId);
                     } else {
-                         // Opponent dead
+                         // Opponent socket is dead, replace with new player
+                         console.log('Opponent socket dead, replacing in lobby');
                          privateLobbies.set(roomId, { userId, socket: connection });
                     }
                 } else {
-                    console.log("Creating private lobby waiting room");
+                    console.log(`Creating private lobby for room ${roomId}`);
                     privateLobbies.set(roomId, { userId, socket: connection });
                 }
             } else {
                 // Public Matchmaking
-                console.log(`player queu size ${playerQueu.length}`);
-                if (! playerQueu.length)
-                {
+                if (!playerQueu.length) {
                     playerQueu.push({userId: userId, socket: connection });
-                }
-                else
-                {
+                    console.log(`User ${userId} added to matchmaking queue`);
+                } else {
                     const opponent = playerQueu.shift();
-                    startNewGame(opponent, { userId, socket: connection });
-                    gameCounter++;
+                    if (opponent.socket.readyState === 1) {
+                        startNewGame(opponent, { userId, socket: connection });
+                        gameCounter++;
+                    } else {
+                        // Opponent socket is dead, add current player to queue instead
+                        console.log('Opponent socket dead, requeuing current player');
+                        playerQueu.push({userId: userId, socket: connection });
+                    }
                 }
             }
         }
 
-//=============================================================================================================================================================
+        connection.on('error', (error) => {
+            console.error('WebSocket error:', error);
+        });
 
-        //WELCOME CLIENT
-        connection.send(`Connected Succesfully to Fastify WebSocket Server ! Total users number is${connections.size}`);
+        connection.send(`Connected Successfully!`);
 
-//=============================================================================================================================================================
-
-        // //HANDLING INCOMING DATA
+        // HANDLING INCOMING DATA
         connection.on('message', message => {
-            try
-            {
-                console.log(message);
+            try {
                 handleClientInput(message, connection);
-            }
-            catch(e)
-            {
-                console.log(e);
+            } catch(e) { 
+                console.error('Error handling client input:', e); 
             }
         })
 
-
-//=============================================================================================================================================================
-        //HANDLLING CONNECTION CLOSE 
+        // HANDLING CONNECTION CLOSE 
         connection.on('close', () => {
             console.log('Client Disconnected');
             connections.delete(connection);
+
+            // Remove from players Map
+            for (const [uid, playerData] of players.entries()) {
+                if (playerData.socket === connection) {
+                    players.delete(uid);
+                    console.log(`Removed player ${uid} from players map`);
+                    break;
+                }
+            }
 
             // Clean up private lobbies
             for (const [roomId, player] of privateLobbies.entries()) {
                 if (player.socket === connection) {
                     privateLobbies.delete(roomId);
-                    console.log(`Player removed from private lobby ${roomId}`);
+                    console.log(`Cleaned up private lobby ${roomId}`);
                     return;
                 }
             }
-
+            // Remove from Queue
             const queueIndex = playerQueu.findIndex(p => p.socket === connection);                                                                                                                                                 
-            if (queueIndex !== -1)
-            {                                                                                                                                                                                               
-                playerQueu.splice(queueIndex, 1);                                                                                                                                                                                  
-                console.log('Player removed from queue');                                                                                                                                                                          
+            if (queueIndex !== -1) {                                                                                                                                                                                               
+                playerQueu.splice(queueIndex, 1);
+                console.log('Removed player from matchmaking queue');                                                                                                                                                                                  
                 return;                                                                                                                                                                                                            
             }                                                                                                                                                                                                                      
-                
 
+            // Find Active Game and End it
             for (const [key, value] of game.entries())
             {
                 const gameState = value.data; 
@@ -598,83 +768,20 @@ fastify.register(async function (fastify) {
                     const isLeft = gameState.leftPlayer.socket === connection;
                     const opponent = isLeft ? gameState.rightPlayer : gameState.leftPlayer;
                     
-                    // Save match when player disconnects (opponent wins by forfeit)
-                    const saveMatchOnDisconnect = async () => {
-                        try {
-                            const user1Id = gameState.leftPlayer.userId;
-                            const user2Id = gameState.rightPlayer.userId;
-                            // Disconnecting player forfeits, opponent wins
-                            const user1Score = isLeft ? 0 : gameState.leftPlayer.score;
-                            const user2Score = isLeft ? gameState.rightPlayer.score : 0;
-                            const winnerId = isLeft ? user2Id : user1Id;
-                            const loserId = isLeft ? user1Id : user2Id;
+                    // Stop Loop Immediately
+                    if (value.intervalId) clearInterval(value.intervalId);
 
-                            // Same update logic as gameOver
-                            const updateUserStats = async (userId, isWinner) => {
-                                 const user = await prisma.user.findUnique({ where: { id: userId } });
-                                 if (!user) {
-                                     await prisma.user.create({
-                                         data: {
-                                            id: userId,
-                                            username: `User_${userId}`,
-                                            wins: isWinner ? 1 : 0,
-                                            losses: isWinner ? 0 : 1,
-                                            experience: isWinner ? 50 : 10,
-                                            level: 1
-                                         }
-                                     });
-                                     return;
-                                 }
-                                 const newWins = user.wins + (isWinner ? 1 : 0);
-                                 const newLosses = user.losses + (isWinner ? 0 : 1);
-                                 const newXp = user.experience + (isWinner ? 50 : 10);
-                                 const newLevel = Math.floor(newXp / 100) + 1;
-                                 await prisma.user.update({
-                                     where: { id: userId },
-                                     data: {
-                                         wins: newWins,
-                                         losses: newLosses,
-                                         experience: newXp,
-                                         level: newLevel
-                                     }
-                                 });
-                            };
+                    // Save Forfeit Match
+                    saveMatchResult(gameState, opponent.userId); // Opponent wins
 
-                            await Promise.all([
-                                updateUserStats(winnerId, true),
-                                updateUserStats(loserId, false)
-                            ]);
-
-                            await prisma.match.create({
-                                data: {
-                                    user1Id,
-                                    user2Id,
-                                    user1Score,
-                                    user2Score,
-                                    winnerId,
-                                    status: 'FINISHED',
-                                    endedAt: new Date()
-                                }
-                            });
-                            console.log(`Match saved (forfeit): ${user1Id} vs ${user2Id}, winner: ${winnerId}`);
-                        } catch (error) {
-                            console.error("Error saving match on disconnect:", error);
-                        }
-                    };
-                    saveMatchOnDisconnect();
-
-                    if (opponent && opponent.socket && opponent.socket.readyState === 1)
-                    {
+                    if (opponent && opponent.socket && opponent.socket.readyState === 1) {
                         opponent.socket.send(JSON.stringify({
                             type: 'player_left',
                             exited_paddel: isLeft ? 'left' : 'right'
                         }));
-                        // opponent.socket.close(); 
                     }
                     
-                    // Cleanup game to prevent double-save if opponent disconnects
                     game.delete(key);
-                    console.log(`Game ${key} ended due to disconnect.`);
                     break;
                 }
             }
@@ -683,280 +790,93 @@ fastify.register(async function (fastify) {
 });
 
 
-function handlePlayerMomvements(gameConnections, paddelSide, action)
+function handlePlayerMomvements(gameConnections, paddelSide, action, gameId)
 {
-    let data = 
-    {
+    // Update Server Side Paddle Position
+    const gameSession = game.get(gameId);
+    if (gameSession) {
+        const { entities } = gameSession;
+        const paddle = paddelSide === 'left' ? entities.leftPaddle : entities.rightPaddle;
+        
+        // Use paddle's own speed property (from shared Paddle class)
+        const moveSpeed = paddle.speed * 16; // Scale by deltaTime (16ms)
+        
+        if (action === 'up' && paddle.y > 0) {
+            paddle.y -= moveSpeed;
+            if (paddle.y < 0) paddle.y = 0;
+        } else if (action === 'down' && paddle.y < GAME_CONFIG.CANVAS_HEIGHT - paddle.height) {
+            paddle.y += moveSpeed;
+            if (paddle.y > GAME_CONFIG.CANVAS_HEIGHT - paddle.height) {
+                paddle.y = GAME_CONFIG.CANVAS_HEIGHT - paddle.height;
+            }
+        }
+    }
+
+    // Broadcast to other player (so they see it)
+    let data = {
         type: 'key_move', 
-        paddel : {
-            side : paddelSide,
-            action : action
-        },
+        paddel : { side : paddelSide, action : action },
         timeStamp: performance.now() 
     }
     let inputData = JSON.stringify(data);
-    gameConnections.forEach(connection =>
-    {
-        try
-        {
-            if (connection.readyState === 1) // WebSocket.OPEN
-                connection.send(inputData);
-        }
-        catch(e)
-        {
-            console.log(e);
-        }
+    gameConnections.forEach(connection => {
+        try {
+            if (connection.readyState === 1) connection.send(inputData);
+        } catch(e) { console.error('Error broadcasting paddle movement:', e); }
     });
 }
 
-function handlResetGameRound(gameConnections, data)
-{
-    try
-    {
-        gameConnections.forEach(connection => 
-        {
-            if (gameConnections[0] == connection)
-                data.isLeft = true;
-            else
-                data.isLeft = false;
-
-            if (connection.readyState == 1)
-                connection.send(JSON.stringify(data));
-        })
-    }
-    catch (e)
-    {
-        console.error(e);
-    }
-}
 
 function handleClientInput(message, sender)
 {
     const messageString = message.toString();
-    const validMessage = ["moveUp", "moveDown", "gameOver", "resetGameRound", "onScore"];
+    const validMessage = ["moveUp", "moveDown", "gameOver", "resetGameRound", "onScore"]; // 'onScore' is now deprecated/ignored from client
     
     let command = messageString;
-    let parsedMessage = null;
-
-    try
-    {
+    try {
         const parsed = JSON.parse(messageString);
-        if (parsed && typeof parsed === 'object')
-        {
-            parsedMessage = parsed;
-            // Check for 'type' or 'action' property
-            if (parsed.type)
-                command = parsed.type;
-            else if (parsed.action)
-                command = parsed.action;
-        }
-    }catch (e)
-    {
-        // To doNot JSON, continue with raw string
+        if (parsed.type) command = parsed.type;
+        else if (parsed.action) command = parsed.action;
+        console.log('Received command:', command, 'from message:', messageString);
+    } catch (e) {
+        console.log('Failed to parse message:', messageString);
     }
 
-    if (validMessage.includes(command))
-    {
-        let currentGameState = null;
-        for (const [id, g] of game)
-        {
-            const state = g.data;
-            if ((state.leftPlayer && state.leftPlayer.socket === sender) || 
-                (state.rightPlayer && state.rightPlayer.socket === sender))
-            {
-                currentGameState = state;
-                break;
-            }
+    // Find the game
+    let currentGameState = null;
+    let currentGameId = null;
+
+    for (const [id, g] of game) {
+        const state = g.data;
+        if ((state.leftPlayer && state.leftPlayer.socket === sender) || 
+            (state.rightPlayer && state.rightPlayer.socket === sender)) {
+            currentGameState = state;
+            currentGameId = id;
+            break;
         }
+    }
 
-        if (!currentGameState)
-            {
-            console.log("No active game found for input sender.");
-            return;
+    if (!currentGameState) {
+        console.log('No active game found for this player');
+        return;
+    }
+
+    // IGNORE CLIENT SCORING (Server is authoritative now)
+    if (command === "onScore" || command === "resetGameRound") {
+        return; 
+    }
+
+    // Handle Movement
+    if (currentGameState.leftPlayer && sender === currentGameState.leftPlayer.socket) {
+        if (command === "moveUp" || command === "moveDown") {
+            console.log('Left player moving:', command);
+            handlePlayerMomvements(currentGameState.connections, "left", command === "moveUp" ? "up" : "down", currentGameId);
         }
-
-        // check if it's reset game
-        if (command == "resetGameRound")
-        {
-            let data = {
-                type: "reset_game_round",
-                random: Math.random(),
-                timeStamp: Date.now(),
-                players: {
-                    leftPlayer: { score: currentGameState.leftPlayer.score },
-                    rightPlayer: { score: currentGameState.rightPlayer.score }
-                }
-            }
-            handlResetGameRound(currentGameState.connections, data);
-            return;
-        }
-        else if (command == "gameOver")
-        {
-            console.log("Game Over Event Detected !!!!!!!!!!!!!!!!!!!")
-            
-            // Save match result
-            const saveMatch = async () => {
-                try {
-                    const user1Id = currentGameState.leftPlayer.userId;
-                    const user2Id = currentGameState.rightPlayer.userId;
-                    const user1Score = currentGameState.leftPlayer.score;
-                    const user2Score = currentGameState.rightPlayer.score;
-                    
-                    let winnerId = null;
-                    let loserId = null;
-                    if (user1Score > user2Score) { winnerId = user1Id; loserId = user2Id; }
-                    else if (user2Score > user1Score) { winnerId = user2Id; loserId = user1Id; }
-
-                    const updateUserStats = async (userId, isWinner) => {
-                         // 1. Get current stats
-                         const user = await prisma.user.findUnique({ where: { id: userId } });
-                         if (!user) {
-                             // Create if missing
-                             await prisma.user.create({
-                                 data: {
-                                    id: userId,
-                                    username: `User_${userId}`,
-                                    wins: isWinner ? 1 : 0,
-                                    losses: isWinner ? 0 : 1,
-                                    experience: isWinner ? 50 : 10,
-                                    level: 1
-                                 }
-                             });
-                             return;
-                         }
-
-                         // 2. Calculate new stats
-                         const newWins = user.wins + (isWinner ? 1 : 0);
-                         const newLosses = user.losses + (isWinner ? 0 : 1);
-                         const newXp = user.experience + (isWinner ? 50 : 10);
-                         // Simple level formula: 1 level per 100 XP
-                         const newLevel = Math.floor(newXp / 100) + 1;
-
-                         // 3. Update
-                         await prisma.user.update({
-                             where: { id: userId },
-                             data: {
-                                 wins: newWins,
-                                 losses: newLosses,
-                                 experience: newXp,
-                                 level: newLevel
-                             }
-                         });
-                    };
-
-                    if (winnerId && loserId) {
-                        await Promise.all([
-                            updateUserStats(winnerId, true),
-                            updateUserStats(loserId, false)
-                        ]);
-                    } else {
-                        // Draw or abort - just ensure users exist
-                        const ensureUser = async (uid) => {
-                            const exists = await prisma.user.findUnique({ where: { id: uid } });
-                            if (!exists) {
-                                await prisma.user.create({
-                                    data: { id: uid, username: `User_${uid}` }
-                                });
-                            }
-                        };
-                        await Promise.all([ensureUser(user1Id), ensureUser(user2Id)]);
-                    }
-
-                    await prisma.match.create({
-                        data: {
-                            user1Id,
-                            user2Id,
-                            user1Score,
-                            user2Score,
-                            winnerId,
-                            status: 'FINISHED',
-                            endedAt: new Date()
-                        }
-                    });
-                    console.log(`Match saved: ${user1Id} vs ${user2Id}`);
-                } catch (error) {
-                    console.error("Error saving match:", error);
-                }
-            };
-            saveMatch();
-
-            currentGameState.connections.forEach(connection =>{
-                try
-                {
-                    if (connection.readyState == 1)
-                        connection.send(JSON.stringify(
-                        {
-                            type: "gameOver",
-                            timeStamp: Date.now(),
-                            players: {
-                                leftPlayer: { score: currentGameState.leftPlayer.score },
-                                rightPlayer: { score: currentGameState.rightPlayer.score }
-                            } 
-                        }));
-                }
-                catch(e)
-                {
-                    console.error(e)
-                }
-            })
-            
-            // Remove game from map to prevent disconnect handler from saving it again
-            game.delete(currentGameState.gameId);
-            console.log(`Game ${currentGameState.gameId} finished and removed.`);
-        }
-        else if (command == "onScore")
-        {
-
-            // console.log("before========================")
-            // console.log(`score 1 ${currentGameState.leftPlayer.score} - score 2 ${currentGameState.rightPlayer.score}`)
-            if (parsedMessage && parsedMessage.side) {
-                if (parsedMessage.side === "left")
-                {
-                    currentGameState.leftPlayer.score++;
-                } 
-                else if (parsedMessage.side === "right")
-                {
-                    currentGameState.rightPlayer.score++;
-                }
-
-            // console.log("before========================")
-            // console.log(`score 1 ${currentGameState.leftPlayer.score} - score 2 ${currentGameState.rightPlayer.score}`)
-                let data = {
-                    type: "reset_game_round",
-                    random: Math.random(),
-                    timeStamp: Date.now(),
-                    players: {
-                        leftPlayer: { score: currentGameState.leftPlayer.score },
-                        rightPlayer: { score: currentGameState.rightPlayer.score }
-                    }
-                };
-                handlResetGameRound(currentGameState.connections, data);
-            }
-            return;
-        }
-
-        if (currentGameState.leftPlayer && sender === currentGameState.leftPlayer.socket)
-        {
-            console.log("Input received from LEFT player");
-            handlePlayerMomvements(currentGameState.connections, "left", command === "moveUp" ? "up" : "down");
-        }
-        else if (currentGameState.rightPlayer && sender === currentGameState.rightPlayer.socket)
-        {
-            console.log("Input received from RIGHT player");
-            handlePlayerMomvements(currentGameState.connections, "right", command === "moveUp" ? "up" : "down");
-        }
-        else
-        {
-            console.log("Input received from unknown socket/observer");
-        }
-
-    } else
-    {
-        try {
-            if (sender.readyState === 1)
-                sender.send("message is not Defined try Again with a VALID MESSAGE ");
-        } catch (e) {
-            console.log(e);
+    }
+    else if (currentGameState.rightPlayer && sender === currentGameState.rightPlayer.socket) {
+        if (command === "moveUp" || command === "moveDown") {
+            console.log('Right player moving:', command);
+            handlePlayerMomvements(currentGameState.connections, "right", command === "moveUp" ? "up" : "down", currentGameId);
         }
     }
 }
