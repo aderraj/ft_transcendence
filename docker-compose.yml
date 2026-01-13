@@ -131,19 +131,19 @@ services:
       - VAULT_SECRETS_PATH=/secrets
       - NODE_ENV=${NODE_ENV:-development}
       - PORT=3001
-      - USE_HTTPS=false
+      - USE_HTTPS=${USE_HTTPS:-true}
       - HOST_IP=${HOST_IP:-localhost}
       # URLs constructed from HOST_IP
-      - FRONTEND_URL=https://${HOST_IP:-localhost}
-      - OAUTH_42_CALLBACK_URL=https://${HOST_IP:-localhost}/api/auth/42/callback
-      - GOOGLE_CALLBACK_URL=https://${HOST_IP:-localhost}/api/auth/google/callback
+      - FRONTEND_URL=http://localhost:3000
+      - OAUTH_42_CALLBACK_URL=${OAUTH_42_CALLBACK_URL:-https://localhost:3001/api/auth/42/callback}
+      - GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL:-https://localhost:3001/api/auth/google/callback}
       # SMTP config (non-sensitive)
       - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
       - SMTP_PORT=${SMTP_PORT:-587}
       - SMTP_SECURE=${SMTP_SECURE:-false}
       - EMAIL_FROM=${EMAIL_FROM:-noreply@localhost}
-      # CORS - allow all services
-      - ALLOWED_ORIGINS=https://${HOST_IP:-localhost},http://${HOST_IP:-localhost}:3000,https://${HOST_IP:-localhost}:3000,http://localhost:3000,https://localhost:3000,http://localhost:5173,https://localhost
+      # CORS - allow localhost and configured HOST_IP
+      - ALLOWED_ORIGINS=${ALLOWED_ORIGINS:-http://localhost:3000,https://localhost:3000,http://localhost:5173}
     depends_on:
       ssl-init:
         condition: service_completed_successfully
@@ -152,7 +152,7 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ['CMD', 'sh', '-c', 'nc -z localhost 3001 || exit 1']
+      test: ['CMD', 'sh', '-c', 'wget --no-check-certificate --spider https://localhost:3001/api || nc -z localhost 3001 || exit 1']
       interval: 10s
       timeout: 5s
       retries: 10
@@ -183,9 +183,9 @@ services:
     environment:
       - NODE_ENV=${NODE_ENV:-development}
       - VITE_HOST_IP=${HOST_IP:-localhost}
-      - VITE_USE_HTTPS=false
-      - VITE_BACKEND_PORT=443
-      - VITE_API_URL=http://${HOST_IP:-localhost:3001}
+      - VITE_USE_HTTPS=${USE_HTTPS:-true}
+      - VITE_BACKEND_PORT=3001
+      - VITE_API_URL=https://${HOST_IP:-localhost}:3001
     depends_on:
       ssl-init:
         condition: service_completed_successfully
@@ -211,7 +211,7 @@ services:
     container_name: transcendence-game
     restart: unless-stopped
     ports:
-      - "3002:3002"  # Direct access for debugging
+      - "3002:3000"  # Map host 3002 to container 3000
     volumes:
       # Mount 'game' SUBDIRECTORY to match directory name
       - ./ft_transcendence-pong_game:/app/ft_transcendence-pong_game
@@ -225,7 +225,7 @@ services:
       postgres:
         condition: service_healthy
     healthcheck:
-      test: ['CMD', 'sh', '-c', 'nc -z localhost 3002 || exit 1']
+      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'http://127.0.0.1:3000']
       interval: 10s
       timeout: 5s
       retries: 5

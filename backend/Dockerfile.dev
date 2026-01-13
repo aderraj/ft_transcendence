@@ -7,7 +7,9 @@ RUN apk add --no-cache \
     g++ \
     openssl \
     bash \
-    curl
+    curl \
+    jq \
+    postgresql-client
 
 WORKDIR /app
 

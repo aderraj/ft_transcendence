@@ -18,7 +18,9 @@ echo "✅ Vault secrets are ready"
 # Load secrets into environment variables
 if [ -f "$SECRETS_PATH/db_password" ]; then
   DB_PASSWORD=$(cat "$SECRETS_PATH/db_password")
-  export DATABASE_URL="postgresql://transcendence:${DB_PASSWORD}@postgres:5432/transcendence?schema=public"
+  # URL encode the password to handle special characters
+  DB_PASSWORD_ENCODED=$(printf '%s' "$DB_PASSWORD" | jq -sRr @uri)
+  export DATABASE_URL="postgresql://transcendence:${DB_PASSWORD_ENCODED}@postgres:5432/transcendence?schema=public"
   echo "✅ DATABASE_URL configured from Vault"
 fi
 
@@ -57,7 +59,7 @@ echo "✅ All secrets loaded from Vault"
 # Wait for PostgreSQL to be ready
 # ============================================
 echo "⏳ Waiting for PostgreSQL..."
-until npx prisma db execute --stdin <<< "SELECT 1;" 2>/dev/null; do
+until PGPASSWORD="$DB_PASSWORD" psql -h postgres -U transcendence -d transcendence -c '\q' 2>/dev/null; do
   echo "PostgreSQL is unavailable - sleeping"
   sleep 2
 done
