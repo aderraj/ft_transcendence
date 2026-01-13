@@ -1,0 +1,18 @@
+1. changed wrong imports in ProfileHeader.jsx
+
+-> added 
+
+import ProfileHeader from '@/components/profile/ProfileHeader';
+import EditProfileForm from '@/components/profile/ProfileEditForm';
+import SecuritySettings from '@/components/profile/ProfileSecuritySettings';
+
+-> removed
+
+import ProfileHeader from '@/components/ProfileHeader';
+import EditProfileForm from '@/components/ProfileEditForm';
+import SecuritySettings from '@/components/ProfileSecuritySettings';
+
+2. Line 14 in AppDataContext.jsx is being called but it is not imported
+
+removed -> import { useNavigate } from 'react-router-dom';
+added -> import { useNavigate, useLocation } from 'react-router-dom';

@@ -37,7 +37,6 @@ services:
       - HOST_IP=${HOST_IP:-localhost}
     networks:
       - transcendence-network
-
   # ============================================
   # Vault (Secrets Management - starts first)
   # ============================================
@@ -71,7 +70,6 @@ services:
       timeout: 5s
       retries: 30
       start_period: 10s
-
   # ============================================
   # PostgreSQL Database
   # ============================================
@@ -108,7 +106,6 @@ services:
       vault:
         condition: service_healthy
     # restart: unless-stopped
-
   # ============================================
   # NestJS Backend
   # ============================================
@@ -161,7 +158,6 @@ services:
     networks:
       - transcendence-network
     restart: unless-stopped
-
   # ============================================
   # React Frontend (Vite)
   # ============================================
@@ -183,7 +179,7 @@ services:
       backend:
         condition: service_healthy
     healthcheck:
-      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'https://localhost:443/health']
+      test: ['CMD', 'wget', '-q', '--spider', 'http://127.0.0.1:80/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -191,7 +187,6 @@ services:
     networks:
       - transcendence-network
     # restart: unless-stopped
-
   # ============================================
   # Pong Game Service (Fastify)
   # ============================================
@@ -221,7 +216,6 @@ services:
     networks:
       - transcendence-network
     # restart: unless-stopped
-
   # ============================================
   # WAF (Edge / Single Entry Point)
   # ============================================
@@ -259,11 +253,9 @@ services:
     networks:
       - transcendence-network
     restart: unless-stopped
-
   # ============================================
   # ELK Stack - Log Management
   # ============================================
-
   # --- Elasticsearch ---
   elasticsearch:
     build: ./infra/elk/elasticsearch
@@ -296,7 +288,6 @@ services:
       retries: 30
       start_period: 30s
     restart: unless-stopped
-
   # --- Logstash ---
   logstash:
     build: ./infra/elk/logstash
@@ -317,7 +308,6 @@ services:
     networks:
       - transcendence-network
     restart: unless-stopped
-
   # --- Kibana ---
   kibana:
     build: ./infra/elk/kibana
@@ -340,7 +330,6 @@ services:
       timeout: 10s
       retries: 20
     restart: unless-stopped
-
   # --- Filebeat ---
   filebeat:
     build: ./infra/elk/filebeat
@@ -356,7 +345,6 @@ services:
     networks:
       - transcendence-network
     restart: unless-stopped
-
   # ============================================
   # Monitoring Stack
   # ============================================
@@ -378,7 +366,6 @@ services:
     networks:
       - transcendence-network
     restart: unless-stopped
-
   # --- Grafana ---
   grafana:
     build: ./infra/monitoring/grafana
@@ -396,7 +383,6 @@ services:
       - prometheus
       - vault
     restart: unless-stopped
-
   # --- Alertmanager ---
   alertmanager:
     image: prom/alertmanager:v0.26.0
@@ -412,7 +398,6 @@ services:
     networks:
       - transcendence-network
     restart: unless-stopped
-
   # --- Node Exporter (System Metrics) ---
   node-exporter:
     image: prom/node-exporter:v1.7.0
@@ -431,7 +416,6 @@ services:
     networks:
       - transcendence-network
     restart: unless-stopped
-
   # --- cAdvisor (Container Metrics) ---
   cadvisor:
     image: gcr.io/cadvisor/cadvisor:v0.47.0
@@ -446,7 +430,6 @@ services:
     networks:
       - transcendence-network
     restart: unless-stopped
-
   # --- PostgreSQL Exporter ---
   postgres-exporter:
     image: prometheuscommunity/postgres-exporter
@@ -465,7 +448,6 @@ services:
       - postgres
       - vault
     restart: unless-stopped
-
   # --- Nginx Exporter ---
   nginx-exporter:
     image: nginx/nginx-prometheus-exporter:1.0
@@ -479,7 +461,6 @@ services:
     depends_on:
       - waf
     restart: unless-stopped
-
   # --- Elasticsearch Exporter ---
   elasticsearch-exporter:
     image: prometheuscommunity/elasticsearch-exporter:v1.6.0

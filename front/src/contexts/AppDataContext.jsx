@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import { useAuth } from './AuthContext';
 import { authenticatedFetch, API_BASE } from '@/utils/api';
 import { io } from 'socket.io-client';
-import { useNavigate} from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 const AppDataContext = createContext();
 
