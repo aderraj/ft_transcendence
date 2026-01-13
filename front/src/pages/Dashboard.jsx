@@ -4,10 +4,10 @@ import { useAuth } from '@/contexts/AuthContext';
 import { useAppData } from '@/contexts/AppDataContext';
 import { TrendingUp, Activity, MoreHorizontal, Inbox, Loader2 } from 'lucide-react';
 
-import HighlightCard from '@/components/HighlightCard';
-import StatCard from '@/components/StatCard';
-import HistoryRow from '@/components/HistoryRow';
-import FriendRow from '@/components/FriendRow';
+import HighlightCard from '@/components/dashboard/HighlightCard';
+import StatCard from '@/components/dashboard/StatCard';
+import HistoryRow from '@/components/dashboard/HistoryRow';
+import FriendRow from '@/components/dashboard/FriendRow';
 import RequestsModal from '@/components/modals/RequestsModal';
 import ConfirmationModal from '@/components/modals/ConfirmationModal';
 

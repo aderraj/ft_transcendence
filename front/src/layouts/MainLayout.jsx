@@ -1,7 +1,7 @@
 import React from 'react';
 import { Outlet, useLocation } from 'react-router-dom';
-import AuroraBackground from '@/components/Aurora';
-import StarField from '@/components/StarField';
+import AuroraBackground from '@/components/background/Aurora';
+import StarField from '@/components/background/StarField';
 import TopBar from '@/components/TopBar';
 import SideBar from '@/components/SideBar';
 

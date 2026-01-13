@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useSearchParams, useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
-import { ShieldCheck, Lock, User, AlertCircle, Mail, ArrowLeft, UserPlus, Smartphone, Key, X } from 'lucide-react';
+import { ShieldCheck, Lock, User, AlertCircle, Mail, ArrowLeft, UserPlus, Smartphone, X } from 'lucide-react';
 import '@/styles/index.css';
 import { API_BASE } from '@/utils/api';
 

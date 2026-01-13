@@ -17,26 +17,9 @@ export default defineConfig({
     },
   },
 
-  build: {
-    outDir: 'dist',
-    sourcemap: false,
-    emptyOutDir: true,
-    rollupOptions: {
-      output: {
-        // Vendor chunking (optional, helps caching)
-        manualChunks(id) {
-          if (id.includes('node_modules')) {
-            return 'vendor';
-          }
-        }
-      }
-    }
-  },
-
   server : {
     fs: {
       allow: ['..']
     },
-  },
-
+  }
 })

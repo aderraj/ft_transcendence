@@ -4,8 +4,8 @@ import { useAuth } from "@/contexts/AuthContext";
 import { useAppData } from "@/contexts/AppDataContext";
 import { authenticatedFetch, API_BASE } from "@/utils/api";
 
-import ChatSidebar from "@/components/ChatSideBar";
-import ChatWindow from "@/components/ChatWindow";
+import ChatSidebar from "@/components/chat/ChatSideBar";
+import ChatWindow from "@/components/chat/ChatWindow";
 
 export default function Chat() {
     const { user } = useAuth();
@@ -95,7 +95,6 @@ export default function Chat() {
         allChatEntries.find(c => String(c?.friend?.id) === String(activeConversationId)), 
     [allChatEntries, activeConversationId]);
 
-    // UPDATED: Sort messages by creation time
     const activeMessages = useMemo(() => {
         const msgs = (activeConversationId ? messageCache[String(activeConversationId)] : []) || [];
         return [...msgs].sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt));

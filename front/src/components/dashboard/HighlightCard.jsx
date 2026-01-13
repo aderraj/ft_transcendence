@@ -1,7 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Play, Trophy } from 'lucide-react';
-import TrueFocus from '@/components/TrueFocus'; 
+import TrueFocus from '@/components/dashboard/TrueFocus'; 
 
 const HighlightCard = () => {
   const navigate = useNavigate();
@@ -11,21 +11,15 @@ const HighlightCard = () => {
                     border border-white/10 bg-[#0bc1021]/40 backdrop-blur-xl 
                     group hover:border-cyan-400/30 transition-all duration-500">
       
-      {/* --- 1. BACKGROUND EFFECTS --- */}
-      {/* Grid Pattern */}
       <div className="absolute inset-0 bg-[linear-gradient(to_right,#80808012_1px,transparent_1px),linear-gradient(to_bottom,#80808012_1px,transparent_1px)] bg-[size:24px_24px] [mask-image:radial-gradient(ellipse_60%_50%_at_50%_0%,#000_70%,transparent_100%)] pointer-events-none"></div>
       
-      {/* Ambient Glows (Cyan/Blue) */}
       <div className="absolute -top-24 -right-24 w-64 h-64 bg-cyan-500/20 rounded-full blur-[80px] group-hover:bg-cyan-400/30 transition-all duration-700"></div>
       <div className="absolute -bottom-24 -left-24 w-64 h-64 bg-blue-600/20 rounded-full blur-[80px] group-hover:bg-blue-500/30 transition-all duration-700"></div>
 
-      {/* --- 2. CONTENT --- */}
       <div className="relative p-8 md:p-10 flex flex-col md:flex-row items-start md:items-center justify-between gap-6 z-10">
         
-        {/* Left Side: Text */}
         <div className="space-y-6 max-w-2xl">
-          
-          {/* Title with TrueFocus Animation (Cyan Theme) */}
+
           <div className="relative z-20 text-5xl md:text-6xl font-black italic tracking-tighter text-white uppercase drop-shadow-xl -ml-1">
             <TrueFocus 
                 sentence="PONG ARENA"
@@ -43,7 +37,6 @@ const HighlightCard = () => {
           </p>
         </div>
         
-        {/* Right Side: Cyan/Blue Action Button */}
         <div className="flex flex-col items-center gap-5 mt-2">
             
             <button 
@@ -59,7 +52,6 @@ const HighlightCard = () => {
                         <div className="relative h-full w-8 bg-white/10"></div>
                     </div>
 
-                    {/* 2. Text: Cyan/White Hover Effects */}
                     <span className="font-black italic tracking-[0.2em] text-white uppercase text-sm group-hover/btn:text-cyan-100 group-hover/btn:drop-shadow-[0_0_8px_rgba(34,211,238,0.8)] transition-all">
                         Enter Arena
                     </span>

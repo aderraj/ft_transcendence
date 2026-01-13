@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { useParams } from 'react-router-dom';
-import { Loader2 } from 'lucide-react';
+import { useParams, useLocation, useNavigate } from 'react-router-dom';
+import { Loader2, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppData } from '@/contexts/AppDataContext';
 import { authenticatedFetch, authenticatedFileUpload } from '@/utils/api'; 
@@ -11,10 +11,23 @@ import PasswordResetModal from '@/components/modals/PasswordResetModal';
 import TwoFactorModal from '@/components/modals/TwoFactorModal';
 
 export default function Profile() {
-
     const { user: authUser, refreshUser } = useAuth(); 
-    const { friends, users: cachedUsers } = useAppData();
+    const { 
+        friends, 
+        users: cachedUsers, 
+        pendingRequests, 
+        sentRequests, 
+        sendFriendRequest, 
+        acceptFriendRequest, 
+        cancelFriendRequest, 
+        removeFriend 
+    } = useAppData();
+    
     const { userId } = useParams();
+    const location = useLocation();
+    const navigate = useNavigate();
+
+    const cameFromChat = location.state?.from === 'chat';
 
     const isOwnProfile = !userId || userId === authUser?.id;
     const initialData = isOwnProfile 
@@ -47,6 +60,36 @@ export default function Profile() {
     const [passSuccess, setPassSuccess] = useState(false);
 
     const fileInputRef = useRef(null);
+
+    const getRelationshipStatus = () => {
+        if (isOwnProfile) return 'OWN';
+        if (friends.some(f => f.id === profile?.id)) return 'FRIEND';
+        if (sentRequests.some(r => r.receiverId === profile?.id)) return 'SENT';
+        if (pendingRequests.some(r => r.senderId === profile?.id)) return 'RECEIVED';
+        return 'NONE';
+    };
+
+    const relationshipStatus = getRelationshipStatus();
+
+    const handleFriendAction = async (action) => {
+        if (!profile?.id) return;
+        
+        try {
+            if (action === 'add') {
+                await sendFriendRequest(profile.id);
+            } else if (action === 'accept') {
+                const req = pendingRequests.find(r => r.senderId === profile.id);
+                if (req) await acceptFriendRequest(req.id);
+            } else if (action === 'cancel') {
+                const req = sentRequests.find(r => r.receiverId === profile.id);
+                if (req) await cancelFriendRequest(req.id);
+            } else if (action === 'remove') {
+                await removeFriend(profile.id);
+            }
+        } catch (error) {
+            console.error("Friend action failed:", error);
+        }
+    };
 
     useEffect(() => {
         const fetchDeepProfile = async () => {
@@ -181,7 +224,6 @@ export default function Profile() {
                 setProfile(prev => ({ ...prev, isTwoFactorEnabled: newState }));
                 setIs2FAModalOpen(false);
                 
-                // Optional: Refresh global user if 2FA status is shown elsewhere
                 if (refreshUser) await refreshUser();
             } else {
                 setSecurityError("Invalid Code.");
@@ -196,6 +238,18 @@ export default function Profile() {
 
     return (
         <div className="max-w-6xl mx-auto space-y-8 animate-in fade-in slide-in-from-bottom-4 duration-500 pb-10">
+            {cameFromChat && (
+                <div className="flex items-center">
+                    <button 
+                        onClick={() => navigate('/chat')}
+                        className="flex items-center gap-2 px-4 py-2 rounded-xl bg-white/5 hover:bg-white/10 text-white/80 hover:text-cyan-400 transition-all border border-white/5"
+                    >
+                        <ArrowLeft size={16} />
+                        <span className="text-sm font-semibold tracking-wide">Back to Chat</span>
+                    </button>
+                </div>
+            )}
+
             <PasswordResetModal 
                 isOpen={isChangePassModalOpen}
                 onClose={() => !passLoading && setIsChangePassModalOpen(false)}
@@ -230,6 +284,8 @@ export default function Profile() {
                         onAvatarClick={() => fileInputRef.current?.click()}
                         fileInputRef={fileInputRef}
                         onFileChange={handleFileChange}
+                        relationshipStatus={relationshipStatus}
+                        onFriendAction={handleFriendAction}
                     />
                 </div>
 

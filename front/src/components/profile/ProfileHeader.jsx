@@ -1,6 +1,7 @@
 import React from 'react';
-import { Camera, Loader2, Calendar, Trophy, XCircle } from 'lucide-react';
+import { Camera, Loader2, Calendar, Trophy, UserPlus, UserCheck, Clock } from 'lucide-react';
 import { Avatar, AvatarImage, AvatarFallback } from '@/components/ui/avatar';
+import { Button } from '@/components/ui/button';
 
 export default function ProfileHeader({ 
     profile, 
@@ -8,7 +9,9 @@ export default function ProfileHeader({
     isUploading, 
     onAvatarClick, 
     fileInputRef, 
-    onFileChange 
+    onFileChange,
+    relationshipStatus,
+    onFriendAction
 }) {
     const getRankTitle = (level = 1) => {
         if (level >= 50) return "Grandmaster";
@@ -55,7 +58,45 @@ export default function ProfileHeader({
             <h2 className="text-2xl font-bold text-white tracking-wide mb-1">
                 {profile?.displayName || profile?.username}
             </h2>
-            <p className="text-sm text-cyan-400 font-mono mb-6">@{profile?.username}</p>
+            <p className="text-sm text-cyan-400 font-mono mb-4">@{profile?.username}</p>
+
+            {!isOwnProfile && (
+                <div className="mb-6">
+                    {relationshipStatus === 'NONE' && (
+                        <Button 
+                            onClick={() => onFriendAction('add')}
+                            className="bg-emerald-500 hover:bg-emerald-600 text-white font-bold tracking-wide flex items-center gap-2"
+                        >
+                            <UserPlus size={16} /> Add Friend
+                        </Button>
+                    )}
+                    {relationshipStatus === 'SENT' && (
+                        <Button 
+                            onClick={() => onFriendAction('cancel')}
+                            className="bg-yellow-500/20 hover:bg-yellow-500/30 text-yellow-200 border border-yellow-500/50 flex items-center gap-2"
+                        >
+                            <Clock size={16} /> Request Sent
+                        </Button>
+                    )}
+                    {relationshipStatus === 'RECEIVED' && (
+                        <Button 
+                            onClick={() => onFriendAction('accept')}
+                            className="bg-cyan-500 hover:bg-cyan-600 text-white font-bold flex items-center gap-2"
+                        >
+                            <UserCheck size={16} /> Accept Request
+                        </Button>
+                    )}
+                    {relationshipStatus === 'FRIEND' && (
+                        <Button 
+                            onClick={() => onFriendAction('remove')}
+                            variant="ghost"
+                            className="bg-white/5 hover:bg-red-500/20 text-white hover:text-red-400 border border-white/10 flex items-center gap-2"
+                        >
+                            <UserCheck size={16} className="text-emerald-400" /> Friends
+                        </Button>
+                    )}
+                </div>
+            )}
 
             <div className="w-full space-y-2">
                 <div className="bg-white/5 rounded-2xl p-6 border border-white/5 relative overflow-hidden">
