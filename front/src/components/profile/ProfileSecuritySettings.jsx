@@ -63,8 +63,8 @@ export default function SecuritySettings({
                         className={cn(
                             "font-bold border-none transition-colors",
                             isTwoFactorEnabled 
-                                ? "bg-red-500 hover:bg-red-600 text-white" // Red for Disable
-                                : "bg-white text-black hover:bg-gray-200"   // White for Enable
+                                ? "bg-red-500 hover:bg-red-600 text-white" 
+                                : "bg-white text-black hover:bg-gray-200"
                         )}
                     >
                         {isTwoFactorEnabled ? "Disable" : "Enable"}

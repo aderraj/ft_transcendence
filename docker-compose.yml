@@ -101,31 +101,22 @@ services:
   frontend:
     build:
       context: .
-      dockerfile: ./front/Dockerfile.dev
+      dockerfile: ./front/Dockerfile
     container_name: transcendence-frontend
     restart: unless-stopped
     ports:
-      - '3000:5173'
+      - '3000:443'
     environment:
-      NODE_ENV: ${NODE_ENV:-development}
-      VITE_HOST_IP: ${HOST_IP:-localhost}
-      VITE_USE_HTTPS: ${USE_HTTPS:-false}
-      VITE_BACKEND_PORT: ${PORT:-3001}
+      VITE_API_BASE: ${VITE_API_BASE:-https://localhost:3001}
     volumes:
-      # Mount 'front' SUBDIRECTORY to '/app/front'
-      - ./front:/app/front
-      # Prevent node_modules from being overwritten by the mount
-      - /app/front/node_modules
-      # Mount 'shared' to '/app/shared'
-      - ./shared:/app/shared
-      - ./ssl:/app/ssl:ro
+      - ./ssl:/etc/nginx/ssl:ro
     depends_on:
       ssl-init:
         condition: service_completed_successfully
       backend:
         condition: service_healthy
     healthcheck:
-      test: ['CMD', 'curl', '-kf', 'https://localhost:5173']
+      test: ['CMD', 'wget', '--no-verbose', '--tries=1', '--spider', 'https://localhost:443/health']
       interval: 30s
       timeout: 10s
       retries: 3
@@ -147,11 +138,8 @@ services:
       NODE_ENV: ${NODE_ENV:-development}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-}
     volumes:
-      # Mount 'game' SUBDIRECTORY to match directory name
       - ./ft_transcendence-pong_game:/app/ft_transcendence-pong_game
-      # Prevent node_modules overwrite
       - /app/ft_transcendence-pong_game/node_modules
-      # Mount shared
       - ./shared:/app/shared
     depends_on:
       postgres:

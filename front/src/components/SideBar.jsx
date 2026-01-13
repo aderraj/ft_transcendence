@@ -2,24 +2,20 @@ import React from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 import { LayoutDashboard, Gamepad2, MessageSquare, User, LogOut, Trophy } from "lucide-react";
 import { useAuth } from "@/contexts/AuthContext";
-import { useAppData } from "@/contexts/AppDataContext"; // Import useAppData
+import { useAppData } from "@/contexts/AppDataContext";
 
 const SideBar = () => {
     const location = useLocation();
     const navigate  = useNavigate();
     const { logout } = useAuth();
-    const { unreadChatCount } = useAppData(); // Get unread count
-
+    const { unreadChatCount } = useAppData();
     const isActive = (path) => location.pathname === path;
 
     const NavItem = ( { path, icon: Icon, label } ) => {
         const active = isActive(path);
-        
-        // Determine if this is the chat button and if we should animate it
         const isChat = label === "Chat";
         const hasUnread = isChat && unreadChatCount > 0;
         
-        // Custom classes for the unread state
         const unreadClasses = hasUnread ? "animate-bounce text-cyan-400 drop-shadow-[0_0_8px_rgba(34,211,238,0.8)]" : "";
 
         return (
@@ -41,7 +37,6 @@ const SideBar = () => {
 
                 <Icon className={`w-6 h-6 ${hasUnread ? 'animate-pulse' : ''}`} />
 
-                {/* Optional: Add a small red dot if unread */}
                 {hasUnread && (
                     <span className="absolute top-2 right-2 w-2 h-2 rounded-full bg-red-500 shadow-[0_0_5px_#ef4444]" />
                 )}

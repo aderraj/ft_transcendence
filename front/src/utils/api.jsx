@@ -1,4 +1,6 @@
-export const API_BASE = import.meta.env.VITE_API_URL;
+// Get API base URL from environment variables injected at runtime
+// Falls back to localhost for development
+export const API_BASE = window.ENV?.VITE_API_BASE
 
 export const authenticatedFetch = async (endpoint, options = {}) => {
   const token = localStorage.getItem('accessToken');

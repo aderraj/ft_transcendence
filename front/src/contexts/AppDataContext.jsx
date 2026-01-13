@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import { useAuth } from './AuthContext';
 import { authenticatedFetch, API_BASE } from '@/utils/api';
 import { io } from 'socket.io-client';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate} from 'react-router-dom';
 
 const AppDataContext = createContext();
 
@@ -11,7 +11,6 @@ export const useAppData = () => useContext(AppDataContext);
 export const AppDataProvider = ({ children }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation(); // Used to check if we are currently on the chat page
   
   const friendsSocketRef = useRef(null);
   const chatSocketRef = useRef(null);
@@ -26,11 +25,10 @@ export const AppDataProvider = ({ children }) => {
     sentGameInvites: [],
     stats: { totalMatches: 0, winRate: 0, rank: 'Unranked' },
     history: [],
-    unreadChatCount: 0, // NEW: Track unread messages
+    unreadChatCount: 0,
     isLoaded: false, 
   });
 
-  // ... (Helper functions: fetchAndPatchFriend, fetchAndPatchPendingRequest, updateFriendStatus) ...
   const fetchAndPatchFriend = async (friendId) => {
     try {
         const res = await authenticatedFetch(`/api/users/${friendId}`);
@@ -108,7 +106,6 @@ export const AppDataProvider = ({ children }) => {
       }
   }, []);
 
-  // NEW: Fetch unread count explicitly (re-using conversations endpoint)
   const fetchUnreadChatCount = useCallback(async () => {
       try {
           const res = await authenticatedFetch('/api/chat/conversations');
@@ -126,8 +123,7 @@ export const AppDataProvider = ({ children }) => {
 
   useEffect(() => {
     if (!user) return;
-    
-    // --- FRIENDS SOCKET ---
+
     if (!friendsSocketRef.current) {
         const token = localStorage.getItem('accessToken');
         const friendsSocket = io(`${API_BASE}/friends`, {
@@ -150,7 +146,7 @@ export const AppDataProvider = ({ children }) => {
                     id: data.senderId,
                     username: data.senderUsername,
                     displayName: data.senderDisplayName,
-                    avatar: cachedUser?.avatar || '/default-avatar.png', 
+                    avatar: cachedUser?.avatar || '/default-avatar.svg', 
                 },
                 status: 'PENDING',
                 createdAt: new Date().toISOString()
@@ -173,7 +169,7 @@ export const AppDataProvider = ({ children }) => {
                     id: data.userId,
                     username: data.username,
                     displayName: data.displayName,
-                    avatar: resolvedAvatar || '/default-avatar.png',
+                    avatar: resolvedAvatar || '/default-avatar.svg',
                     isOnline: true, 
                     status: 'Online'
                 };
@@ -302,7 +298,6 @@ export const AppDataProvider = ({ children }) => {
           createdAt: invite.createdAt
       }));
 
-      // Calculate initial unread chat count
       const initialUnreadCount = Array.isArray(conversationsData) 
           ? conversationsData.reduce((acc, c) => acc + (c.unreadCount || 0), 0) 
           : 0;
@@ -329,7 +324,6 @@ export const AppDataProvider = ({ children }) => {
     }
   }, [user]);
 
-  // ... (respondToGameInvite, sendGameInvite, acceptFriendRequest, declineFriendRequest, sendFriendRequest, removeFriend, cancelFriendRequest) ...
 
   const respondToGameInvite = async (invitationId, accepted) => {
       try {

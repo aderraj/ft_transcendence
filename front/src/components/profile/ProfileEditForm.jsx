@@ -15,9 +15,16 @@ export default function EditProfileForm({
     return (
         <Card className="bg-[#0bc1021]/60 backdrop-blur-xl border-white/10 shadow-lg">
             <CardHeader>
-                <CardTitle className="text-xl text-white tracking-wide">Profile Settings</CardTitle>
-                <CardDescription className="text-white/40">Manage your public identity details.</CardDescription>
+                <CardTitle className="text-xl text-white tracking-wide">
+                    {isOwnProfile ? "Profile Settings" : "Profile Details"}
+                </CardTitle>
+                <CardDescription className="text-white/40">
+                    {isOwnProfile 
+                        ? "Manage your public identity details." 
+                        : "Public user information."}
+                </CardDescription>
             </CardHeader>
+            
             <CardContent className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div className="space-y-2">
@@ -46,23 +53,25 @@ export default function EditProfileForm({
                     </div>
                 </div>
 
-                <div className="space-y-2">
-                    <label className="text-xs font-bold text-white/60 uppercase tracking-wider flex items-center gap-2">
-                        <Mail size={14} /> Email Address
-                    </label>
-                    <div className="relative">
-                        <Input 
-                            name="email" 
-                            value={formData.email} 
-                            disabled 
-                            className="bg-black/40 border-white/5 text-white/50 cursor-not-allowed" 
-                            placeholder={loadingSensitiveData ? "Loading..." : "Hidden"} 
-                        />
-                        {loadingSensitiveData && (
-                            <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-white/20" />
-                        )}
+                {isOwnProfile && (
+                    <div className="space-y-2">
+                        <label className="text-xs font-bold text-white/60 uppercase tracking-wider flex items-center gap-2">
+                            <Mail size={14} /> Email Address
+                        </label>
+                        <div className="relative">
+                            <Input 
+                                name="email" 
+                                value={formData.email} 
+                                disabled 
+                                className="bg-black/40 border-white/5 text-white/50 cursor-not-allowed" 
+                                placeholder={loadingSensitiveData ? "Loading..." : "Hidden"} 
+                            />
+                            {loadingSensitiveData && (
+                                <Loader2 className="absolute right-3 top-2.5 h-4 w-4 animate-spin text-white/20" />
+                            )}
+                        </div>
                     </div>
-                </div>
+                )}
 
                 {isOwnProfile && (
                     <div className="flex justify-end pt-2">
