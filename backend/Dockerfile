@@ -60,6 +60,10 @@ RUN ls -la dist/src/ && test -f dist/src/main.js
 RUN mkdir -p /app/uploads/avatars && \
     chmod -R 755 /app/uploads
 
+# Copy default avatar (to uploads and as backup)
+COPY uploads/avatars/default-avatar.png /app/uploads/avatars/default-avatar.png
+COPY uploads/avatars/default-avatar.png /app/default-avatar.png
+
 # Copy entrypoint script
 COPY docker-entrypoint.sh /usr/local/bin/
 RUN chmod +x /usr/local/bin/docker-entrypoint.sh

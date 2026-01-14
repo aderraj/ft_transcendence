@@ -119,7 +119,7 @@ services:
     # No direct port exposure - all traffic goes through WAF reverse proxy
     volumes:
       # No source code mount in production - uses built dist/
-      - uploads-data:/app/uploads
+      - uploads:/app/uploads
       - secrets-data:/secrets:ro
     environment:
       # Secrets read from /secrets volume (populated by Vault)
@@ -492,5 +492,5 @@ volumes:
   prometheus-data:
   grafana-data:
   alertmanager-data:
-  uploads-data:
+  uploads:
   ssl-certs:

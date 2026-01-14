@@ -14,5 +14,7 @@ coverage
 *.log
 .DS_Store
 uploads/*
+!uploads/avatars/
+!uploads/avatars/default-avatar.png
 !uploads/.gitkeep
 prisma/migrations/.gitkeep

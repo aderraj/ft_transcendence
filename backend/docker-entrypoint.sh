@@ -56,6 +56,23 @@ fi
 echo "✅ All secrets loaded from Vault"
 
 # ============================================
+# Ensure default avatar exists
+# ============================================
+if [ ! -f /app/uploads/avatars/default-avatar.png ]; then
+  echo "📷 Copying default avatar..."
+  mkdir -p /app/uploads/avatars
+  # Copy from backup location if available, otherwise download
+  if [ -f /app/default-avatar.png ]; then
+    cp /app/default-avatar.png /app/uploads/avatars/default-avatar.png
+  else
+    # Download a simple default avatar
+    curl -s "https://ui-avatars.com/api/?name=User&size=200&background=6366f1&color=ffffff&format=png" \
+      -o /app/uploads/avatars/default-avatar.png || echo "⚠️  Could not download default avatar"
+  fi
+  echo "✅ Default avatar ready"
+fi
+
+# ============================================
 # Wait for PostgreSQL to be ready
 # ============================================
 echo "⏳ Waiting for PostgreSQL..."
