@@ -7,9 +7,7 @@ import Dashboard from '@/pages/Dashboard';
 import Profile from '@/pages/Profile';
 import Game from '@/pages/Game';
 import Chat from '@/pages/Chat';
-import Leaderboard from '@/pages/LeaderBoard';
-import PrivacyPolicy from '@/pages/PrivacyPolicy';
-import TermsOfService from '@/pages/TermsOfService';
+import Leaderboard from '@/pages/LeaderBoard'; // Or '@/pages/Leaderboard' if you create a page wrapper
 
 const ProtectedRoute = ({children}) => {
   const { user, loading } = useAuth();
@@ -40,9 +38,6 @@ function AppRoutes() {
         } />
 
         <Route path="/reset-password" element={<ResetRedirect />} />
-        
-        <Route path="/privacy" element={<PrivacyPolicy />} />
-        <Route path="/terms" element={<TermsOfService />} />
 
         <Route path="/" element={
           <ProtectedRoute>

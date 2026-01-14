@@ -16,7 +16,7 @@ const Dashboard = () => {
   const { user } = useAuth();
 
   const { 
-    friends, history, isLoaded, refreshData, 
+    friends, history, isLoaded, refreshData, // Import refreshData
     removeFriend, 
     pendingRequests, sentRequests,
     acceptFriendRequest, declineFriendRequest, cancelFriendRequest
@@ -25,6 +25,7 @@ const Dashboard = () => {
   const [friendToRemove, setFriendToRemove] = useState(null);
   const [showRequestsModal, setShowRequestsModal] = useState(false);
 
+  // Auto-refresh data on mount to get latest game history
   useEffect(() => {
     refreshData();
   }, [refreshData]);
