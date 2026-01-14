@@ -88,12 +88,20 @@ fi
 echo "📦 Generating Prisma Client..."
 npx prisma generate
 
-# Seed the database with test data
-echo "🌱 Seeding database..."
-if npx prisma db seed 2>&1; then
-  echo "✅ Database seeded successfully!"
+# Seed the database (only in development or if explicitly requested)
+if [ "$NODE_ENV" != "production" ] || [ "$FORCE_SEED" = "true" ]; then
+  echo "🌱 Seeding database..."
+  if command -v ts-node &> /dev/null; then
+    if npx prisma db seed 2>&1; then
+      echo "✅ Database seeded successfully!"
+    else
+      echo "⚠️  Seeding skipped or already seeded"
+    fi
+  else
+    echo "⚠️  Seeding skipped (ts-node not available in production)"
+  fi
 else
-  echo "⚠️  Seeding skipped or already seeded"
+  echo "⏭️  Skipping seed in production mode"
 fi
 
 echo "✅ Database setup complete!"

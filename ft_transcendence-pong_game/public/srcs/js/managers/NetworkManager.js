@@ -5,8 +5,8 @@ class NetworkManager {
         this.ws = new WebSocket(serverUrl);
         this.ws.onopen = () =>
         {
-            console.log('Connected !..');
-            console.log(`connection ${this.ws}`);
+            ;
+            ;
         } 
         
         this.ws.onmessage = (event) =>
@@ -18,7 +18,7 @@ class NetworkManager {
                     this.messageHandler(data);
                 } catch (e)
                 {
-                    console.log("Received text message:", event.data);
+                    ;
                 }
             }
         };

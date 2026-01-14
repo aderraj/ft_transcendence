@@ -342,6 +342,16 @@ export class FriendsService {
     //   throw new BadRequestException('Friend is currently offline');
     // }
 
+    // Clean up expired invitations first
+    await this.prisma.gameInvitation.deleteMany({
+      where: {
+        inviterId,
+        inviteeId,
+        status: 'PENDING',
+        expiresAt: { lte: new Date() },
+      },
+    });
+
     // Check for existing pending game invitation
     const existingInvitation = await this.prisma.gameInvitation.findFirst({
       where: {

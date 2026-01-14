@@ -16,8 +16,13 @@ RUN npm install
 WORKDIR /app/ft_transcendence-pong_game
 RUN npm install
 
-# 5. Expose Port
-EXPOSE 3002
+# 5. Copy and set up entrypoint script
+COPY ft_transcendence-pong_game/docker-entrypoint.sh /docker-entrypoint.sh
+RUN chmod +x /docker-entrypoint.sh
 
-# 6. Run Server
-CMD sh -c "npx prisma generate && npm start"
+# 6. Expose Port
+EXPOSE 3000
+
+# 7. Use entrypoint to load secrets before starting
+ENTRYPOINT ["/docker-entrypoint.sh"]
+CMD ["npm", "start"]

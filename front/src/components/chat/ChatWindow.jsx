@@ -1,5 +1,5 @@
+
 import React, { useEffect, useRef } from 'react';
-import { useNavigate } from 'react-router-dom'; 
 import { ArrowLeft, Gamepad2, Loader2, AlertCircle, Send, Check, CheckCheck } from 'lucide-react';
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Button } from '@/components/ui/button';
@@ -20,7 +20,6 @@ export default function ChatWindow({
     onBack
 }) {
     const scrollRef = useRef(null);
-    const navigate = useNavigate();
 
     useEffect(() => {
         if (scrollRef.current) {
@@ -31,12 +30,6 @@ export default function ChatWindow({
     const formatTime = (dateStr) => {
         if (!dateStr) return '';
         return new Date(dateStr).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-    };
-
-    const handleProfileClick = () => {
-        if (activeConversation?.friend?.id) {
-            navigate(`/profile/${activeConversation.friend.id}`, { state: { from: 'chat' } });
-        }
     };
 
     if (!activeConversation) {
@@ -69,27 +62,21 @@ export default function ChatWindow({
                         <ArrowLeft className="h-5 w-5" />
                     </Button>
 
-                    <div 
-                        className="flex items-center gap-3 cursor-pointer group select-none"
-                        onClick={handleProfileClick}
-                        title="View Profile"
-                    >
-                        <Avatar className="h-9 w-9 border border-white/10 group-hover:border-cyan-400/50 transition-colors">
-                            <AvatarImage src={activeConversation.friend?.avatar} />
-                            <AvatarFallback className="bg-cyan-900 text-cyan-100">
-                                {activeConversation.friend?.displayName?.[0]}
-                            </AvatarFallback>
-                        </Avatar>
-                        <div>
-                            <h3 className="font-semibold text-sm text-gray-100 group-hover:text-cyan-400 transition-colors">
-                                {activeConversation.friend?.displayName}
-                            </h3>
-                            <p className="text-xs text-gray-400 flex items-center gap-1 group-hover:text-gray-300">
-                                {activeConversation.friend?.isOnline ? (
-                                    <><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block shadow-[0_0_5px_#10b981]" /> Online</>
-                                ) : 'Offline'}
-                            </p>
-                        </div>
+                    <Avatar className="h-9 w-9 border border-white/10 cursor-pointer" onClick={() => window.location.href=`/profile/${activeConversation.friend?.id}`}>
+                        <AvatarImage src={activeConversation.friend?.avatar} />
+                        <AvatarFallback className="bg-cyan-900 text-cyan-100">
+                            {activeConversation.friend?.displayName?.[0]}
+                        </AvatarFallback>
+                    </Avatar>
+                    <div>
+                        <h3 className="font-semibold text-sm text-gray-100">
+                            {activeConversation.friend?.displayName}
+                        </h3>
+                        <p className="text-xs text-gray-400 flex items-center gap-1">
+                            {activeConversation.friend?.isOnline ? (
+                                <><span className="w-1.5 h-1.5 rounded-full bg-emerald-500 inline-block shadow-[0_0_5px_#10b981]" /> Online</>
+                            ) : 'Offline'}
+                        </p>
                     </div>
                 </div>
 

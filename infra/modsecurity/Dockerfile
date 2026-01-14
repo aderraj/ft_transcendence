@@ -22,7 +22,8 @@ RUN chmod 644 /etc/nginx/ssl/nginx.crt && \
 # COPY custom Nginx configuration
 COPY ./nginx.conf /etc/nginx/nginx.conf
 
-# CRITICAL: Remove the default template.
-# If we don't do this, the container's startup script (20-envsubst) will 
-# overwrite our copied nginx.conf with the default one at runtime.
-RUN rm -f /etc/nginx/templates/nginx.conf.template
+# CRITICAL: Remove the default templates and configs.
+# We use our own template mounted via docker-compose
+RUN rm -f /etc/nginx/templates/nginx.conf.template && \
+    rm -f /etc/nginx/templates/conf.d/default.conf.template && \
+    rm -f /etc/nginx/conf.d/default.conf

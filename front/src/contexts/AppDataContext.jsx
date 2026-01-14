@@ -2,7 +2,7 @@ import React, { createContext, useContext, useState, useEffect, useRef, useCallb
 import { useAuth } from './AuthContext';
 import { authenticatedFetch, API_BASE } from '@/utils/api';
 import { io } from 'socket.io-client';
-import { useNavigate, useLocation } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 
 const AppDataContext = createContext();
 
@@ -11,10 +11,11 @@ export const useAppData = () => useContext(AppDataContext);
 export const AppDataProvider = ({ children }) => {
   const { user } = useAuth();
   const navigate = useNavigate();
-  const location = useLocation(); // Used to check if we are currently on the chat page
   
   const friendsSocketRef = useRef(null);
-  const chatSocketRef = useRef(null);
+  
+  const [chatSocket, setChatSocket] = useState(null);
+  
   const isFetchingRef = useRef(false);
 
   const [state, setState] = useState({
@@ -78,7 +79,6 @@ export const AppDataProvider = ({ children }) => {
           const res = await authenticatedFetch('/api/friends/game-invitations/pending');
           if (res.ok) {
               const rawData = await res.json();
-              
               let receivedInvites = [];
               let sentInvites = [];
 
@@ -127,10 +127,13 @@ export const AppDataProvider = ({ children }) => {
 
     if (!friendsSocketRef.current) {
         const token = localStorage.getItem('accessToken');
-        const friendsSocket = io(`${API_BASE}/friends`, {
+        const url = API_BASE || '';
+        const friendsSocketUrl = url.endsWith('/') ? `${url}friends` : `${url}/friends`;
+
+        const friendsSocket = io(friendsSocketUrl, {
             auth: { token },
             transports: ['websocket'],
-            secure: API_BASE.startsWith('https'), 
+            secure: friendsSocketUrl.startsWith('https'), 
             rejectUnauthorized: false 
         });
 
@@ -147,7 +150,7 @@ export const AppDataProvider = ({ children }) => {
                     id: data.senderId,
                     username: data.senderUsername,
                     displayName: data.senderDisplayName,
-                    avatar: cachedUser?.avatar || '/default-avatar.svg', 
+                    avatar: cachedUser?.avatar || '/default-avatar.png', 
                 },
                 status: 'PENDING',
                 createdAt: new Date().toISOString()
@@ -170,7 +173,7 @@ export const AppDataProvider = ({ children }) => {
                     id: data.userId,
                     username: data.username,
                     displayName: data.displayName,
-                    avatar: resolvedAvatar || '/default-avatar.svg',
+                    avatar: resolvedAvatar || '/default-avatar.png',
                     isOnline: true, 
                     status: 'Online'
                 };
@@ -196,29 +199,29 @@ export const AppDataProvider = ({ children }) => {
         friendsSocketRef.current = friendsSocket;
     }
 
-    // --- CHAT SOCKET (NEW) ---
-    if (!chatSocketRef.current) {
+    if (!chatSocket) {
         const token = localStorage.getItem('accessToken');
-        const chatSocket = io(`${API_BASE}/chat`, {
+        const url = API_BASE || '';
+        const chatSocketUrl = url.endsWith('/') ? `${url}chat` : `${url}/chat`;
+
+        const newChatSocket = io(chatSocketUrl, {
             auth: { token },
             transports: ['websocket'],
-            secure: API_BASE.startsWith('https'),
+            secure: chatSocketUrl.startsWith('https'),
             rejectUnauthorized: false
         });
 
-        chatSocket.on('message:receive', (message) => {
-            // If we are NOT on the chat page, or we are but not in this specific conversation (handling that is complex here, so we simplify),
-            // we increment the badge.
-            // Ideally, Chat.jsx handles 'read' status which triggers 'message:read' event below.
-            setState(prev => ({ ...prev, unreadChatCount: prev.unreadChatCount + 1 }));
+        newChatSocket.on('message:receive', (message) => {
+            if (String(message.senderId) !== String(user.id)) {
+                setState(prev => ({ ...prev, unreadChatCount: prev.unreadChatCount + 1 }));
+            }
         });
 
-        // When a message is read (by us or updated by server), refresh the true count
-        chatSocket.on('message:read', () => {
+        newChatSocket.on('message:read', () => {
              fetchUnreadChatCount();
         });
 
-        chatSocketRef.current = chatSocket;
+        setChatSocket(newChatSocket);
     }
 
     return () => {
@@ -226,12 +229,8 @@ export const AppDataProvider = ({ children }) => {
             friendsSocketRef.current.disconnect();
             friendsSocketRef.current = null;
         }
-        if (chatSocketRef.current) {
-            chatSocketRef.current.disconnect();
-            chatSocketRef.current = null;
-        }
     };
-  }, [user, navigate, updateFriendStatus, fetchGameInvites, state.users, fetchUnreadChatCount]);
+  }, [user, navigate, updateFriendStatus, fetchGameInvites, state.users, fetchUnreadChatCount, chatSocket]);
 
 
   const fetchAllData = useCallback(async () => {
@@ -247,7 +246,7 @@ export const AppDataProvider = ({ children }) => {
          authenticatedFetch('/api/leaderboard/me/history?take=5'),
          authenticatedFetch('/api/users?take=100'),
          authenticatedFetch('/api/friends/game-invitations/pending'),
-         authenticatedFetch('/api/chat/conversations') // Fetch conversations to calc unread
+         authenticatedFetch('/api/chat/conversations') 
       ]);
 
       const friendsData = await friendsRes.json();
@@ -269,13 +268,25 @@ export const AppDataProvider = ({ children }) => {
            const isPlayer1 = match.player1Id === user.id;
            const opponent = isPlayer1 ? match.player2 : match.player1;
            const opponentName = opponent?.username || opponent?.displayName || "Unknown";
+
            const isWin = match.winnerId === user.id;
+           const isDraw = !match.winnerId && (match.finishedAt || match.status === 'FINISHED'); 
+
+           let resultString = "DEFEAT";
+           if (isDraw) resultString = "DRAW";
+           else if (isWin) resultString = "VICTORY";
+
            let winnerScore = match.winnerId === match.player1Id ? match.player1Score : match.player2Score;
            let loserScore = match.winnerId === match.player1Id ? match.player2Score : match.player1Score;
+           
+           if (isDraw) {
+               winnerScore = match.player1Score;
+               loserScore = match.player2Score;
+           }
 
            return {
                id: match.id,
-               result: isWin ? "VICTORY" : "DEFEAT",
+               result: resultString,
                opponent: opponentName,
                score: `${winnerScore} - ${loserScore}`,
                date: match.finishedAt ? new Date(match.finishedAt).toLocaleDateString() : "Recent",
@@ -324,7 +335,6 @@ export const AppDataProvider = ({ children }) => {
       isFetchingRef.current = false;
     }
   }, [user]);
-
 
   const respondToGameInvite = async (invitationId, accepted) => {
       try {
@@ -405,6 +415,7 @@ export const AppDataProvider = ({ children }) => {
   return (
     <AppDataContext.Provider value={{ 
         ...state, 
+        chatSocket,
         refreshData: fetchAllData,
         respondToGameInvite,
         sendGameInvite,

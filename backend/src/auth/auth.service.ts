@@ -320,12 +320,12 @@ export class AuthService {
 
     // Log token in development for faster testing
     if (process.env.NODE_ENV === 'development') {
-      console.log('\n🔐 PASSWORD RESET TOKEN (DEV MODE):');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log(`📧 Email: ${user.email}`);
-      console.log(`🔑 Token: ${resetToken}`);
-      console.log(`🔗 Reset URL: ${process.env.FRONTEND_URL}/reset-password?token=${resetToken}`);
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━\n');
+      ;
+      ;
+      ;
+      ;
+      ;
+      ;
     }
 
     // Send email

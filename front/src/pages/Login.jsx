@@ -169,7 +169,7 @@ const Login = () => {
   const [isLoading, setIsLoading] = useState(false);
 
   const handleResetSuccess = (username, newPassword) => {
-      console.log(username, newPassword);
+      ;
       setLoginData({ username, password: newPassword });
       setSuccessMsg("Password updated. Ready for authentication.");
   };

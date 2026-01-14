@@ -1,0 +1,2019 @@
+🎮 Starting Pong Game Service...
+⏳ Waiting for Vault secrets...
+✅ Vault secrets are ready
+✅ DATABASE_URL configured from Vault
+📦 Generating Prisma Client...
+
+✔ Generated Prisma Client (v7.2.0) to ./generated/client in 177ms
+
+Start by importing your Prisma Client (See: https://pris.ly/d/importing-client)
+
+Tip: Want to turn off tips and other hints? https://pris.ly/tip-4-nohints
+
+✅ Game service ready!
+🎮 Starting application...
+
+> pong_game@1.0.0 start
+> npx tsx server.js
+
+{"level":30,"time":1768351624351,"pid":93,"hostname":"fd93bfd6f647","msg":"Server listening at http://127.0.0.1:3000"}
+Server running on http://localhost:3000
+{"level":30,"time":1768351624351,"pid":93,"hostname":"fd93bfd6f647","msg":"Server listening at http://172.18.0.13:3000"}
+{"level":30,"time":1768351627364,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":57880},"msg":"incoming request"}
+{"level":30,"time":1768351627387,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1","res":{"statusCode":200},"responseTime":21.899948999285698,"msg":"request completed"}
+{"level":30,"time":1768351637429,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":48010},"msg":"incoming request"}
+{"level":30,"time":1768351637432,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2","res":{"statusCode":200},"responseTime":2.284962000325322,"msg":"request completed"}
+{"level":30,"time":1768351647539,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-3","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":58180},"msg":"incoming request"}
+{"level":30,"time":1768351647544,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-3","res":{"statusCode":200},"responseTime":4.659360000863671,"msg":"request completed"}
+{"level":30,"time":1768351655637,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-4","req":{"method":"GET","url":"/websocket?user_id=1c50bccc-9592-49e1-936f-a1d1bbb7cd89&roomId=game-1c50bccc-9592-49e1-936f-a1d1bbb7cd89-bdfd97ab-83b6-4140-91a9-4c0366221e30-1768351655551&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxYzUwYmNjYy05NTkyLTQ5ZTEtOTM2Zi1hMWQxYmJiN2NkODkiLCJlbWFpbCI6InJlZGFAdHJhbnNjZW5kZW5jZS5tYSIsInVzZXJuYW1lIjoicmVkYSIsInNlc3Npb25Ub2tlbiI6IjcwZTdiNjVhNGNkMTUzMzU4ZWM0N2RkZWUyMWQ5ZDIxZDNhN2NmNDc4NzIyODA5ZGJhOWZjMzYxNjU0MzA5ODgiLCJpYXQiOjE3NjgzNTAwOTYsImV4cCI6MTc2ODk1NDg5Nn0.1fqCtxVZem6az3ydMPorEGpbe22IU32wV6jKHvtbTWs","host":"10.14.57.32","remoteAddress":"172.18.0.15","remotePort":50878},"msg":"incoming request"}
+Client Connected
+{"level":30,"time":1768351655669,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-5","req":{"method":"GET","url":"/websocket?user_id=bdfd97ab-83b6-4140-91a9-4c0366221e30&roomId=game-1c50bccc-9592-49e1-936f-a1d1bbb7cd89-bdfd97ab-83b6-4140-91a9-4c0366221e30-1768351655551&token=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiJiZGZkOTdhYi04M2I2LTQxNDAtOTFhOS00YzAzNjYyMjFlMzAiLCJlbWFpbCI6Im1vdWFkZWxmZXJnb3VsQGdtYWlsLmNvbSIsInVzZXJuYW1lIjoibW91YWRlbGZlcmdvdWwiLCJzZXNzaW9uVG9rZW4iOiIwZDMwYjkwM2RmZmNjNDEwODY1MGY2MzEwMTAyNzEyYTQ3NDFmMWE4MmI1NTJmODQ5NmRjMzY0ODQzZTQ1NzgwIiwiaWF0IjoxNzY4MzUwMDg2LCJleHAiOjE3Njg5NTQ4ODZ9.YFQNUbn1EsUkAzGCtVt2AXnUSNBVscmuopFDCL9xE20","host":"10.14.57.32","remoteAddress":"172.18.0.15","remotePort":50890},"msg":"incoming request"}
+Client Connected
+Auth Success: reda (1c50bccc-9592-49e1-936f-a1d1bbb7cd89)
+Checking private lobby for room game-1c50bccc-9592-49e1-936f-a1d1bbb7cd89-bdfd97ab-83b6-4140-91a9-4c0366221e30-1768351655551
+Creating private lobby for room game-1c50bccc-9592-49e1-936f-a1d1bbb7cd89-bdfd97ab-83b6-4140-91a9-4c0366221e30-1768351655551
+Auth Success: mouadelfergoul (bdfd97ab-83b6-4140-91a9-4c0366221e30)
+Checking private lobby for room game-1c50bccc-9592-49e1-936f-a1d1bbb7cd89-bdfd97ab-83b6-4140-91a9-4c0366221e30-1768351655551
+Found opponent! Starting match...
+[GAME START] Ball: x=500, y=300, dx=0.3, dy=0.3, radius=10
+[GAME START] Left Paddle: x=30, y=250, w=15, h=100
+[GAME START] Right Paddle: x=960, y=250, w=15, h=100
+[COUNTDOWN] 3
+[COUNTDOWN] 2
+{"level":30,"time":1768351657660,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-6","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":44488},"msg":"incoming request"}
+{"level":30,"time":1768351657667,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-6","res":{"statusCode":200},"responseTime":5.9025430008769035,"msg":"request completed"}
+[COUNTDOWN] 1
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+[COUNTDOWN] GO!
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+[COLLISION] Ball hit right paddle! Ball: (951.2, 431.6), Paddle Y: 388.0
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+[SCORE] Right player scored! Ball X: -2.6, Left Paddle: x=30, y=282.0
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+[COLLISION] Ball hit right paddle! Ball: (954.2, 340.1), Paddle Y: 308.0
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+{"level":30,"time":1768351667788,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-7","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":33474},"msg":"incoming request"}
+{"level":30,"time":1768351667793,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-7","res":{"statusCode":200},"responseTime":4.225299000740051,"msg":"request completed"}
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+[COLLISION] Ball hit left paddle! Ball: (51.3, 149.7), Paddle Y: 98.0
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+[COLLISION] Ball hit right paddle! Ball: (951.2, 35.2), Paddle Y: 4.0
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+[COLLISION] Ball hit left paddle! Ball: (53.3, 74.5), Paddle Y: 0.0
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+[SCORE] Left player scored! Ball X: 1002.3, Right Paddle: x=960, y=148.0
+{"level":30,"time":1768351677860,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-8","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":43966},"msg":"incoming request"}
+{"level":30,"time":1768351677862,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-8","res":{"statusCode":200},"responseTime":1.9350140001624823,"msg":"request completed"}
+[COLLISION] Ball hit right paddle! Ball: (950.9, 231.9), Paddle Y: 148.0
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+[COLLISION] Ball hit left paddle! Ball: (53.0, 573.3), Paddle Y: 500.0
+[SCORE] Left player scored! Ball X: 1002.1, Right Paddle: x=960, y=148.0
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+[SCORE] Right player scored! Ball X: -0.7, Left Paddle: x=30, y=308.0
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+{"level":30,"time":1768351688135,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-9","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":48468},"msg":"incoming request"}
+{"level":30,"time":1768351688141,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-9","res":{"statusCode":200},"responseTime":5.843083001673222,"msg":"request completed"}
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+[SCORE] Left player scored! Ball X: 1002.7, Right Paddle: x=960, y=204.0
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+[SCORE] Right player scored! Ball X: -0.4, Left Paddle: x=30, y=500.0
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+[COLLISION] Ball hit left paddle! Ball: (53.9, 367.9), Paddle Y: 292.0
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+[COLLISION] Ball hit right paddle! Ball: (951.9, 285.2), Paddle Y: 260.0
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+{"level":30,"time":1768351698232,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-a","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":49236},"msg":"incoming request"}
+{"level":30,"time":1768351698237,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-a","res":{"statusCode":200},"responseTime":4.010049000382423,"msg":"request completed"}
+[COLLISION] Ball hit left paddle! Ball: (50.1, 564.2), Paddle Y: 500.0
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+[COLLISION] Ball hit right paddle! Ball: (950.4, 140.8), Paddle Y: 76.0
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+[SCORE] Right player scored! Ball X: -1.7, Left Paddle: x=30, y=500.0
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+[COLLISION] Ball hit left paddle! Ball: (54.4, 109.1), Paddle Y: 68.0
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+{"level":30,"time":1768351708275,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-b","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":60484},"msg":"incoming request"}
+{"level":30,"time":1768351708277,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-b","res":{"statusCode":200},"responseTime":2.1578259989619255,"msg":"request completed"}
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+[SCORE] Left player scored! Ball X: 1000.1, Right Paddle: x=960, y=244.0
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+[COLLISION] Ball hit left paddle! Ball: (54.3, 325.3), Paddle Y: 268.0
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+[COLLISION] Ball hit right paddle! Ball: (950.7, 484.7), Paddle Y: 388.0
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Right player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveDown from message: {"type":"moveDown"}
+Left player moving: moveDown
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+[COLLISION] Ball hit left paddle! Ball: (51.8, 146.1), Paddle Y: 136.0
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Left player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+Received command: moveUp from message: {"type":"moveUp"}
+Right player moving: moveUp
+{"level":30,"time":1768351718346,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-c","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":42266},"msg":"incoming request"}
+{"level":30,"time":1768351718350,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-c","res":{"statusCode":200},"responseTime":3.3099460005760193,"msg":"request completed"}
+[COLLISION] Ball hit right paddle! Ball: (953.7, 430.2), Paddle Y: 404.0
+Game 0 ended. Winner: Draw
+Client Disconnected
+Removed player bdfd97ab-83b6-4140-91a9-4c0366221e30 from players map
+Client Disconnected
+Removed player 1c50bccc-9592-49e1-936f-a1d1bbb7cd89 from players map
+{"level":30,"time":1768351728418,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-d","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":46038},"msg":"incoming request"}
+{"level":30,"time":1768351728419,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-d","res":{"statusCode":200},"responseTime":1.1593739986419678,"msg":"request completed"}
+{"level":30,"time":1768351738490,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-e","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":39616},"msg":"incoming request"}
+{"level":30,"time":1768351738492,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-e","res":{"statusCode":200},"responseTime":1.27492499910295,"msg":"request completed"}
+{"level":30,"time":1768351748555,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-f","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":51906},"msg":"incoming request"}
+{"level":30,"time":1768351748558,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-f","res":{"statusCode":200},"responseTime":2.116620998829603,"msg":"request completed"}
+{"level":30,"time":1768351758626,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-g","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":37490},"msg":"incoming request"}
+{"level":30,"time":1768351758628,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-g","res":{"statusCode":200},"responseTime":1.8479600008577108,"msg":"request completed"}
+{"level":30,"time":1768351768700,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-h","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":33314},"msg":"incoming request"}
+{"level":30,"time":1768351768701,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-h","res":{"statusCode":200},"responseTime":1.2636350002139807,"msg":"request completed"}
+{"level":30,"time":1768351778778,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-i","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":59930},"msg":"incoming request"}
+{"level":30,"time":1768351778779,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-i","res":{"statusCode":200},"responseTime":1.2317479997873306,"msg":"request completed"}
+{"level":30,"time":1768351788856,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-j","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":40050},"msg":"incoming request"}
+{"level":30,"time":1768351788858,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-j","res":{"statusCode":200},"responseTime":1.214725000783801,"msg":"request completed"}
+{"level":30,"time":1768351798911,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-k","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":60542},"msg":"incoming request"}
+{"level":30,"time":1768351798912,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-k","res":{"statusCode":200},"responseTime":0.9279169999063015,"msg":"request completed"}
+{"level":30,"time":1768351808969,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-l","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":56460},"msg":"incoming request"}
+{"level":30,"time":1768351808970,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-l","res":{"statusCode":200},"responseTime":0.9809259995818138,"msg":"request completed"}
+{"level":30,"time":1768351819017,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-m","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":35148},"msg":"incoming request"}
+{"level":30,"time":1768351819018,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-m","res":{"statusCode":200},"responseTime":1.5660209991037846,"msg":"request completed"}
+{"level":30,"time":1768351829056,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-n","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":54248},"msg":"incoming request"}
+{"level":30,"time":1768351829057,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-n","res":{"statusCode":200},"responseTime":1.03872299939394,"msg":"request completed"}
+{"level":30,"time":1768351839111,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-o","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":35092},"msg":"incoming request"}
+{"level":30,"time":1768351839112,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-o","res":{"statusCode":200},"responseTime":0.811361001804471,"msg":"request completed"}
+{"level":30,"time":1768351849200,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-p","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":45706},"msg":"incoming request"}
+{"level":30,"time":1768351849204,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-p","res":{"statusCode":200},"responseTime":4.577478000894189,"msg":"request completed"}
+{"level":30,"time":1768351859277,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-q","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":44876},"msg":"incoming request"}
+{"level":30,"time":1768351859280,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-q","res":{"statusCode":200},"responseTime":2.560530001297593,"msg":"request completed"}
+{"level":30,"time":1768351869358,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-r","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":53056},"msg":"incoming request"}
+{"level":30,"time":1768351869361,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-r","res":{"statusCode":200},"responseTime":2.2220920007675886,"msg":"request completed"}
+{"level":30,"time":1768351879434,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-s","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":44906},"msg":"incoming request"}
+{"level":30,"time":1768351879436,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-s","res":{"statusCode":200},"responseTime":2.5489949993789196,"msg":"request completed"}
+{"level":30,"time":1768351889514,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-t","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":43412},"msg":"incoming request"}
+{"level":30,"time":1768351889517,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-t","res":{"statusCode":200},"responseTime":2.7205960005521774,"msg":"request completed"}
+{"level":30,"time":1768351899615,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-u","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":36132},"msg":"incoming request"}
+{"level":30,"time":1768351899617,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-u","res":{"statusCode":200},"responseTime":2.136183999478817,"msg":"request completed"}
+{"level":30,"time":1768351909685,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-v","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":48280},"msg":"incoming request"}
+{"level":30,"time":1768351909688,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-v","res":{"statusCode":200},"responseTime":2.117843000218272,"msg":"request completed"}
+{"level":30,"time":1768351919758,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-w","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":60006},"msg":"incoming request"}
+{"level":30,"time":1768351919759,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-w","res":{"statusCode":200},"responseTime":1.2076610010117292,"msg":"request completed"}
+{"level":30,"time":1768351929842,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-x","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":39488},"msg":"incoming request"}
+{"level":30,"time":1768351929844,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-x","res":{"statusCode":200},"responseTime":1.4929959997534752,"msg":"request completed"}
+{"level":30,"time":1768351939902,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-y","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":43822},"msg":"incoming request"}
+{"level":30,"time":1768351939903,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-y","res":{"statusCode":200},"responseTime":1.2483390010893345,"msg":"request completed"}
+{"level":30,"time":1768351949954,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-z","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":46418},"msg":"incoming request"}
+{"level":30,"time":1768351949955,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-z","res":{"statusCode":200},"responseTime":1.2264669984579086,"msg":"request completed"}
+{"level":30,"time":1768351959996,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-10","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":38388},"msg":"incoming request"}
+{"level":30,"time":1768351959997,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-10","res":{"statusCode":200},"responseTime":0.7448210008442402,"msg":"request completed"}
+{"level":30,"time":1768351970069,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-11","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":33724},"msg":"incoming request"}
+{"level":30,"time":1768351970071,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-11","res":{"statusCode":200},"responseTime":1.1316190008074045,"msg":"request completed"}
+{"level":30,"time":1768351980187,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-12","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":47514},"msg":"incoming request"}
+{"level":30,"time":1768351980190,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-12","res":{"statusCode":200},"responseTime":2.965063000097871,"msg":"request completed"}
+{"level":30,"time":1768351990251,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-13","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":50060},"msg":"incoming request"}
+{"level":30,"time":1768351990253,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-13","res":{"statusCode":200},"responseTime":2.3415789995342493,"msg":"request completed"}
+{"level":30,"time":1768352000312,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-14","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":37148},"msg":"incoming request"}
+{"level":30,"time":1768352000314,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-14","res":{"statusCode":200},"responseTime":2.1048459988087416,"msg":"request completed"}
+{"level":30,"time":1768352010403,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-15","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":49006},"msg":"incoming request"}
+{"level":30,"time":1768352010405,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-15","res":{"statusCode":200},"responseTime":2.806487999856472,"msg":"request completed"}
+{"level":30,"time":1768352020483,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-16","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":40146},"msg":"incoming request"}
+{"level":30,"time":1768352020485,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-16","res":{"statusCode":200},"responseTime":1.1516590006649494,"msg":"request completed"}
+{"level":30,"time":1768352030558,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-17","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":41184},"msg":"incoming request"}
+{"level":30,"time":1768352030560,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-17","res":{"statusCode":200},"responseTime":2.1677509993314743,"msg":"request completed"}
+{"level":30,"time":1768352040622,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-18","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":60686},"msg":"incoming request"}
+{"level":30,"time":1768352040625,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-18","res":{"statusCode":200},"responseTime":3.385335998609662,"msg":"request completed"}
+{"level":30,"time":1768352050719,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-19","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":33032},"msg":"incoming request"}
+{"level":30,"time":1768352050723,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-19","res":{"statusCode":200},"responseTime":3.8464789986610413,"msg":"request completed"}
+{"level":30,"time":1768352060792,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1a","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":57186},"msg":"incoming request"}
+{"level":30,"time":1768352060793,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1a","res":{"statusCode":200},"responseTime":1.4285800009965897,"msg":"request completed"}
+{"level":30,"time":1768352070869,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1b","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":33660},"msg":"incoming request"}
+{"level":30,"time":1768352070872,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1b","res":{"statusCode":200},"responseTime":2.5249770004302263,"msg":"request completed"}
+{"level":30,"time":1768352080940,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1c","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":47548},"msg":"incoming request"}
+{"level":30,"time":1768352080941,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1c","res":{"statusCode":200},"responseTime":1.3253359999507666,"msg":"request completed"}
+{"level":30,"time":1768352091039,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1d","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":42652},"msg":"incoming request"}
+{"level":30,"time":1768352091043,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1d","res":{"statusCode":200},"responseTime":4.025637999176979,"msg":"request completed"}
+{"level":30,"time":1768352101111,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1e","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":58490},"msg":"incoming request"}
+{"level":30,"time":1768352101113,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1e","res":{"statusCode":200},"responseTime":1.390812998637557,"msg":"request completed"}
+{"level":30,"time":1768352111178,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1f","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":35094},"msg":"incoming request"}
+{"level":30,"time":1768352111180,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1f","res":{"statusCode":200},"responseTime":1.7777970004826784,"msg":"request completed"}
+{"level":30,"time":1768352121259,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1g","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":47636},"msg":"incoming request"}
+{"level":30,"time":1768352121260,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1g","res":{"statusCode":200},"responseTime":1.3934369999915361,"msg":"request completed"}
+{"level":30,"time":1768352131325,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1h","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":46288},"msg":"incoming request"}
+{"level":30,"time":1768352131328,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1h","res":{"statusCode":200},"responseTime":2.392493000254035,"msg":"request completed"}
+{"level":30,"time":1768352141412,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1i","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":47996},"msg":"incoming request"}
+{"level":30,"time":1768352141414,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1i","res":{"statusCode":200},"responseTime":1.317034998908639,"msg":"request completed"}
+{"level":30,"time":1768352151476,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1j","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":35308},"msg":"incoming request"}
+{"level":30,"time":1768352151477,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1j","res":{"statusCode":200},"responseTime":1.1530639994889498,"msg":"request completed"}
+{"level":30,"time":1768352161540,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1k","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":37736},"msg":"incoming request"}
+{"level":30,"time":1768352161541,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1k","res":{"statusCode":200},"responseTime":1.289665000513196,"msg":"request completed"}
+{"level":30,"time":1768352171600,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1l","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":52118},"msg":"incoming request"}
+{"level":30,"time":1768352171603,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1l","res":{"statusCode":200},"responseTime":1.7470739986747503,"msg":"request completed"}
+{"level":30,"time":1768352181691,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1m","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":37272},"msg":"incoming request"}
+{"level":30,"time":1768352181693,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1m","res":{"statusCode":200},"responseTime":1.8314330000430346,"msg":"request completed"}
+{"level":30,"time":1768352191757,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1n","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":40240},"msg":"incoming request"}
+{"level":30,"time":1768352191758,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1n","res":{"statusCode":200},"responseTime":0.8660800009965897,"msg":"request completed"}
+{"level":30,"time":1768352201843,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1o","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":43296},"msg":"incoming request"}
+{"level":30,"time":1768352201845,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1o","res":{"statusCode":200},"responseTime":1.519599998369813,"msg":"request completed"}
+{"level":30,"time":1768352211914,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1p","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":41560},"msg":"incoming request"}
+{"level":30,"time":1768352211919,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1p","res":{"statusCode":200},"responseTime":3.4022899996489286,"msg":"request completed"}
+{"level":30,"time":1768352221993,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1q","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":56992},"msg":"incoming request"}
+{"level":30,"time":1768352221993,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1q","res":{"statusCode":200},"responseTime":0.5652819983661175,"msg":"request completed"}
+{"level":30,"time":1768352232064,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1r","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":51108},"msg":"incoming request"}
+{"level":30,"time":1768352232067,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1r","res":{"statusCode":200},"responseTime":2.1561760008335114,"msg":"request completed"}
+{"level":30,"time":1768352242123,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1s","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":57460},"msg":"incoming request"}
+{"level":30,"time":1768352242124,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1s","res":{"statusCode":200},"responseTime":1.0569909997284412,"msg":"request completed"}
+{"level":30,"time":1768352252218,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1t","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":33920},"msg":"incoming request"}
+{"level":30,"time":1768352252221,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1t","res":{"statusCode":200},"responseTime":2.3697499986737967,"msg":"request completed"}
+{"level":30,"time":1768352262333,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1u","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":34138},"msg":"incoming request"}
+{"level":30,"time":1768352262336,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1u","res":{"statusCode":200},"responseTime":1.9623269997537136,"msg":"request completed"}
+{"level":30,"time":1768352272390,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1v","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":43616},"msg":"incoming request"}
+{"level":30,"time":1768352272391,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1v","res":{"statusCode":200},"responseTime":0.7613019999116659,"msg":"request completed"}
+{"level":30,"time":1768352282452,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1w","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":33224},"msg":"incoming request"}
+{"level":30,"time":1768352282454,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1w","res":{"statusCode":200},"responseTime":1.6939869988709688,"msg":"request completed"}
+{"level":30,"time":1768352292489,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1x","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":50246},"msg":"incoming request"}
+{"level":30,"time":1768352292490,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1x","res":{"statusCode":200},"responseTime":1.3440320007503033,"msg":"request completed"}
+{"level":30,"time":1768352302541,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1y","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":59414},"msg":"incoming request"}
+{"level":30,"time":1768352302542,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1y","res":{"statusCode":200},"responseTime":1.0054030008614063,"msg":"request completed"}
+{"level":30,"time":1768352312666,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1z","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":38052},"msg":"incoming request"}
+{"level":30,"time":1768352312674,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-1z","res":{"statusCode":200},"responseTime":7.294145999476314,"msg":"request completed"}
+{"level":30,"time":1768352322744,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-20","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":45812},"msg":"incoming request"}
+{"level":30,"time":1768352322746,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-20","res":{"statusCode":200},"responseTime":1.7089360002428293,"msg":"request completed"}
+{"level":30,"time":1768352332834,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-21","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":45296},"msg":"incoming request"}
+{"level":30,"time":1768352332836,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-21","res":{"statusCode":200},"responseTime":1.9676149990409613,"msg":"request completed"}
+{"level":30,"time":1768352342903,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-22","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":33456},"msg":"incoming request"}
+{"level":30,"time":1768352342905,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-22","res":{"statusCode":200},"responseTime":2.0214900001883507,"msg":"request completed"}
+{"level":30,"time":1768352352963,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-23","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":42400},"msg":"incoming request"}
+{"level":30,"time":1768352352964,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-23","res":{"statusCode":200},"responseTime":1.0349119994789362,"msg":"request completed"}
+{"level":30,"time":1768352363029,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-24","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":49362},"msg":"incoming request"}
+{"level":30,"time":1768352363030,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-24","res":{"statusCode":200},"responseTime":0.6255289986729622,"msg":"request completed"}
+{"level":30,"time":1768352373081,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-25","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":38272},"msg":"incoming request"}
+{"level":30,"time":1768352373081,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-25","res":{"statusCode":200},"responseTime":0.7698470000177622,"msg":"request completed"}
+{"level":30,"time":1768352383138,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-26","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":55246},"msg":"incoming request"}
+{"level":30,"time":1768352383139,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-26","res":{"statusCode":200},"responseTime":1.270855998620391,"msg":"request completed"}
+{"level":30,"time":1768352393199,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-27","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":49476},"msg":"incoming request"}
+{"level":30,"time":1768352393200,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-27","res":{"statusCode":200},"responseTime":0.8960440009832382,"msg":"request completed"}
+{"level":30,"time":1768352403256,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-28","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":54300},"msg":"incoming request"}
+{"level":30,"time":1768352403258,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-28","res":{"statusCode":200},"responseTime":2.0683459993451834,"msg":"request completed"}
+{"level":30,"time":1768352413319,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-29","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":47618},"msg":"incoming request"}
+{"level":30,"time":1768352413320,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-29","res":{"statusCode":200},"responseTime":0.7419520001858473,"msg":"request completed"}
+{"level":30,"time":1768352423407,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2a","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":53670},"msg":"incoming request"}
+{"level":30,"time":1768352423409,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2a","res":{"statusCode":200},"responseTime":1.69157600030303,"msg":"request completed"}
+{"level":30,"time":1768352433502,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2b","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":51952},"msg":"incoming request"}
+{"level":30,"time":1768352433507,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2b","res":{"statusCode":200},"responseTime":5.060951000079513,"msg":"request completed"}
+{"level":30,"time":1768352443579,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2c","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":55680},"msg":"incoming request"}
+{"level":30,"time":1768352443580,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2c","res":{"statusCode":200},"responseTime":0.9118670001626015,"msg":"request completed"}
+{"level":30,"time":1768352453635,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2d","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":47866},"msg":"incoming request"}
+{"level":30,"time":1768352453637,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2d","res":{"statusCode":200},"responseTime":1.4589710012078285,"msg":"request completed"}
+{"level":30,"time":1768352463691,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2e","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":32816},"msg":"incoming request"}
+{"level":30,"time":1768352463692,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2e","res":{"statusCode":200},"responseTime":1.2247839998453856,"msg":"request completed"}
+{"level":30,"time":1768352473757,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2f","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":33810},"msg":"incoming request"}
+{"level":30,"time":1768352473759,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2f","res":{"statusCode":200},"responseTime":1.5882060006260872,"msg":"request completed"}
+{"level":30,"time":1768352483820,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2g","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":48606},"msg":"incoming request"}
+{"level":30,"time":1768352483822,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2g","res":{"statusCode":200},"responseTime":1.9464039988815784,"msg":"request completed"}
+{"level":30,"time":1768352493874,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2h","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":52704},"msg":"incoming request"}
+{"level":30,"time":1768352493876,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2h","res":{"statusCode":200},"responseTime":0.9643830005079508,"msg":"request completed"}
+{"level":30,"time":1768352503928,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2i","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":59772},"msg":"incoming request"}
+{"level":30,"time":1768352503929,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2i","res":{"statusCode":200},"responseTime":0.7769620008766651,"msg":"request completed"}
+{"level":30,"time":1768352514018,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2j","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":45894},"msg":"incoming request"}
+{"level":30,"time":1768352514021,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2j","res":{"statusCode":200},"responseTime":2.8676500003784895,"msg":"request completed"}
+{"level":30,"time":1768352524121,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2k","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":37624},"msg":"incoming request"}
+{"level":30,"time":1768352524124,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2k","res":{"statusCode":200},"responseTime":3.4174979999661446,"msg":"request completed"}
+{"level":30,"time":1768352534168,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2l","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":56040},"msg":"incoming request"}
+{"level":30,"time":1768352534171,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2l","res":{"statusCode":200},"responseTime":2.920531000941992,"msg":"request completed"}
+{"level":30,"time":1768352544227,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2m","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":58370},"msg":"incoming request"}
+{"level":30,"time":1768352544228,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2m","res":{"statusCode":200},"responseTime":0.8287829998880625,"msg":"request completed"}
+{"level":30,"time":1768352554279,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2n","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":45062},"msg":"incoming request"}
+{"level":30,"time":1768352554280,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2n","res":{"statusCode":200},"responseTime":1.1312649995088577,"msg":"request completed"}
+{"level":30,"time":1768352564346,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2o","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":45584},"msg":"incoming request"}
+{"level":30,"time":1768352564347,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2o","res":{"statusCode":200},"responseTime":0.9404640011489391,"msg":"request completed"}
+{"level":30,"time":1768352574413,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2p","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":57230},"msg":"incoming request"}
+{"level":30,"time":1768352574415,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2p","res":{"statusCode":200},"responseTime":1.6777379997074604,"msg":"request completed"}
+{"level":30,"time":1768352584453,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2q","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":43896},"msg":"incoming request"}
+{"level":30,"time":1768352584456,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2q","res":{"statusCode":200},"responseTime":2.5558980014175177,"msg":"request completed"}
+{"level":30,"time":1768352594527,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2r","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":55980},"msg":"incoming request"}
+{"level":30,"time":1768352594530,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2r","res":{"statusCode":200},"responseTime":2.9565960001200438,"msg":"request completed"}
+{"level":30,"time":1768352604642,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2s","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":40850},"msg":"incoming request"}
+{"level":30,"time":1768352604644,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2s","res":{"statusCode":200},"responseTime":2.008934998884797,"msg":"request completed"}
+{"level":30,"time":1768352614709,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2t","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":41594},"msg":"incoming request"}
+{"level":30,"time":1768352614710,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2t","res":{"statusCode":200},"responseTime":1.0635080002248287,"msg":"request completed"}
+{"level":30,"time":1768352624801,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2u","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":54440},"msg":"incoming request"}
+{"level":30,"time":1768352624804,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2u","res":{"statusCode":200},"responseTime":2.0461250003427267,"msg":"request completed"}
+{"level":30,"time":1768352634858,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2v","req":{"method":"GET","url":"/","host":"127.0.0.1:3000","remoteAddress":"127.0.0.1","remotePort":59336},"msg":"incoming request"}
+{"level":30,"time":1768352634860,"pid":93,"hostname":"fd93bfd6f647","reqId":"req-2v","res":{"statusCode":200},"responseTime":1.127283999696374,"msg":"request completed"}

@@ -21,7 +21,8 @@ RUN mkdir -p /etc/nginx/ssl
 
 COPY --from=builder /app/front/dist /usr/share/nginx/html
 
-EXPOSE 443
+# HTTP only - WAF reverse proxy handles HTTPS/SSL termination
+EXPOSE 80
 
 RUN echo '#!/bin/sh' > /docker-entrypoint.sh && \
     echo 'set -e' >> /docker-entrypoint.sh && \

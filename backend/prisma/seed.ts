@@ -4,7 +4,7 @@ import * as bcrypt from 'bcrypt';
 const prisma = new PrismaClient();
 
 async function main() {
-  console.log('🌱 Seeding database...');
+  ;
 
   // Clear existing data
   await prisma.game.deleteMany();
@@ -31,7 +31,7 @@ async function main() {
       isOnline: true,
     },
   });
-  console.log('✅ Created user: reda');
+  ;
 
   const user2 = await prisma.user.create({
     data: {
@@ -46,7 +46,7 @@ async function main() {
       isOnline: false,
     },
   });
-  console.log('✅ Created user: samir');
+  ;
 
   const user3 = await prisma.user.create({
     data: {
@@ -61,7 +61,7 @@ async function main() {
       isOnline: true,
     },
   });
-  console.log('✅ Created user: aymen');
+  ;
 
   const user4 = await prisma.user.create({
     data: {
@@ -76,7 +76,7 @@ async function main() {
       isOnline: false,
     },
   });
-  console.log('✅ Created user: karim');
+  ;
 
   const user5 = await prisma.user.create({
     data: {
@@ -91,7 +91,7 @@ async function main() {
       isOnline: true,
     },
   });
-  console.log('✅ Created user: user5');
+  ;
 
   // Create friendships (accepted friend requests create mutual friendships)
   
@@ -102,7 +102,7 @@ async function main() {
       { userId: user2.id, friendId: user1.id },
     ],
   });
-  console.log('✅ Created friendship: reda <-> samir');
+  ;
 
   // User 4 and User 5 are friends (accepted)
   await prisma.friend.createMany({
@@ -111,7 +111,7 @@ async function main() {
       { userId: user5.id, friendId: user4.id },
     ],
   });
-  console.log('✅ Created friendship: karim <-> user5');
+  ;
 
   // User 3 sent pending request to User 4
   await prisma.friendRequest.create({
@@ -121,7 +121,7 @@ async function main() {
       status: 'PENDING',
     },
   });
-  console.log('✅ Created pending friend request: aymen -> karim');
+  ;
 
   // Create some game history
   const games = [
@@ -140,21 +140,21 @@ async function main() {
   for (const game of games) {
     await prisma.game.create({ data: game });
   }
-  console.log('✅ Created 10 game records');
+  ;
 
-  console.log('');
-  console.log('🎉 Seeding complete!');
-  console.log('');
-  console.log('Test Users:');
-  console.log('-------------------');
-  console.log('| Username | Password   | ELO  |');
-  console.log('|----------|------------|------|');
-  console.log('| reda     | password1  | 1200 |');
-  console.log('| samir    | password2  | 1100 |');
-  console.log('| aymen    | password3  | 1050 |');
-  console.log('| karim    | password4  | 1000 |');
-  console.log('| user5    | password5  | 950  |');
-  console.log('-------------------');
+  ;
+  ;
+  ;
+  ;
+  ;
+  ;
+  ;
+  ;
+  ;
+  ;
+  ;
+  ;
+  ;
 }
 
 main()

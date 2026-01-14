@@ -7,7 +7,7 @@ import { NetworkManager } from "./managers/NetworkManager.js";
 class RemoteGame {
     constructor(canvasid, width=1000, height=600, wsocketSever)
     {
-        console.log("LocalGame constructor called");
+        ;
         const canvas = document.getElementById(canvasid);
         if (!canvas) {
             console.error("Canvas element not found!");
@@ -164,7 +164,7 @@ class RemoteGame {
         const wallHit = this.checkWallCollision();
         if (wallHit === 2)
         {
-            console.log(`player 1 score ${this.leftPaddle.score} - player 2 score ${this.rightPaddel.score}`);
+            ;
             // Left/Right wall collision - scoring
             if (this.ball.x - this.ball.radius <= 0 && this.localPaddel == "right")
             {
@@ -177,18 +177,18 @@ class RemoteGame {
                     gameId : this.gameState.game.gameId,
                     timeStamp : Date.now(),
                 }));
-                // console.log("--------------------RIGHT -------------------")
+                // 
                 this.isRunning = false; // Prevent multiple sends
                 if (this.player2.score  + 1 == this.maxScore)
                 {   
-                    // console.log("Player 2 reached max score");
+                    ;
                     this.networkManger.broadCast("gameOver")
                     return;
                 }
             }
             else if (this.ball.x + this.ball.radius >= this.canvasWidth &&  this.localPaddel == "left")
             {
-                // console.log("--------------------LEFT -------------------")
+                // 
                 // this.player1.onScore();
                 // this.updateScore1(this.player1.score);
                 this.networkManger.broadCast(JSON.stringify({
@@ -201,7 +201,7 @@ class RemoteGame {
 
                 if (this.player1.score + 1 === this.maxScore)
                 {
-                    console.log("Player 1 reached max score");
+                    ;
                     this.networkManger.broadCast("gameOver");
                     return;
                 }
@@ -369,7 +369,7 @@ class RemoteGame {
         }
         this.update(deltaTime);
         this.render();
-        // console.log(`Delta Time: ${currentTime} ms`);
+        // ;
         this.lastTime = currentTime;
         requestAnimationFrame((time) => this.gameLoop(time));
     }
@@ -382,7 +382,7 @@ class RemoteGame {
     
     start(data)
     {
-        console.log("we are starting the game !!!!!!!!!!!!!!!!");
+        ;
         const gameEndMessage = document.getElementById('gameEndMessage');
         const waitingMessage = document.getElementById('waitingMessage');
         
@@ -498,7 +498,7 @@ class RemoteGame {
     //handling Server Messages
     handleServerMessages(data)
     {
-        console.log(data);
+        ;
         switch(data.type)
         {
             case 'player_left':

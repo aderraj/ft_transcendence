@@ -86,12 +86,17 @@ export class FriendsGateway
     if (client.userId) {
       this.userSockets.delete(client.userId);
 
-      await this.prisma.user.update({
-        where: { id: client.userId },
-        data: { isOnline: false, lastSeen: new Date() },
-      });
+      try {
+        await this.prisma.user.update({
+          where: { id: client.userId },
+          data: { isOnline: false, lastSeen: new Date() },
+        });
 
-      await this.notifyFriendsStatus(client.userId, false);
+        await this.notifyFriendsStatus(client.userId, false);
+      } catch (error) {
+        // User may have been deleted, ignore the error
+        console.warn(`Failed to update disconnect status for user ${client.userId}:`, error.message);
+      }
     }
   }
 

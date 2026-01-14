@@ -125,7 +125,7 @@ export default function Profile() {
             });
             if (res.ok) {
                 const updated = await res.json();
-                setProfile(prev => ({ ...prev, ...updated }));
+                setProfile(prev => ({ ...prev, ...updated, avatar: prev.avatar }));
                 if (refreshUser) await refreshUser();
             }
         } catch (error) { console.error(error); } 

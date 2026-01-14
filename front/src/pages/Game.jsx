@@ -89,11 +89,13 @@ const PongGame = () => {
     cleanupGame();
     setMode('remote');
     
-    const host = import.meta.env.VITE_HOST_IP || window.location.hostname;
-    const port = import.meta.env.VITE_GAME_PORT || 3002;
+    // Use secure WebSocket (WSS) through the reverse proxy
+    // Protocol matches page protocol, connects via /game-ws/ path
+    const protocol = window.location.protocol === 'https:' ? 'wss:' : 'ws:';
+    const host = window.location.host; // Uses same host as the page (goes through WAF)
     const token = localStorage.getItem('accessToken');
     
-    const wsUrl = `ws://${host}:${port}/websocket?user_id=${user.id}&roomId=${targetRoomId}&token=${token}`;
+    const wsUrl = `${protocol}//${host}/game-ws/?user_id=${user.id}&roomId=${targetRoomId}&token=${token}`;
 
     setGameState('waiting');
     
@@ -101,7 +103,7 @@ const PongGame = () => {
     socketRef.current = socket;
 
     socket.onopen = () => {
-        console.log("Connected to game server");
+        ;
     };
 
     socket.onerror = (error) => {
@@ -120,7 +122,7 @@ const PongGame = () => {
         setGameState('playing');
       },
       onGameEnd: (gameOverMsg) => {
-        console.log('Game ended with data:', gameOverMsg);
+        ;
         
         if (typeof gameOverMsg === 'string') {
           setGameOverData({
@@ -173,7 +175,7 @@ const PongGame = () => {
         navigate('/game');
       },
       onConnectionClosed: (reason) => {
-        console.log('Connection closed:', reason);
+        ;
         if (gameState !== 'gameOver') {
           setGameState('menu');
           cleanupGame();

@@ -35,14 +35,10 @@ export class UsersService {
       this.prisma.user.count(),
     ]);
 
-    // Convert avatar filenames to full URLs
-    const protocol = this.configService.get('USE_HTTPS') === 'true' ? 'https' : 'http';
-    const host = this.configService.get('HOST_IP') || 'localhost';
-    const port = this.configService.get('PORT') || '3001';
-
+    // Convert avatar filenames to relative URLs (works with reverse proxy)
     const usersWithAvatarUrls = users.map((user) => ({
       ...user,
-      avatar: user.avatar && !user.avatar.startsWith('http') ? `${protocol}://${host}:${port}/uploads/avatars/${user.avatar}` : user.avatar,
+      avatar: user.avatar && !user.avatar.startsWith('http') ? `/uploads/avatars/${user.avatar}` : user.avatar,
     }));
 
     return { users: usersWithAvatarUrls, total, take, skip };
@@ -72,12 +68,9 @@ export class UsersService {
       throw new NotFoundException(`User with ID ${id} not found`);
     }
 
-    // Convert avatar filename to full URL
+    // Convert avatar filename to relative URL (works with reverse proxy)
     if (user.avatar && !user.avatar.startsWith('http')) {
-      const protocol = this.configService.get('USE_HTTPS') === 'true' ? 'https' : 'http';
-      const host = this.configService.get('HOST_IP') || 'localhost';
-      const port = this.configService.get('PORT') || '3001';
-      user.avatar = `${protocol}://${host}:${port}/uploads/avatars/${user.avatar}`;
+      user.avatar = `/uploads/avatars/${user.avatar}`;
     }
 
     return user;
@@ -103,12 +96,9 @@ export class UsersService {
       throw new NotFoundException(`User ${username} not found`);
     }
 
-    // Convert avatar filename to full URL
+    // Convert avatar filename to relative URL (works with reverse proxy)
     if (user.avatar && !user.avatar.startsWith('http')) {
-      const protocol = this.configService.get('USE_HTTPS') === 'true' ? 'https' : 'http';
-      const host = this.configService.get('HOST_IP') || 'localhost';
-      const port = this.configService.get('PORT') || '3001';
-      user.avatar = `${protocol}://${host}:${port}/uploads/avatars/${user.avatar}`;
+      user.avatar = `/uploads/avatars/${user.avatar}`;
     }
 
     return user;

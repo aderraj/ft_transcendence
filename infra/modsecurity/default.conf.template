@@ -1,23 +1,32 @@
 # Pong WAF - Custom Server Configuration
 # This template is processed by the OWASP ModSecurity CRS entrypoint
 
-# Upstream definitions
+# Use Docker's embedded DNS resolver with caching disabled
+# This ensures nginx re-resolves DNS when containers restart
+resolver 127.0.0.11 valid=10s ipv6=off;
+resolver_timeout 5s;
+
+# Upstream definitions - using variables for dynamic resolution
 upstream backend_upstream {
     server backend:3001;
 }
 
 upstream frontend_upstream {
-    server frontend:5173;
+    server frontend:80;
 }
 
 upstream game_upstream {
-    server game:3002;
+    server game:3000;
 }
 
 # HTTPS Server (Main)
 server {
     listen 8443 ssl;
     server_name localhost;
+
+    # Prevent nginx from using internal port in redirects
+    port_in_redirect off;
+    absolute_redirect off;
 
     # SSL Certificates
     ssl_certificate     /etc/nginx/ssl/nginx.crt;
@@ -34,9 +43,7 @@ server {
     add_header X-XSS-Protection "1; mode=block" always;
     add_header Referrer-Policy "strict-origin-when-cross-origin" always;
 
-    # ModSecurity WAF - Enabled
-    modsecurity on;
-    modsecurity_rules_file /etc/nginx/modsecurity.d/include.conf;
+    # ModSecurity WAF - Enabled via modsecurity.conf (included from conf.d)
 
     # API endpoints -> Backend
     location /api/ {
@@ -75,7 +82,7 @@ server {
     }
 
     # Game Service API endpoints
-    location /game/ {
+    location /game-api/ {
         proxy_pass http://game_upstream/;
         proxy_http_version 1.1;
         proxy_set_header Host $host;
@@ -88,6 +95,11 @@ server {
         # WebSocket support for game
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
+    }
+
+    # /game/ path redirects to dashboard
+    location /game/ {
+        return 301 /dashboard;
     }
 
     # Game WebSocket endpoint
@@ -111,6 +123,10 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
+        
+        # Fix redirects from upstream to use correct port
+        proxy_redirect http://frontend_upstream/ /;
+        proxy_redirect ~^https?://[^/]+:8443/(.*)$ /$1;
         
         # WebSocket support for Vite HMR
         proxy_set_header Upgrade $http_upgrade;

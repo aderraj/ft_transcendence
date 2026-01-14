@@ -12,10 +12,8 @@ export class LeaderboardService {
   private getAvatarUrl(filename: string | null): string | null {
     if (!filename) return null;
     if (filename.startsWith('http')) return filename;
-    const protocol = this.configService.get('USE_HTTPS') === 'true' ? 'https' : 'http';
-    const host = this.configService.get('HOST_IP') || 'localhost';
-    const port = this.configService.get('PORT') || '3001';
-    return `${protocol}://${host}:${port}/uploads/avatars/${filename}`;
+    // Return relative URL - works with reverse proxy
+    return `/uploads/avatars/${filename}`;
   }
 
   // Get global leaderboard ranked by level and experience

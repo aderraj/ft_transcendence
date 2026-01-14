@@ -6,6 +6,10 @@ server.name: kibana
 server.host: "0.0.0.0"
 server.port: 5601
 
+# Base path for running behind reverse proxy
+# server.basePath: "/kibana"
+# server.rewriteBasePath: true
+
 # SSL Configuration
 server.ssl.enabled: true
 server.ssl.certificate: /usr/share/kibana/config/certs/kibana.crt

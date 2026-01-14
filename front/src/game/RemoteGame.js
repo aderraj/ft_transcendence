@@ -62,7 +62,7 @@ export class RemoteGame {
         };
 
         this.socket.onclose = (event) => {
-            console.log('WebSocket connection closed:', event.code, event.reason);
+            ;
             if (this.isRunning && this.callbacks.onConnectionClosed) {
                 this.callbacks.onConnectionClosed('Connection closed unexpectedly');
             }
