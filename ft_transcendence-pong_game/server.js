@@ -277,7 +277,7 @@ function checkPaddleHit(ball, paddle, side) {
     const hitY = ball.y + ball.radius > paddle.y && ball.y - ball.radius < paddle.y + paddle.height;
     
     if (hitX && hitY) {
-        , Paddle Y: ${paddle.y.toFixed(1)}`);
+         //console.log(`[COLLISION] Ball hit ${side} paddle! Ball: (${ball.x.toFixed(1)}, ${ball.y.toFixed(1)}), Paddle Y: ${paddle.y.toFixed(1)}`);
         
         if (side === 'left') {
             // Hit Left Paddle: Push ball to right side of paddle
@@ -316,16 +316,16 @@ function startCountdown(gameId) {
 
     // Send initial countdown
     sendCountdown(count);
-    ;
+     //console.log(`[COUNTDOWN] ${count}`);
 
     const countdownInterval = setInterval(() => {
         count--;
         if (count > 0) {
             sendCountdown(count);
-            ;
+             //console.log(`[COUNTDOWN] ${count}`);
         } else if (count === 0) {
             sendCountdown('GO!');
-            ;
+             //console.log(`[COUNTDOWN] GO!`);
         } else {
             // Countdown finished, start the actual game
             clearInterval(countdownInterval);
@@ -376,11 +376,11 @@ function startGameLoop(gameId) {
 
         // 4. Check Scoring (Server Authoritative)
         if (entities.ball.x < 0) {
-            ;
+             //console.log(`[SCORE] Right player scored! Ball X: ${entities.ball.x.toFixed(1)}, Left Paddle: x=${entities.leftPaddle.x}, y=${entities.leftPaddle.y.toFixed(1)}`);
             data.rightPlayer.score++;
             handleServerScore(gameId, "right");
         } else if (entities.ball.x > GAME_CONFIG.CANVAS_WIDTH) {
-            ;
+             //console.log(`[SCORE] Left player scored! Ball X: ${entities.ball.x.toFixed(1)}, Right Paddle: x=${entities.rightPaddle.x}, y=${entities.rightPaddle.y.toFixed(1)}`);
             data.leftPlayer.score++;
             handleServerScore(gameId, "left");
         }
@@ -479,9 +479,9 @@ function endGame(gameId) {
             rightPlayer: { userId: data.rightPlayer.userId, score: data.rightPlayer.score }
         }
     });
-    
-    
-    
+     //console.log("end_message--------------------------------------------------------------------")
+     //console.log(endMsg)
+     //console.log("end_message-------------------------------------------------------------------")
 
     data.connections.forEach(conn => {
         if (conn.readyState === 1) conn.send(endMsg);
@@ -493,7 +493,7 @@ function endGame(gameId) {
 
     // Cleanup
     game.delete(gameId);
-    ;
+     //console.log(`Game ${gameId} ended. Winner: ${winnerName}`);
 }
 
 async function saveMatchResult(gameState, winnerId) {
@@ -556,7 +556,7 @@ async function saveMatchResult(gameState, winnerId) {
                 endedAt: new Date()
             }
         });
-        ;
+         //console.log(`Match saved to DB: ${user1Id} vs ${user2Id}`);
     } catch (error) {
         console.error("Error saving match:", error);
     }
@@ -571,9 +571,9 @@ function startNewGame(player1, player2) {
     const leftPaddle = new Paddle(30, GAME_CONFIG.CANVAS_HEIGHT / 2 - GAME_CONFIG.PADDLE_HEIGHT / 2, GAME_CONFIG.PADDLE_WIDTH, GAME_CONFIG.PADDLE_HEIGHT, 'yellow');
     const rightPaddle = new Paddle(GAME_CONFIG.CANVAS_WIDTH - 40, GAME_CONFIG.CANVAS_HEIGHT / 2 - GAME_CONFIG.PADDLE_HEIGHT / 2, GAME_CONFIG.PADDLE_WIDTH, GAME_CONFIG.PADDLE_HEIGHT, 'purple');
 
-    ;
-    ;
-    ;
+     //console.log(`[GAME START] Ball: x=${ball.x}, y=${ball.y}, dx=${ball.dx}, dy=${ball.dy}, radius=${ball.radius}`);
+     //console.log(`[GAME START] Left Paddle: x=${leftPaddle.x}, y=${leftPaddle.y}, w=${leftPaddle.width}, h=${leftPaddle.height}`);
+     //console.log(`[GAME START] Right Paddle: x=${rightPaddle.x}, y=${rightPaddle.y}, w=${rightPaddle.width}, h=${rightPaddle.height}`);
 
     game.set(gameState.gameId, {
         data: gameState,
@@ -633,7 +633,7 @@ fastify.get('/api/websocket-info', {
 fastify.register(async function (fastify) {
     fastify.get('/websocket', { websocket: true }, async (connection, request) =>
     {
-        ;
+         //console.log('Client Connected');
         let userId = request.query.user_id;
         const token = request.query.token;
 
@@ -654,7 +654,7 @@ fastify.register(async function (fastify) {
                 if (res && res.ok) {
                     const profile = await res.json();
                     userId = profile.id; 
-                    ;
+                     //console.log(`Auth Success: ${profile.username} (${userId})`);
                 }
             } catch (err) {
                 console.error("Auth Error:", err);
@@ -680,33 +680,33 @@ fastify.register(async function (fastify) {
 
             if (roomId) {
                 // Private Match Logic
-                ;
+                 //console.log(`Checking private lobby for room ${roomId}`);
                 if (privateLobbies.has(roomId)) {
                     const opponent = privateLobbies.get(roomId);
                     if (opponent.userId === userId) {
                          // Same user reconnecting - update socket
                          opponent.socket = connection;
                          privateLobbies.set(roomId, opponent);
-                         ;
+                          //console.log(`User ${userId} reconnected to lobby ${roomId}`);
                     } else if (opponent.socket.readyState === 1) {
-                         ;
+                          //console.log("Found opponent! Starting match...");
                          startNewGame(opponent, { userId, socket: connection });
                          gameCounter++;
                          privateLobbies.delete(roomId);
                     } else {
                          // Opponent socket is dead, replace with new player
-                         ;
+                          //console.log('Opponent socket dead, replacing in lobby');
                          privateLobbies.set(roomId, { userId, socket: connection });
                     }
                 } else {
-                    ;
+                     //console.log(`Creating private lobby for room ${roomId}`);
                     privateLobbies.set(roomId, { userId, socket: connection });
                 }
             } else {
                 // Public Matchmaking
                 if (!playerQueu.length) {
                     playerQueu.push({userId: userId, socket: connection });
-                    ;
+                     //console.log(`User ${userId} added to matchmaking queue`);
                 } else {
                     const opponent = playerQueu.shift();
                     if (opponent.socket.readyState === 1) {
@@ -714,7 +714,7 @@ fastify.register(async function (fastify) {
                         gameCounter++;
                     } else {
                         // Opponent socket is dead, add current player to queue instead
-                        ;
+                         //console.log('Opponent socket dead, requeuing current player');
                         playerQueu.push({userId: userId, socket: connection });
                     }
                 }
@@ -738,14 +738,14 @@ fastify.register(async function (fastify) {
 
         // HANDLING CONNECTION CLOSE 
         connection.on('close', () => {
-            ;
+             //console.log('Client Disconnected');
             connections.delete(connection);
 
             // Remove from players Map
             for (const [uid, playerData] of players.entries()) {
                 if (playerData.socket === connection) {
                     players.delete(uid);
-                    ;
+                     //console.log(`Removed player ${uid} from players map`);
                     break;
                 }
             }
@@ -754,7 +754,7 @@ fastify.register(async function (fastify) {
             for (const [roomId, player] of privateLobbies.entries()) {
                 if (player.socket === connection) {
                     privateLobbies.delete(roomId);
-                    ;
+                     //console.log(`Cleaned up private lobby ${roomId}`);
                     return;
                 }
             }
@@ -762,7 +762,7 @@ fastify.register(async function (fastify) {
             const queueIndex = playerQueu.findIndex(p => p.socket === connection);                                                                                                                                                 
             if (queueIndex !== -1) {                                                                                                                                                                                               
                 playerQueu.splice(queueIndex, 1);
-                ;                                                                                                                                                                                  
+                 //console.log('Removed player from matchmaking queue');                                                                                                                                                                                  
                 return;                                                                                                                                                                                                            
             }                                                                                                                                                                                                                      
 
@@ -845,9 +845,9 @@ function handleClientInput(message, sender)
         const parsed = JSON.parse(messageString);
         if (parsed.type) command = parsed.type;
         else if (parsed.action) command = parsed.action;
-        ;
+         //console.log('Received command:', command, 'from message:', messageString);
     } catch (e) {
-        ;
+         //console.log('Failed to parse message:', messageString);
     }
 
     // Find the game
@@ -865,7 +865,7 @@ function handleClientInput(message, sender)
     }
 
     if (!currentGameState) {
-        ;
+         //console.log('No active game found for this player');
         return;
     }
 
@@ -877,13 +877,13 @@ function handleClientInput(message, sender)
     // Handle Movement
     if (currentGameState.leftPlayer && sender === currentGameState.leftPlayer.socket) {
         if (command === "moveUp" || command === "moveDown") {
-            ;
+             //console.log('Left player moving:', command);
             handlePlayerMomvements(currentGameState.connections, "left", command === "moveUp" ? "up" : "down", currentGameId);
         }
     }
     else if (currentGameState.rightPlayer && sender === currentGameState.rightPlayer.socket) {
         if (command === "moveUp" || command === "moveDown") {
-            ;
+             //console.log('Right player moving:', command);
             handlePlayerMomvements(currentGameState.connections, "right", command === "moveUp" ? "up" : "down", currentGameId);
         }
     }
@@ -895,7 +895,7 @@ const PORT = process.env.PORT || 3000;
 const start = async () => {
     try {
         await fastify.listen({ port: PORT, host: '0.0.0.0' });
-        ;
+         //console.log(`Server running on http://localhost:${PORT}`);
     } catch (err) {
         fastify.log.error(err);
         process.exit(1);
