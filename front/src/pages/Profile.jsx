@@ -4,9 +4,9 @@ import { Loader2, ArrowLeft } from 'lucide-react';
 import { useAuth } from '@/contexts/AuthContext';
 import { useAppData } from '@/contexts/AppDataContext';
 import { authenticatedFetch, authenticatedFileUpload } from '@/utils/api'; 
-import ProfileHeader from '@/components/ProfileHeader';
-import EditProfileForm from '@/components/ProfileEditForm';
-import SecuritySettings from '@/components/ProfileSecuritySettings';
+import ProfileHeader from '@/components/profile/ProfileHeader';
+import EditProfileForm from '@/components/profile/ProfileEditForm';
+import SecuritySettings from '@/components/profile/ProfileSecuritySettings';
 import PasswordResetModal from '@/components/modals/PasswordResetModal';
 import TwoFactorModal from '@/components/modals/TwoFactorModal';
 
@@ -125,7 +125,7 @@ export default function Profile() {
             });
             if (res.ok) {
                 const updated = await res.json();
-                setProfile(prev => ({ ...prev, ...updated }));
+                setProfile(prev => ({ ...prev, ...updated, avatar: prev.avatar }));
                 if (refreshUser) await refreshUser();
             }
         } catch (error) { console.error(error); } 
