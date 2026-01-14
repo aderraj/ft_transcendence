@@ -268,13 +268,25 @@ export const AppDataProvider = ({ children }) => {
            const isPlayer1 = match.player1Id === user.id;
            const opponent = isPlayer1 ? match.player2 : match.player1;
            const opponentName = opponent?.username || opponent?.displayName || "Unknown";
+
            const isWin = match.winnerId === user.id;
+           const isDraw = !match.winnerId && (match.finishedAt || match.status === 'FINISHED'); 
+
+           let resultString = "DEFEAT";
+           if (isDraw) resultString = "DRAW";
+           else if (isWin) resultString = "VICTORY";
+
            let winnerScore = match.winnerId === match.player1Id ? match.player1Score : match.player2Score;
            let loserScore = match.winnerId === match.player1Id ? match.player2Score : match.player1Score;
+           
+           if (isDraw) {
+               winnerScore = match.player1Score;
+               loserScore = match.player2Score;
+           }
 
            return {
                id: match.id,
-               result: isWin ? "VICTORY" : "DEFEAT",
+               result: resultString,
                opponent: opponentName,
                score: `${winnerScore} - ${loserScore}`,
                date: match.finishedAt ? new Date(match.finishedAt).toLocaleDateString() : "Recent",
