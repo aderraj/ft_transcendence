@@ -18,18 +18,9 @@ Beyond the game itself, the platform offers a complete social ecosystem includin
 
 ## Preview
 
-| | |
-|:---:|:---:|
-| ![Login](preview/login.png) | ![Register](preview/register.png) |
-| **Login** | **Register** |
-| ![Dashboard](preview/dashboard.png) | ![Profile](preview/profile.png) |
-| **Dashboard** | **Profile** |
-| ![Game Lobby](preview/game_lobby.png) | ![Game Start](preview/game_start.png) |
-| **Game Lobby** | **Game Start** |
-| ![Game](preview/game.png) | ![Leaderboard](preview/leaderboard.png) |
-| **Game** | **Leaderboard** |
-| ![Chat](preview/chat.png) | ![Forgot Password](preview/forgot-password.png) |
-| **Chat** | **Forgot Password** |
+<p align="center">
+  <img src="preview/slideshow.gif" alt="Application Preview" width="800" />
+</p>
 
 ## Instructions
 
