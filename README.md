@@ -16,6 +16,21 @@ Beyond the game itself, the platform offers a complete social ecosystem includin
 * **Social Suite:** Friends system, live chat, and game invitations.
 * **Authentication:** Robust system supporting Local Auth, 42 OAuth, Google OAuth, and 2FA.
 
+## Preview
+
+| | |
+|:---:|:---:|
+| ![Login](preview/login.png) | ![Register](preview/register.png) |
+| **Login** | **Register** |
+| ![Dashboard](preview/dashboard.png) | ![Profile](preview/profile.png) |
+| **Dashboard** | **Profile** |
+| ![Game Lobby](preview/game_lobby.png) | ![Game Start](preview/game_start.png) |
+| **Game Lobby** | **Game Start** |
+| ![Game](preview/game.png) | ![Leaderboard](preview/leaderboard.png) |
+| **Game** | **Leaderboard** |
+| ![Chat](preview/chat.png) | ![Forgot Password](preview/frogot-password.png) |
+| **Chat** | **Forgot Password** |
+
 ## Instructions
 
 ### Prerequisites
@@ -30,7 +45,7 @@ To run this project, ensure the following tools are installed on your machine:
 
 1.  **Clone the repository:**
     ```bash
-    git clone [https://github.com/your-repo/ft_transcendence.git](https://github.com/your-repo/ft_transcendence.git)
+    git clone https://github.com/aderraj/ft_transcendence.git
     cd ft_transcendence
     ```
 
