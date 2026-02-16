@@ -28,7 +28,7 @@ Beyond the game itself, the platform offers a complete social ecosystem includin
 | **Game Lobby** | **Game Start** |
 | ![Game](preview/game.png) | ![Leaderboard](preview/leaderboard.png) |
 | **Game** | **Leaderboard** |
-| ![Chat](preview/chat.png) | ![Forgot Password](preview/frogot-password.png) |
+| ![Chat](preview/chat.png) | ![Forgot Password](preview/forgot-password.png) |
 | **Chat** | **Forgot Password** |
 
 ## Instructions
